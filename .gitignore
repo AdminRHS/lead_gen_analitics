@@ -1,5 +1,5 @@
 # Service account keys (NEVER commit these!)
-*.json
+apiweb-474307-e5d97b1ea289.json
 !package*.json
 !tsconfig*.json
 
