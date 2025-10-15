@@ -1,0 +1,35 @@
+name: Update Dashboard Data
+
+on:
+  schedule:
+    - cron: "0 20 * * *"  # щодня о 20:00 UTC
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+
+      - name: Install dependencies
+        run: pip install gspread google-auth
+
+      - name: Create service account file from secret
+        run: |
+          echo '${{ secrets.GOOGLE_SERVICE_KEY }}' > service_account.json
+
+      - name: Fetch data from Google Sheets
+        run: python update_data.py
+
+      - name: Commit and push data.json
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add data.json
+          git commit -m "update data.json" || echo "No changes"
+          git push

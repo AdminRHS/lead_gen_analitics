@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lead Generation Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script type="module" src="./charts.js"></script>
+  <style>
+    body {
+      font-family: "Segoe UI", sans-serif;
+      background: #fafafa;
+      margin: 30px;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    #update {
+      text-align: center;
+      color: gray;
+      margin-bottom: 40px;
+    }
+    .chart-container {
+      max-width: 900px;
+      margin: 40px auto;
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    .controls {
+      max-width: 1200px;
+      margin: 10px auto 30px auto;
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 16px 20px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+      border: 1px solid #eee;
+    }
+    /* Tabs */
+    .tabs {
+      max-width: 1240px;
+      margin: 0 auto 16px auto;
+      display: flex;
+      gap: 8px;
+      border-bottom: 1px solid #eee;
+    }
+    .tab {
+      padding: 10px 14px;
+      border: 1px solid #eee;
+      border-bottom: none;
+      border-top-left-radius: 8px;
+      border-top-right-radius: 8px;
+      background: #f7f8fb;
+      color: #333;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .tab.active { background: #fff; color: #111; box-shadow: 0 -2px 8px rgba(0,0,0,0.04); }
+    .tabpanels { max-width: 1240px; margin: 0 auto; }
+    .tabpanel { display: none; }
+    .tabpanel.active { display: block; }
+    .controls-left,
+    .controls-right {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .field label {
+      font-size: 12px;
+      color: #555;
+    }
+    .input {
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid #dcdcdc;
+      background: #fff;
+      font-size: 14px;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .input:focus {
+      outline: none;
+      border-color: #7aa7ff;
+      box-shadow: 0 0 0 3px rgba(84,132,255,0.2);
+    }
+    .btn {
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 14px;
+      transition: transform 0.05s ease, box-shadow 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+    }
+    .btn:active { transform: translateY(1px); }
+    .btn-primary {
+      background: linear-gradient(180deg, #4f8bff, #336dff);
+      color: #fff;
+      box-shadow: 0 6px 16px rgba(51,109,255,0.25);
+    }
+    .btn-primary:hover { filter: brightness(1.05); }
+    .btn-secondary {
+      background: #fff;
+      color: #333;
+      border-color: #dcdcdc;
+    }
+    .btn-secondary:hover {
+      background: #f6f8ff;
+      border-color: #c8d6ff;
+    }
+    /* Modal and overlay */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .modal {
+      width: min(900px, 92vw);
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 12px 36px rgba(0,0,0,0.25);
+      overflow: hidden;
+      border: 1px solid #eee;
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid #f0f0f0;
+      background: #fafafa;
+    }
+    .modal-title { font-weight: 700; color: #333; }
+    .modal-body { padding: 16px; }
+    .modal-actions { padding: 12px 16px; border-top: 1px solid #f0f0f0; display: flex; justify-content: flex-end; gap: 10px; }
+    .link-btn { background: transparent; border: none; color: #336dff; cursor: pointer; font-weight: 600; }
+    .link-btn:hover { text-decoration: underline; }
+    .summary-controls { display: flex; gap: 12px; align-items: center; margin-bottom: 12px; }
+    .summary-table { width: 100%; border-collapse: collapse; }
+    .summary-table th, .summary-table td { padding: 8px 10px; border-bottom: 1px solid #f0f0f0; text-align: right; }
+    .summary-table th:first-child, .summary-table td:first-child { text-align: left; }
+    .summary-table tfoot td { font-weight: 700; }
+    .dashboard-grid {
+      display: grid;
+      gap: 24px;
+      grid-template-columns: repeat(2, minmax(520px, 1fr));
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    @media (max-width: 1200px) {
+      .dashboard-grid { grid-template-columns: repeat(2, minmax(420px, 1fr)); }
+    }
+    @media (max-width: 900px) {
+      .dashboard-grid { grid-template-columns: 1fr; }
+    }
+    .dashboard-grid .chart-card {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 16px;
+    }
+    /* Soft themed cards (very light pastels) */
+    .chart-card.soft-blue { background: linear-gradient(180deg, #f6f9ff, #ffffff); border: 1px solid #e6edff; }
+    .chart-card.soft-purple { background: linear-gradient(180deg, #faf6ff, #ffffff); border: 1px solid #eee6ff; }
+    .chart-card.soft-green { background: linear-gradient(180deg, #f6fffb, #ffffff); border: 1px solid #e6fff3; }
+    .chart-card.soft-yellow { background: linear-gradient(180deg, #fffdf6, #ffffff); border: 1px solid #fff5d6; }
+    .chart-card.soft-pink { background: linear-gradient(180deg, #fff6fb, #ffffff); border: 1px solid #ffe6f3; }
+
+    /* Elegant section divider */
+    .section-break {
+      max-width: 1240px;
+      margin: 28px auto 18px auto;
+      height: 1px;
+      background: linear-gradient(90deg, rgba(0,0,0,0.06), rgba(0,0,0,0.02) 40%, rgba(0,0,0,0.02) 60%, rgba(0,0,0,0.06));
+      position: relative;
+    }
+    .section-break .label {
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #fafafa;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid #eee;
+      font-size: 12px;
+      color: #666;
+    }
+    /* Ensure monthly tab charts have explicit height to avoid 0px when toggled */
+    /* Fix chart growth/responsive loops by giving explicit canvas height everywhere */
+    .chart-card canvas { height: 380px !important; width: 100% !important; display: block; }
+    .chart-card h3 {
+      margin: 0 0 12px 0;
+      font-size: 16px;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <h1>Lead Generation Dashboard</h1>
+  <div id="update">Loading...</div>
+  <div class="controls">
+    <div class="controls-left">
+      <div class="field">
+        <label for="fromDate">From</label>
+        <input type="date" id="fromDate" class="input">
+      </div>
+      <div class="field">
+        <label for="toDate">To</label>
+        <input type="date" id="toDate" class="input">
+      </div>
+    </div>
+    <div class="controls-right">
+      <button id="openDaySummary" class="btn btn-secondary">Day Summary</button>
+      <button id="applyFilter" class="btn btn-primary">Apply</button>
+      <button id="resetFilter" class="btn btn-secondary">Reset</button>
+    </div>
+  </div>
+  <div class="tabs" role="tablist">
+    <button class="tab active" role="tab" aria-selected="true" aria-controls="tab-funnel" id="tab-funnel-btn">Funnel</button>
+    <button class="tab" role="tab" aria-selected="false" aria-controls="tab-country" id="tab-country-btn">Countries</button>
+    <button class="tab" role="tab" aria-selected="false" aria-controls="tab-weekly" id="tab-weekly-btn">Weekly</button>
+    <button class="tab" role="tab" aria-selected="false" aria-controls="tab-monthly" id="tab-monthly-btn">Monthly</button>
+    <button class="tab" role="tab" aria-selected="false" aria-controls="tab-leaderboard" id="tab-leaderboard-btn">Leaderboard</button>
+    
+  </div>
+
+  <div class="tabpanels">
+  <div id="tab-funnel" class="tabpanel active" role="tabpanel" aria-labelledby="tab-funnel-btn">
+  <div class="dashboard-grid">
+    <div class="chart-card soft-blue">
+      <h3>Created → Sent Requests</h3>
+      <canvas id="chartCreatedToFound"></canvas>
+    </div>
+    <div class="chart-card soft-purple">
+      <h3>Sent Requests → Connected</h3>
+      <canvas id="chartSentToConnected"></canvas>
+    </div>
+    <div class="chart-card soft-green">
+      <h3>Connected → Replies</h3>
+      <canvas id="chartConnectedToReplies"></canvas>
+    </div>
+    <div class="chart-card soft-yellow">
+      <h3>Replies → Positive Replies</h3>
+      <canvas id="chartRepliesToPositive"></canvas>
+    </div>
+    <div class="chart-card soft-pink">
+      <h3>Positive Replies → Events</h3>
+      <canvas id="chartPositiveToEvents"></canvas>
+    </div>
+  </div>
+  </div>
+
+  <div id="tab-country" class="tabpanel" role="tabpanel" aria-labelledby="tab-country-btn">
+  <div class="dashboard-grid" id="countryDashboard">
+    <div class="chart-card soft-blue">
+      <h3>Created → Sent Requests (by Country)</h3>
+      <canvas id="chartCountryCreatedToFound"></canvas>
+    </div>
+    <div class="chart-card soft-purple">
+      <h3>Sent Requests → Connected (by Country)</h3>
+      <canvas id="chartCountrySentToConnected"></canvas>
+    </div>
+    <div class="chart-card soft-green">
+      <h3>Connected → Replies (by Country)</h3>
+      <canvas id="chartCountryConnectedToReplies"></canvas>
+    </div>
+    <div class="chart-card soft-yellow">
+      <h3>Replies → Positive Replies (by Country)</h3>
+      <canvas id="chartCountryRepliesToPositive"></canvas>
+    </div>
+    <div class="chart-card soft-pink">
+      <h3>Positive Replies → Events (by Country)</h3>
+      <canvas id="chartCountryPositiveToEvents"></canvas>
+    </div>
+  </div>
+  </div>
+  <div id="tab-weekly" class="tabpanel" role="tabpanel" aria-labelledby="tab-weekly-btn">
+  <div class="dashboard-grid">
+    <div class="chart-card soft-blue">
+      <h3>Weekly: Created → Sent Requests</h3>
+      <canvas id="chartWeekCreatedToFound"></canvas>
+    </div>
+    <div class="chart-card soft-purple">
+      <h3>Weekly: Sent Requests → Connected</h3>
+      <canvas id="chartWeekSentToConnected"></canvas>
+    </div>
+    <div class="chart-card soft-green">
+      <h3>Weekly: Connected → Replies</h3>
+      <canvas id="chartWeekConnectedToReplies"></canvas>
+    </div>
+    <div class="chart-card soft-yellow">
+      <h3>Weekly: Replies → Positive Replies</h3>
+      <canvas id="chartWeekRepliesToPositive"></canvas>
+    </div>
+    <div class="chart-card soft-pink">
+      <h3>Weekly: Positive Replies → Events</h3>
+      <canvas id="chartWeekPositiveToEvents"></canvas>
+    </div>
+  </div>
+  </div>
+  <div id="tab-monthly" class="tabpanel" role="tabpanel" aria-labelledby="tab-monthly-btn">
+  <div class="dashboard-grid">
+    <div class="chart-card soft-blue">
+      <h3>Monthly: Created → Sent Requests</h3>
+      <canvas id="chartMonthCreatedToFound"></canvas>
+    </div>
+    <div class="chart-card soft-purple">
+      <h3>Monthly: Sent Requests → Connected</h3>
+      <canvas id="chartMonthSentToConnected"></canvas>
+    </div>
+    <div class="chart-card soft-green">
+      <h3>Monthly: Connected → Replies</h3>
+      <canvas id="chartMonthConnectedToReplies"></canvas>
+    </div>
+    <div class="chart-card soft-yellow">
+      <h3>Monthly: Replies → Positive Replies</h3>
+      <canvas id="chartMonthRepliesToPositive"></canvas>
+    </div>
+    <div class="chart-card soft-pink">
+      <h3>Monthly: Positive Replies → Events</h3>
+      <canvas id="chartMonthPositiveToEvents"></canvas>
+    </div>
+  </div>
+  </div>
+
+  <div id="tab-leaderboard" class="tabpanel" role="tabpanel" aria-labelledby="tab-leaderboard-btn">
+  <div class="dashboard-grid">
+    <div class="chart-card soft-blue">
+      <h3>Created by Lead Generator (month/range)</h3>
+      <canvas id="chartLbCreated"></canvas>
+    </div>
+    <div class="chart-card soft-purple">
+      <h3>Sent Requests by Lead Generator</h3>
+      <canvas id="chartLbSent"></canvas>
+    </div>
+    <div class="chart-card soft-green">
+      <h3>Positive Replies by Lead Generator</h3>
+      <canvas id="chartLbPositive"></canvas>
+    </div>
+    <div class="chart-card soft-yellow">
+      <h3>Events Created by Lead Generator</h3>
+      <canvas id="chartLbEvents"></canvas>
+    </div>
+  </div>
+  </div>
+  </div>
+  </div>
+
+  <!-- Modal for single-day summary -->
+  <div class="modal-overlay" id="dayModalOverlay">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="dayModalTitle">
+      <div class="modal-header">
+        <div class="modal-title" id="dayModalTitle">Day Summary</div>
+        <button id="closeDayModal" class="link-btn">Close</button>
+      </div>
+      <div class="modal-body">
+        <div class="summary-controls">
+          <label for="dayPicker">Pick a date:</label>
+          <input type="date" id="dayPicker" class="input">
+        </div>
+        <div id="daySummaryContainer"></div>
+      </div>
+      <div class="modal-actions">
+        <button id="exportDayCsv" class="btn btn-secondary">Export CSV</button>
+        <button id="doneDay" class="btn btn-primary">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { renderPairedBarChart, renderSingleBarChart } from './charts.js';
+    function parseDdMmYyyyToDate(str) {
+      // expects DD/MM/YYYY
+      const [dd, mm, yyyy] = (str || '').split('/').map(Number);
+      if (!dd || !mm || !yyyy) return null;
+      return new Date(yyyy, mm - 1, dd);
+    }
+
+    function toIsoDateInputValue(date) {
+      const pad = n => String(n).padStart(2, '0');
+      return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}`;
+    }
+
+    // Shared state across tabs/renderers
+    let chartRefs = {
+      createdFound: null,
+      sentConnected: null,
+      connectedReplies: null,
+      repliesPositive: null,
+      positiveEvents: null,
+      // Countries (new paired charts)
+      countryCreatedFound: null,
+      countrySentConnected: null,
+      countryConnectedReplies: null,
+      countryRepliesPositive: null,
+      countryPositiveEvents: null,
+      // Countries (legacy single charts, kept for safety)
+      countryConnected: null,
+      countryReplies: null,
+      countryPositive: null,
+      countryEvents: null,
+      weekCreatedFound: null,
+      weekSentConnected: null,
+      weekConnectedReplies: null,
+      weekRepliesPositive: null,
+      weekPositiveEvents: null,
+      monthCreatedFound: null,
+      monthSentConnected: null,
+      monthConnectedReplies: null,
+      monthRepliesPositive: null,
+      monthPositiveEvents: null
+    };
+    // Leaderboard chart refs
+    chartRefs.lbCreated = null;
+    chartRefs.lbSent = null;
+    chartRefs.lbPositive = null;
+    chartRefs.lbEvents = null;
+    let lastFilteredRows = [];
+    let rerenderAll = null; // will be assigned inside initDashboard
+
+    async function initDashboard() {
+      const res = await fetch("data.json");
+      const json = await res.json();
+      const rows = json.data;
+      document.getElementById("update").textContent =
+        "Last updated: " + json.last_updated;
+
+      // Precompute min/max dates for controls
+      const datesList = rows
+        .map(r => parseDdMmYyyyToDate(r.Date))
+        .filter(Boolean)
+        .sort((a,b) => a - b);
+      const minDate = datesList[0] || new Date();
+      const maxDate = datesList[datesList.length - 1] || new Date();
+
+      const fromEl = document.getElementById('fromDate');
+      const toEl = document.getElementById('toDate');
+      fromEl.value = toIsoDateInputValue(minDate);
+      toEl.value = toIsoDateInputValue(maxDate);
+
+      // Modal wiring
+      const overlay = document.getElementById('dayModalOverlay');
+      const openBtn = document.getElementById('openDaySummary');
+      const closeBtn = document.getElementById('closeDayModal');
+      const doneBtn = document.getElementById('doneDay');
+      const dayPicker = document.getElementById('dayPicker');
+      const summaryContainer = document.getElementById('daySummaryContainer');
+      const exportBtn = document.getElementById('exportDayCsv');
+
+      function openModal() { overlay.style.display = 'flex'; }
+      function closeModal() { overlay.style.display = 'none'; }
+      openBtn.addEventListener('click', () => {
+        dayPicker.value = toIsoDateInputValue(maxDate);
+        renderDaySummary(new Date(dayPicker.value));
+        openModal();
+      });
+      closeBtn.addEventListener('click', closeModal);
+      doneBtn.addEventListener('click', closeModal);
+      overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModal(); });
+      dayPicker.addEventListener('change', () => {
+        const d = new Date(dayPicker.value);
+        renderDaySummary(d);
+      });
+
+      exportBtn.addEventListener('click', () => {
+        const d = new Date(dayPicker.value);
+        const dataForDay = getRowsForDay(d);
+        const csv = buildCsvForDay(dataForDay);
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `day-summary-${toIsoDateInputValue(d)}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+
+      // use shared chartRefs/lastFilteredRows declared above
+
+      function buildAggregates(filteredRows) {
+        const byDate = {};
+        for (const row of filteredRows) {
+          const dateKey = row.Date;
+          if (!byDate[dateKey]) {
+            byDate[dateKey] = {
+            Created: 0,
+            SentRequests: 0,
+            Connected: 0,
+              PositiveReplies: 0,
+              Events: 0,
+              TotalFound: 0,
+              Replies: 0
+            };
+          }
+          byDate[dateKey].Created += Number(row["Created"] || 0);
+          byDate[dateKey].SentRequests += Number(row["Sent Requests"] || 0);
+          byDate[dateKey].Connected += Number(row["Connected"] || 0);
+          byDate[dateKey].PositiveReplies += Number(row["Positive Replies"] || 0);
+          byDate[dateKey].Events += Number(row["Events Created"] || 0);
+          // Map Total replies → Replies series
+          byDate[dateKey].Replies += Number(row["Total replies"] || 0);
+          // TODO: map TotalFound when confirmed
+        }
+        const dates = Object.keys(byDate);
+        return {
+          dates,
+          created: dates.map(d => byDate[d].Created),
+          sent: dates.map(d => byDate[d].SentRequests),
+          connected: dates.map(d => byDate[d].Connected),
+          replies: dates.map(d => byDate[d].Replies),
+          positive: dates.map(d => byDate[d].PositiveReplies),
+          events: dates.map(d => byDate[d].Events),
+          totalFound: dates.map(d => byDate[d].TotalFound)
+        };
+      }
+
+      function buildCountryAggregates(filteredRows) {
+        const byCountry = {};
+        for (const row of filteredRows) {
+          const country = row.Country || 'Unknown';
+          if (!byCountry[country]) {
+            byCountry[country] = {
+              Created: 0,
+              SentRequests: 0,
+              Connected: 0,
+              Replies: 0,
+              PositiveReplies: 0,
+              Events: 0,
+              TotalFound: 0
+            };
+          }
+          byCountry[country].Created += Number(row["Created"] || 0);
+          byCountry[country].SentRequests += Number(row["Sent Requests"] || 0);
+          byCountry[country].Connected += Number(row["Connected"] || 0);
+          byCountry[country].Replies += Number(row["Total replies"] || 0);
+          byCountry[country].PositiveReplies += Number(row["Positive Replies"] || 0);
+          byCountry[country].Events += Number(row["Events Created"] || 0);
+          // TODO: map TotalFound when confirmed
+        }
+        const countries = Object.keys(byCountry);
+        return {
+          countries,
+          created: countries.map(c => byCountry[c].Created),
+          sent: countries.map(c => byCountry[c].SentRequests),
+          connected: countries.map(c => byCountry[c].Connected),
+          replies: countries.map(c => byCountry[c].Replies),
+          positive: countries.map(c => byCountry[c].PositiveReplies),
+          events: countries.map(c => byCountry[c].Events),
+          totalFound: countries.map(c => byCountry[c].TotalFound)
+        };
+      }
+
+      function destroyIfExists(chartInstance) {
+        if (chartInstance && typeof chartInstance.destroy === 'function') {
+          chartInstance.destroy();
+        }
+      }
+
+      function getIsoWeekInfo(dateObj) {
+        const d = new Date(Date.UTC(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate()));
+        const dayNum = d.getUTCDay() || 7; // 1..7, Monday=1
+        d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+        const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+        const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+        const year = d.getUTCFullYear();
+        return { year, week: weekNo };
+      }
+
+      function buildWeeklyAggregates(filteredRows) {
+        const byWeek = {};
+        for (const row of filteredRows) {
+          const dt = parseDdMmYyyyToDate(row.Date);
+          if (!dt) continue;
+          const { year, week } = getIsoWeekInfo(dt);
+          const key = `${year}-W${String(week).padStart(2,'0')}`;
+          if (!byWeek[key]) {
+            byWeek[key] = {
+              Created: 0,
+              SentRequests: 0,
+              Connected: 0,
+              Replies: 0,
+              PositiveReplies: 0,
+              Events: 0,
+              TotalFound: 0
+            };
+          }
+          byWeek[key].Created += Number(row["Created"] || 0);
+          byWeek[key].SentRequests += Number(row["Sent Requests"] || 0);
+          byWeek[key].Connected += Number(row["Connected"] || 0);
+          byWeek[key].Replies += Number(row["Total replies"] || 0);
+          byWeek[key].PositiveReplies += Number(row["Positive Replies"] || 0);
+          byWeek[key].Events += Number(row["Events Created"] || 0);
+          // TODO: map TotalFound when confirmed
+        }
+        const keys = Object.keys(byWeek).sort((a,b) => {
+          const [ay, aw] = a.split('-W').map(Number);
+          const [by, bw] = b.split('-W').map(Number);
+          if (ay !== by) return ay - by;
+          return aw - bw;
+        });
+        return {
+          weeks: keys,
+          created: keys.map(k => byWeek[k].Created),
+          sent: keys.map(k => byWeek[k].SentRequests),
+          connected: keys.map(k => byWeek[k].Connected),
+          replies: keys.map(k => byWeek[k].Replies),
+          positive: keys.map(k => byWeek[k].PositiveReplies),
+          events: keys.map(k => byWeek[k].Events),
+          totalFound: keys.map(k => byWeek[k].TotalFound)
+        };
+      }
+
+      function buildMonthlyAggregates(filteredRows) {
+        const byMonth = {};
+        for (const row of filteredRows) {
+          const dt = parseDdMmYyyyToDate(row.Date);
+          if (!dt) continue;
+          const key = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}`; // YYYY-MM
+          if (!byMonth[key]) {
+            byMonth[key] = {
+              Created: 0,
+              SentRequests: 0,
+              Connected: 0,
+              Replies: 0,
+              PositiveReplies: 0,
+              Events: 0,
+              TotalFound: 0
+            };
+          }
+          byMonth[key].Created += Number(row["Created"] || 0);
+          byMonth[key].SentRequests += Number(row["Sent Requests"] || 0);
+          byMonth[key].Connected += Number(row["Connected"] || 0);
+          byMonth[key].Replies += Number(row["Total replies"] || 0);
+          byMonth[key].PositiveReplies += Number(row["Positive Replies"] || 0);
+          byMonth[key].Events += Number(row["Events Created"] || 0);
+          // TODO: map TotalFound when confirmed
+        }
+        const keys = Object.keys(byMonth).sort();
+        return {
+          months: keys,
+          created: keys.map(k => byMonth[k].Created),
+          sent: keys.map(k => byMonth[k].SentRequests),
+          connected: keys.map(k => byMonth[k].Connected),
+          replies: keys.map(k => byMonth[k].Replies),
+          positive: keys.map(k => byMonth[k].PositiveReplies),
+          events: keys.map(k => byMonth[k].Events),
+          totalFound: keys.map(k => byMonth[k].TotalFound)
+        };
+      }
+
+      function buildLeaderboardAggregates(filteredRows) {
+        // Aggregate by Name (lead generator) over the current filtered range
+        const byName = {};
+        for (const row of filteredRows) {
+          const name = row.Name || 'Unknown';
+          if (!byName[name]) {
+            byName[name] = { Created: 0, SentRequests: 0, PositiveReplies: 0, Events: 0 };
+          }
+          byName[name].Created += Number(row["Created"] || 0);
+          byName[name].SentRequests += Number(row["Sent Requests"] || 0);
+          byName[name].PositiveReplies += Number(row["Positive Replies"] || 0);
+          byName[name].Events += Number(row["Events Created"] || 0);
+        }
+        const names = Object.keys(byName);
+        return {
+          names,
+          created: names.map(n => byName[n].Created),
+          sent: names.map(n => byName[n].SentRequests),
+          positive: names.map(n => byName[n].PositiveReplies),
+          events: names.map(n => byName[n].Events)
+        };
+      }
+
+      function renderAll(filteredRows) {
+        lastFilteredRows = filteredRows;
+        const agg = buildAggregates(filteredRows);
+        const countryAgg = buildCountryAggregates(filteredRows);
+        const weekAgg = buildWeeklyAggregates(filteredRows);
+        const monthAgg = buildMonthlyAggregates(filteredRows);
+        const lbAgg = buildLeaderboardAggregates(filteredRows);
+        destroyIfExists(chartRefs.createdFound);
+        destroyIfExists(chartRefs.sentConnected);
+        destroyIfExists(chartRefs.connectedReplies);
+        destroyIfExists(chartRefs.repliesPositive);
+        destroyIfExists(chartRefs.positiveEvents);
+      // Destroy country charts (both legacy and new)
+      destroyIfExists(chartRefs.countryConnected);
+      destroyIfExists(chartRefs.countryReplies);
+      destroyIfExists(chartRefs.countryPositive);
+      destroyIfExists(chartRefs.countryEvents);
+      destroyIfExists(chartRefs.countryCreatedFound);
+      destroyIfExists(chartRefs.countrySentConnected);
+      destroyIfExists(chartRefs.countryConnectedReplies);
+      destroyIfExists(chartRefs.countryRepliesPositive);
+      destroyIfExists(chartRefs.countryPositiveEvents);
+        destroyIfExists(chartRefs.weekCreatedFound);
+        destroyIfExists(chartRefs.weekSentConnected);
+        destroyIfExists(chartRefs.weekConnectedReplies);
+        destroyIfExists(chartRefs.weekRepliesPositive);
+        destroyIfExists(chartRefs.weekPositiveEvents);
+        destroyIfExists(chartRefs.monthCreatedFound);
+        destroyIfExists(chartRefs.monthSentConnected);
+        destroyIfExists(chartRefs.monthConnectedReplies);
+        destroyIfExists(chartRefs.monthRepliesPositive);
+        destroyIfExists(chartRefs.monthPositiveEvents);
+        destroyIfExists(chartRefs.lbCreated);
+        destroyIfExists(chartRefs.lbSent);
+        destroyIfExists(chartRefs.lbPositive);
+        destroyIfExists(chartRefs.lbEvents);
+
+        chartRefs.createdFound = renderPairedBarChart(
+          document.getElementById("chartCreatedToFound"),
+          agg.dates,
+          "Created",
+          agg.created,
+          "Sent Requests",
+          agg.sent
+        );
+        chartRefs.sentConnected = renderPairedBarChart(
+          document.getElementById("chartSentToConnected"),
+          agg.dates,
+          "Sent Requests",
+          agg.sent,
+          "Connected",
+          agg.connected
+        );
+        chartRefs.connectedReplies = renderPairedBarChart(
+          document.getElementById("chartConnectedToReplies"),
+          agg.dates,
+          "Connected",
+          agg.connected,
+          "Replies",
+          agg.replies
+        );
+        chartRefs.repliesPositive = renderPairedBarChart(
+          document.getElementById("chartRepliesToPositive"),
+          agg.dates,
+          "Replies",
+          agg.replies,
+          "Positive Replies",
+          agg.positive
+        );
+        chartRefs.positiveEvents = renderPairedBarChart(
+          document.getElementById("chartPositiveToEvents"),
+          agg.dates,
+          "Positive Replies",
+          agg.positive,
+          "Events",
+          agg.events
+        );
+
+        chartRefs.countryCreatedFound = renderPairedBarChart(
+          document.getElementById('chartCountryCreatedToFound'),
+          countryAgg.countries,
+          'Created',
+          countryAgg.created,
+          'Sent Requests',
+          countryAgg.sent
+        );
+        chartRefs.countrySentConnected = renderPairedBarChart(
+          document.getElementById('chartCountrySentToConnected'),
+          countryAgg.countries,
+          'Sent Requests',
+          countryAgg.sent,
+          'Connected',
+          countryAgg.connected
+        );
+        chartRefs.countryConnectedReplies = renderPairedBarChart(
+          document.getElementById('chartCountryConnectedToReplies'),
+          countryAgg.countries,
+          'Connected',
+          countryAgg.connected,
+          'Replies',
+          countryAgg.replies
+        );
+        chartRefs.countryRepliesPositive = renderPairedBarChart(
+          document.getElementById('chartCountryRepliesToPositive'),
+          countryAgg.countries,
+          'Replies',
+          countryAgg.replies,
+          'Positive Replies',
+          countryAgg.positive
+        );
+        chartRefs.countryPositiveEvents = renderPairedBarChart(
+          document.getElementById('chartCountryPositiveToEvents'),
+          countryAgg.countries,
+          'Positive Replies',
+          countryAgg.positive,
+          'Events',
+          countryAgg.events
+        );
+
+        // Weekly charts
+        chartRefs.weekCreatedFound = renderPairedBarChart(
+          document.getElementById('chartWeekCreatedToFound'),
+          weekAgg.weeks,
+          'Created',
+          weekAgg.created,
+          'Sent Requests',
+          weekAgg.sent
+        );
+        chartRefs.weekSentConnected = renderPairedBarChart(
+          document.getElementById('chartWeekSentToConnected'),
+          weekAgg.weeks,
+          'Sent Requests',
+          weekAgg.sent,
+          'Connected',
+          weekAgg.connected
+        );
+        chartRefs.weekConnectedReplies = renderPairedBarChart(
+          document.getElementById('chartWeekConnectedToReplies'),
+          weekAgg.weeks,
+          'Connected',
+          weekAgg.connected,
+          'Replies',
+          weekAgg.replies
+        );
+        chartRefs.weekRepliesPositive = renderPairedBarChart(
+          document.getElementById('chartWeekRepliesToPositive'),
+          weekAgg.weeks,
+          'Replies',
+          weekAgg.replies,
+          'Positive Replies',
+          weekAgg.positive
+        );
+        chartRefs.weekPositiveEvents = renderPairedBarChart(
+          document.getElementById('chartWeekPositiveToEvents'),
+          weekAgg.weeks,
+          'Positive Replies',
+          weekAgg.positive,
+          'Events',
+          weekAgg.events
+        );
+
+        // Monthly charts
+        chartRefs.monthCreatedFound = renderPairedBarChart(
+          document.getElementById('chartMonthCreatedToFound'),
+          monthAgg.months,
+          'Created',
+          monthAgg.created,
+          'Sent Requests',
+          monthAgg.sent
+        );
+        chartRefs.monthSentConnected = renderPairedBarChart(
+          document.getElementById('chartMonthSentToConnected'),
+          monthAgg.months,
+          'Sent Requests',
+          monthAgg.sent,
+          'Connected',
+          monthAgg.connected
+        );
+        chartRefs.monthConnectedReplies = renderPairedBarChart(
+          document.getElementById('chartMonthConnectedToReplies'),
+          monthAgg.months,
+          'Connected',
+          monthAgg.connected,
+          'Replies',
+          monthAgg.replies
+        );
+        chartRefs.monthRepliesPositive = renderPairedBarChart(
+          document.getElementById('chartMonthRepliesToPositive'),
+          monthAgg.months,
+          'Replies',
+          monthAgg.replies,
+          'Positive Replies',
+          monthAgg.positive
+        );
+        chartRefs.monthPositiveEvents = renderPairedBarChart(
+          document.getElementById('chartMonthPositiveToEvents'),
+          monthAgg.months,
+          'Positive Replies',
+          monthAgg.positive,
+          'Events',
+          monthAgg.events
+        );
+
+        // Leaderboard charts
+        chartRefs.lbCreated = renderSingleBarChart(
+          document.getElementById('chartLbCreated'),
+          lbAgg.names,
+          'Created',
+          lbAgg.created,
+          'rgba(54,162,235,0.6)'
+        );
+        chartRefs.lbSent = renderSingleBarChart(
+          document.getElementById('chartLbSent'),
+          lbAgg.names,
+          'Sent Requests',
+          lbAgg.sent,
+          'rgba(153,102,255,0.6)'
+        );
+        chartRefs.lbPositive = renderSingleBarChart(
+          document.getElementById('chartLbPositive'),
+          lbAgg.names,
+          'Positive Replies',
+          lbAgg.positive,
+          'rgba(75,192,192,0.6)'
+        );
+        chartRefs.lbEvents = renderSingleBarChart(
+          document.getElementById('chartLbEvents'),
+          lbAgg.names,
+          'Events Created',
+          lbAgg.events,
+          'rgba(255,206,86,0.6)'
+        );
+      }
+
+      // expose re-render for tabs logic
+      rerenderAll = renderAll;
+      // also attach to window for safety
+      window._rerenderAll = renderAll;
+
+      function applyCurrentFilter() {
+        const from = new Date(document.getElementById('fromDate').value);
+        const to = new Date(document.getElementById('toDate').value);
+        // normalize times
+        from.setHours(0,0,0,0);
+        to.setHours(23,59,59,999);
+        const filtered = rows.filter(r => {
+          const d = parseDdMmYyyyToDate(r.Date);
+          return d && d >= from && d <= to;
+        });
+        renderAll(filtered);
+      }
+
+      document.getElementById('applyFilter').addEventListener('click', applyCurrentFilter);
+      document.getElementById('resetFilter').addEventListener('click', () => {
+        fromEl.value = toIsoDateInputValue(minDate);
+        toEl.value = toIsoDateInputValue(maxDate);
+        renderAll(rows);
+      });
+
+      // initial render
+      renderAll(rows);
+
+      function getRowsForDay(dateObj) {
+        const target = toIsoDateInputValue(dateObj); // YYYY-MM-DD
+        return rows.filter(r => {
+          const d = parseDdMmYyyyToDate(r.Date);
+          if (!d) return false;
+          return toIsoDateInputValue(d) === target;
+        });
+      }
+
+      function renderDaySummary(dateObj) {
+        const dayRows = getRowsForDay(dateObj);
+        // aggregate by Name for the selected day
+        const byName = {};
+        for (const r of dayRows) {
+          const name = r.Name || 'Unknown';
+          if (!byName[name]) {
+            byName[name] = {
+              Created: 0,
+              SentRequests: 0,
+              Connected: 0,
+              PositiveReplies: 0,
+              Events: 0
+            };
+          }
+          byName[name].Created += Number(r["Created"] || 0);
+          byName[name].SentRequests += Number(r["Sent Requests"] || 0);
+          byName[name].Connected += Number(r["Connected"] || 0);
+          byName[name].PositiveReplies += Number(r["Positive Replies"] || 0);
+          byName[name].Events += Number(r["Events Created"] || 0);
+        }
+
+        const names = Object.keys(byName);
+        const totals = { Created: 0, SentRequests: 0, Connected: 0, PositiveReplies: 0, Events: 0 };
+        let html = '';
+        html += '<table class="summary-table">';
+        html += '<thead><tr><th>Name</th><th>Created</th><th>Sent Requests</th><th>Connected</th><th>Positive Replies</th><th>Events</th></tr></thead>';
+        html += '<tbody>';
+        for (const n of names) {
+          const row = byName[n];
+          totals.Created += row.Created;
+          totals.SentRequests += row.SentRequests;
+          totals.Connected += row.Connected;
+          totals.PositiveReplies += row.PositiveReplies;
+          totals.Events += row.Events;
+          html += `<tr><td>${n}</td><td>${row.Created}</td><td>${row.SentRequests}</td><td>${row.Connected}</td><td>${row.PositiveReplies}</td><td>${row.Events}</td></tr>`;
+        }
+        html += '</tbody>';
+        html += `<tfoot><tr><td>Total</td><td>${totals.Created}</td><td>${totals.SentRequests}</td><td>${totals.Connected}</td><td>${totals.PositiveReplies}</td><td>${totals.Events}</td></tr></tfoot>`;
+        html += '</table>';
+
+        summaryContainer.innerHTML = html;
+        document.getElementById('dayModalTitle').textContent = `Day Summary — ${toIsoDateInputValue(dateObj)}`;
+      }
+
+      function buildCsvForDay(dayRows) {
+        const headers = ["Name","Created","Sent Requests","Connected","Positive Replies","Events"];
+        const byName = {};
+        for (const r of dayRows) {
+          const name = r.Name || 'Unknown';
+          if (!byName[name]) {
+            byName[name] = { Created: 0, SentRequests: 0, Connected: 0, PositiveReplies: 0, Events: 0 };
+          }
+          byName[name].Created += Number(r["Created"] || 0);
+          byName[name].SentRequests += Number(r["Sent Requests"] || 0);
+          byName[name].Connected += Number(r["Connected"] || 0);
+          byName[name].PositiveReplies += Number(r["Positive Replies"] || 0);
+          byName[name].Events += Number(r["Events Created"] || 0);
+        }
+        let csv = headers.join(',') + '\n';
+        for (const name of Object.keys(byName)) {
+          const r = byName[name];
+          csv += `${name},${r.Created},${r.SentRequests},${r.Connected},${r.PositiveReplies},${r.Events}\n`;
+        }
+        return csv;
+      }
+    }
+
+    // Tabs logic
+    function initTabs() {
+      const tabs = [
+        { btn: document.getElementById('tab-funnel-btn'), panel: document.getElementById('tab-funnel') },
+        { btn: document.getElementById('tab-country-btn'), panel: document.getElementById('tab-country') },
+        { btn: document.getElementById('tab-weekly-btn'), panel: document.getElementById('tab-weekly') },
+        { btn: document.getElementById('tab-monthly-btn'), panel: document.getElementById('tab-monthly') },
+        { btn: document.getElementById('tab-leaderboard-btn'), panel: document.getElementById('tab-leaderboard') }
+      ];
+
+      function resizeChartsFor(panelId) {
+        // Ensure charts render correctly after being un-hidden
+        if (panelId === 'tab-funnel') {
+          [chartRefs.createdFound, chartRefs.sentConnected, chartRefs.connectedReplies, chartRefs.repliesPositive, chartRefs.positiveEvents]
+            .forEach(c => c && typeof c.resize === 'function' && c.resize());
+        } else if (panelId === 'tab-country') {
+          [
+            chartRefs.countryCreatedFound,
+            chartRefs.countrySentConnected,
+            chartRefs.countryConnectedReplies,
+            chartRefs.countryRepliesPositive,
+            chartRefs.countryPositiveEvents
+          ].forEach(c => c && typeof c.resize === 'function' && c.resize());
+        } else if (panelId === 'tab-weekly') {
+          [chartRefs.weekCreatedFound, chartRefs.weekSentConnected, chartRefs.weekConnectedReplies, chartRefs.weekRepliesPositive, chartRefs.weekPositiveEvents]
+            .forEach(c => c && typeof c.resize === 'function' && c.resize());
+        } else if (panelId === 'tab-monthly') {
+          [chartRefs.monthCreatedFound, chartRefs.monthSentConnected, chartRefs.monthConnectedReplies, chartRefs.monthRepliesPositive, chartRefs.monthPositiveEvents]
+            .forEach(c => c && typeof c.resize === 'function' && c.resize());
+        } else if (panelId === 'tab-leaderboard') {
+          [chartRefs.lbCreated, chartRefs.lbSent, chartRefs.lbPositive, chartRefs.lbEvents]
+            .forEach(c => c && typeof c.resize === 'function' && c.resize());
+        }
+      }
+
+      function activate(targetBtn) {
+        tabs.forEach(({btn, panel}) => {
+          const active = btn === targetBtn;
+          btn.classList.toggle('active', active);
+          btn.setAttribute('aria-selected', active ? 'true' : 'false');
+          panel.classList.toggle('active', active);
+        });
+        // After DOM visibility change, trigger chart resize for the newly active panel
+        const panelId = targetBtn.getAttribute('aria-controls');
+        // Always rebuild after activating a tab to ensure charts mount into visible containers
+        setTimeout(() => {
+          if (typeof rerenderAll === 'function' && Array.isArray(lastFilteredRows) && lastFilteredRows.length) {
+            rerenderAll(lastFilteredRows);
+          } else if (window._rerenderAll && Array.isArray(lastFilteredRows) && lastFilteredRows.length) {
+            window._rerenderAll(lastFilteredRows);
+          }
+          resizeChartsFor(panelId);
+        }, 80);
+      }
+      tabs.forEach(({btn}) => btn.addEventListener('click', () => activate(btn)));
+    }
+
+    initTabs();
+    initDashboard();
+  </script>
+</body>
+</html>
