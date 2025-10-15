@@ -23,11 +23,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Create service account file from secret
-        run: |
-          echo '${{ secrets.GOOGLE_SERVICE_KEY }}' > apiweb-474307-e5d97b1ea289.json
-
       - name: Fetch data from Google Sheets
+        env:
+          GOOGLE_SERVICE_KEY: ${{ secrets.GOOGLE_SERVICE_KEY }}
         run: python update_data.py
 
       - name: Commit and push data.json

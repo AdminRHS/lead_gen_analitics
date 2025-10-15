@@ -9,9 +9,27 @@ SHEET_NAME = "Form responses 1"
 
 # Авторизація через service account
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets.readonly"]
-CREDS = Credentials.from_service_account_file(
-    "apiweb-474307-e5d97b1ea289.json", scopes=SCOPES
-)
+
+def get_credentials():
+    """Отримати credentials з файлу або з GitHub Secrets."""
+    import os
+    
+    # Спочатку спробуємо зчитати з файлу (для локального тестування)
+    if os.path.exists("apiweb-474307-e5d97b1ea289.json"):
+        return Credentials.from_service_account_file(
+            "apiweb-474307-e5d97b1ea289.json", scopes=SCOPES
+        )
+    
+    # Якщо файлу немає, читаємо з GitHub Secret (через змінну середовища)
+    service_key = os.environ.get('GOOGLE_SERVICE_KEY')
+    if service_key:
+        import json
+        service_key_json = json.loads(service_key)
+        return Credentials.from_service_account_info(service_key_json, scopes=SCOPES)
+    
+    raise Exception("Не знайдено Service Account ключ ні в файлі, ні в змінних середовища")
+
+CREDS = get_credentials()
 
 def fetch_data():
     """Отримати всі дані з аркуша Google Sheets."""
