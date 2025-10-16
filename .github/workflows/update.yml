@@ -31,7 +31,7 @@ jobs:
 
       - name: Fetch data from Google Sheets
         env:
-          GOOGLE_SERVICE_KEY: ${{ secrets.GOOGLE_SERVICE_KEY }}
+          GOOGLE_SERVICE_KEY: ${{ secrets.GOOGLE_SHEETS_API_KEY }}
         run: python update_data.py
 
       - name: Commit and push data.json
