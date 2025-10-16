@@ -21,7 +21,8 @@ def get_credentials():
         )
     
     # Якщо файлу немає, читаємо з GitHub Secret (через змінну середовища)
-    service_key = os.environ.get('GOOGLE_SERVICE_KEY')
+    # Підтримуємо обидві назви: GOOGLE_SERVICE_KEY або GOOGLE_SHEETS_API_KEY
+    service_key = os.environ.get('GOOGLE_SERVICE_KEY') or os.environ.get('GOOGLE_SHEETS_API_KEY')
     if service_key:
         import json
         service_key_json = json.loads(service_key)
