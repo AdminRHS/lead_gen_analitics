@@ -2,7 +2,8 @@ name: Update Dashboard Data
 
 on:
   schedule:
-    - cron: "* * * * *"  # кожну хвилину (тимчасово для тесту)
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
 
 permissions:
   contents: write
