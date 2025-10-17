@@ -270,6 +270,10 @@
   <div id="tab-country" class="tabpanel" role="tabpanel" aria-labelledby="tab-country-btn">
   <div class="dashboard-grid" id="countryDashboard">
     <div class="chart-card soft-blue">
+      <h3>Conversion Rate (Created → Events) by Country</h3>
+      <canvas id="chartCountryConversionRate"></canvas>
+    </div>
+    <div class="chart-card soft-blue">
       <h3>Created → Sent Requests (by Country)</h3>
       <canvas id="chartCountryCreatedToFound"></canvas>
     </div>
@@ -318,6 +322,10 @@
   <div id="tab-monthly" class="tabpanel" role="tabpanel" aria-labelledby="tab-monthly-btn">
   <div class="dashboard-grid">
     <div class="chart-card soft-blue">
+      <h3>Monthly: Conversion Rate (Created → Events)</h3>
+      <canvas id="chartMonthConversionRate"></canvas>
+    </div>
+    <div class="chart-card soft-blue">
       <h3>Monthly: Created → Sent Requests</h3>
       <canvas id="chartMonthCreatedToFound"></canvas>
     </div>
@@ -342,6 +350,10 @@
 
   <div id="tab-leaderboard" class="tabpanel" role="tabpanel" aria-labelledby="tab-leaderboard-btn">
   <div class="dashboard-grid">
+    <div class="chart-card soft-blue">
+      <h3>Conversion Rate (Created → Events) by Lead Generator</h3>
+      <canvas id="chartLbConversionRate"></canvas>
+    </div>
     <div class="chart-card soft-blue">
       <h3>Created by Lead Generator (month/range)</h3>
       <canvas id="chartLbCreated"></canvas>
@@ -375,6 +387,17 @@
           <label for="dayPicker">Pick a date:</label>
           <input type="date" id="dayPicker" class="input">
         </div>
+        <div class="sort-controls" style="margin: 10px 0;">
+          <label for="sortColumn">Sort by:</label>
+          <select id="sortColumn" class="input">
+            <option value="Created">Created</option>
+            <option value="SentRequests">Sent Requests</option>
+            <option value="Connected">Connected</option>
+            <option value="PositiveReplies">Positive Replies</option>
+            <option value="Events">Events</option>
+          </select>
+          <button id="sortButton" class="btn btn-secondary">Sort</button>
+        </div>
         <div id="daySummaryContainer"></div>
       </div>
       <div class="modal-actions">
@@ -384,8 +407,54 @@
     </div>
   </div>
 
+  <!-- Modal for Country Insight -->
+  <div class="modal-overlay" id="countryModalOverlay">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="countryModalTitle">
+      <div class="modal-header">
+        <div class="modal-title" id="countryModalTitle">Country Insight</div>
+        <button id="closeCountryModal" class="link-btn">Close</button>
+      </div>
+      <div class="modal-body">
+        <div id="countrySummary"></div>
+        <div class="dashboard-grid" style="grid-template-columns: 1fr;">
+          <div class="chart-card soft-blue">
+            <h3>Monthly Created vs Events</h3>
+            <canvas id="countryMonthlyPaired"></canvas>
+          </div>
+        </div>
+        <div id="countryTopGenerators"></div>
+      </div>
+      <div class="modal-actions">
+        <button id="doneCountry" class="btn btn-primary">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal for Lead Generator Insight -->
+  <div class="modal-overlay" id="leadModalOverlay">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="leadModalTitle">
+      <div class="modal-header">
+        <div class="modal-title" id="leadModalTitle">Lead Insight</div>
+        <button id="closeLeadModal" class="link-btn">Close</button>
+      </div>
+      <div class="modal-body">
+        <div id="leadSummary"></div>
+        <div class="dashboard-grid" style="grid-template-columns: 1fr;">
+          <div class="chart-card soft-blue">
+            <h3>Monthly Created vs Events</h3>
+            <canvas id="leadMonthlyPaired"></canvas>
+          </div>
+        </div>
+        <div id="leadTopCountries"></div>
+      </div>
+      <div class="modal-actions">
+        <button id="doneLead" class="btn btn-primary">Done</button>
+      </div>
+    </div>
+  </div>
+
   <script type="module">
-    import { renderPairedBarChart, renderSingleBarChart } from './charts.js';
+    import { renderPairedBarChart, renderSingleBarChart, renderConversionRateChart } from './charts.js';
     function parseDdMmYyyyToDate(str) {
       // expects DD/MM/YYYY
       const [dd, mm, yyyy] = (str || '').split('/').map(Number);
@@ -432,8 +501,17 @@
     chartRefs.lbSent = null;
     chartRefs.lbPositive = null;
     chartRefs.lbEvents = null;
+    // Conversion rate chart refs
+    chartRefs.monthConversionRate = null;
+    chartRefs.countryConversionRate = null;
+    chartRefs.lbConversionRate = null;
+    // Country modal chart ref
+    chartRefs.countryMonthlyPaired = null;
+    // Lead modal chart ref
+    chartRefs.leadMonthlyPaired = null;
     let lastFilteredRows = [];
     let rerenderAll = null; // will be assigned inside initDashboard
+    let currentDayData = null; // для зберігання даних поточного дня для сортування
 
     async function initDashboard() {
       const res = await fetch("data.json");
@@ -464,11 +542,50 @@
       const summaryContainer = document.getElementById('daySummaryContainer');
       const exportBtn = document.getElementById('exportDayCsv');
 
+      // Country modal wiring
+      const countryOverlay = document.getElementById('countryModalOverlay');
+      const closeCountryBtn = document.getElementById('closeCountryModal');
+      const doneCountryBtn = document.getElementById('doneCountry');
+      function openCountryModal() { countryOverlay.style.display = 'flex'; }
+      function closeCountryModal() { countryOverlay.style.display = 'none'; }
+      closeCountryBtn.addEventListener('click', closeCountryModal);
+      doneCountryBtn.addEventListener('click', closeCountryModal);
+      countryOverlay.addEventListener('click', (e) => { if (e.target === countryOverlay) closeCountryModal(); });
+
+      // Lead modal wiring
+      const leadOverlay = document.getElementById('leadModalOverlay');
+      const closeLeadBtn = document.getElementById('closeLeadModal');
+      const doneLeadBtn = document.getElementById('doneLead');
+      function openLeadModal() { leadOverlay.style.display = 'flex'; }
+      function closeLeadModal() { leadOverlay.style.display = 'none'; }
+      closeLeadBtn.addEventListener('click', closeLeadModal);
+      doneLeadBtn.addEventListener('click', closeLeadModal);
+      leadOverlay.addEventListener('click', (e) => { if (e.target === leadOverlay) closeLeadModal(); });
+
       function openModal() { overlay.style.display = 'flex'; }
       function closeModal() { overlay.style.display = 'none'; }
       openBtn.addEventListener('click', () => {
         dayPicker.value = toIsoDateInputValue(maxDate);
         renderDaySummary(new Date(dayPicker.value));
+        // після первинного рендера одразу відсортуємо за вибраною колонкою
+        const sortSelect = document.getElementById('sortColumn');
+        if (sortSelect) sortDayData(sortSelect.value || 'Created');
+        // підвісимо слухачі на елементи сортування щоразу при відкритті
+        const sortBtn = document.getElementById('sortButton');
+        if (sortBtn && !sortBtn.__bound) {
+          sortBtn.addEventListener('click', () => {
+            const col = (document.getElementById('sortColumn') || {}).value || 'Created';
+            sortDayData(col);
+          });
+          sortBtn.__bound = true;
+        }
+        if (sortSelect && !sortSelect.__bound) {
+          sortSelect.addEventListener('change', () => {
+            const col = sortSelect.value || 'Created';
+            sortDayData(col);
+          });
+          sortSelect.__bound = true;
+        }
         openModal();
       });
       closeBtn.addEventListener('click', closeModal);
@@ -477,6 +594,9 @@
       dayPicker.addEventListener('change', () => {
         const d = new Date(dayPicker.value);
         renderDaySummary(d);
+        // після зміни дати — одразу застосувати останній вибір сортування
+        const sortSelect = document.getElementById('sortColumn');
+        if (sortSelect) sortDayData(sortSelect.value || 'Created');
       });
 
       exportBtn.addEventListener('click', () => {
@@ -563,7 +683,12 @@
           replies: countries.map(c => byCountry[c].Replies),
           positive: countries.map(c => byCountry[c].PositiveReplies),
           events: countries.map(c => byCountry[c].Events),
-          totalFound: countries.map(c => byCountry[c].TotalFound)
+          totalFound: countries.map(c => byCountry[c].TotalFound),
+          conversionRates: countries.map(c => {
+            const created = byCountry[c].Created;
+            const events = byCountry[c].Events;
+            return created > 0 ? (events / created) * 100 : 0;
+          })
         };
       }
 
@@ -661,7 +786,12 @@
           replies: keys.map(k => byMonth[k].Replies),
           positive: keys.map(k => byMonth[k].PositiveReplies),
           events: keys.map(k => byMonth[k].Events),
-          totalFound: keys.map(k => byMonth[k].TotalFound)
+          totalFound: keys.map(k => byMonth[k].TotalFound),
+          conversionRates: keys.map(k => {
+            const created = byMonth[k].Created;
+            const events = byMonth[k].Events;
+            return created > 0 ? (events / created) * 100 : 0;
+          })
         };
       }
 
@@ -684,7 +814,12 @@
           created: names.map(n => byName[n].Created),
           sent: names.map(n => byName[n].SentRequests),
           positive: names.map(n => byName[n].PositiveReplies),
-          events: names.map(n => byName[n].Events)
+          events: names.map(n => byName[n].Events),
+          conversionRates: names.map(n => {
+            const created = byName[n].Created;
+            const events = byName[n].Events;
+            return created > 0 ? (events / created) * 100 : 0;
+          })
         };
       }
 
@@ -724,6 +859,9 @@
         destroyIfExists(chartRefs.lbSent);
         destroyIfExists(chartRefs.lbPositive);
         destroyIfExists(chartRefs.lbEvents);
+        destroyIfExists(chartRefs.monthConversionRate);
+        destroyIfExists(chartRefs.countryConversionRate);
+        destroyIfExists(chartRefs.lbConversionRate);
 
         chartRefs.createdFound = renderPairedBarChart(
           document.getElementById("chartCreatedToFound"),
@@ -766,6 +904,24 @@
           agg.events
         );
 
+        chartRefs.countryConversionRate = renderConversionRateChart(
+          document.getElementById('chartCountryConversionRate'),
+          countryAgg.countries,
+          'Conversion Rate (%)',
+          countryAgg.conversionRates,
+          'rgba(75,192,192,0.6)'
+        );
+      if (chartRefs.countryConversionRate) {
+        chartRefs.countryConversionRate.options.onClick = (evt, activeEls) => {
+          const points = chartRefs.countryConversionRate.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
+          if (points && points.length) {
+            const idx = points[0].index;
+            const country = countryAgg.countries[idx];
+            openCountryInsight(country, filteredRows);
+          }
+        };
+        chartRefs.countryConversionRate.update();
+      }
         chartRefs.countryCreatedFound = renderPairedBarChart(
           document.getElementById('chartCountryCreatedToFound'),
           countryAgg.countries,
@@ -774,6 +930,17 @@
           'Sent Requests',
           countryAgg.sent
         );
+      if (chartRefs.countryCreatedFound) {
+        chartRefs.countryCreatedFound.options.onClick = (evt, activeEls) => {
+          const points = chartRefs.countryCreatedFound.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
+          if (points && points.length) {
+            const idx = points[0].index;
+            const country = countryAgg.countries[idx];
+            openCountryInsight(country, filteredRows);
+          }
+        };
+        chartRefs.countryCreatedFound.update();
+      }
         chartRefs.countrySentConnected = renderPairedBarChart(
           document.getElementById('chartCountrySentToConnected'),
           countryAgg.countries,
@@ -782,6 +949,17 @@
           'Connected',
           countryAgg.connected
         );
+      if (chartRefs.countrySentConnected) {
+        chartRefs.countrySentConnected.options.onClick = (evt, activeEls) => {
+          const points = chartRefs.countrySentConnected.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
+          if (points && points.length) {
+            const idx = points[0].index;
+            const country = countryAgg.countries[idx];
+            openCountryInsight(country, filteredRows);
+          }
+        };
+        chartRefs.countrySentConnected.update();
+      }
         chartRefs.countryConnectedReplies = renderPairedBarChart(
           document.getElementById('chartCountryConnectedToReplies'),
           countryAgg.countries,
@@ -790,6 +968,17 @@
           'Replies',
           countryAgg.replies
         );
+      if (chartRefs.countryConnectedReplies) {
+        chartRefs.countryConnectedReplies.options.onClick = (evt, activeEls) => {
+          const points = chartRefs.countryConnectedReplies.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
+          if (points && points.length) {
+            const idx = points[0].index;
+            const country = countryAgg.countries[idx];
+            openCountryInsight(country, filteredRows);
+          }
+        };
+        chartRefs.countryConnectedReplies.update();
+      }
         chartRefs.countryRepliesPositive = renderPairedBarChart(
           document.getElementById('chartCountryRepliesToPositive'),
           countryAgg.countries,
@@ -798,6 +987,17 @@
           'Positive Replies',
           countryAgg.positive
         );
+      if (chartRefs.countryRepliesPositive) {
+        chartRefs.countryRepliesPositive.options.onClick = (evt, activeEls) => {
+          const points = chartRefs.countryRepliesPositive.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
+          if (points && points.length) {
+            const idx = points[0].index;
+            const country = countryAgg.countries[idx];
+            openCountryInsight(country, filteredRows);
+          }
+        };
+        chartRefs.countryRepliesPositive.update();
+      }
         chartRefs.countryPositiveEvents = renderPairedBarChart(
           document.getElementById('chartCountryPositiveToEvents'),
           countryAgg.countries,
@@ -806,6 +1006,17 @@
           'Events',
           countryAgg.events
         );
+      if (chartRefs.countryPositiveEvents) {
+        chartRefs.countryPositiveEvents.options.onClick = (evt, activeEls) => {
+          const points = chartRefs.countryPositiveEvents.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
+          if (points && points.length) {
+            const idx = points[0].index;
+            const country = countryAgg.countries[idx];
+            openCountryInsight(country, filteredRows);
+          }
+        };
+        chartRefs.countryPositiveEvents.update();
+      }
 
         // Weekly charts
         chartRefs.weekCreatedFound = renderPairedBarChart(
@@ -850,6 +1061,13 @@
         );
 
         // Monthly charts
+        chartRefs.monthConversionRate = renderConversionRateChart(
+          document.getElementById('chartMonthConversionRate'),
+          monthAgg.months,
+          'Conversion Rate (%)',
+          monthAgg.conversionRates,
+          'rgba(75,192,192,0.6)'
+        );
         chartRefs.monthCreatedFound = renderPairedBarChart(
           document.getElementById('chartMonthCreatedToFound'),
           monthAgg.months,
@@ -892,6 +1110,24 @@
         );
 
         // Leaderboard charts
+      chartRefs.lbConversionRate = renderConversionRateChart(
+          document.getElementById('chartLbConversionRate'),
+          lbAgg.names,
+          'Conversion Rate (%)',
+          lbAgg.conversionRates,
+          'rgba(75,192,192,0.6)'
+        );
+      if (chartRefs.lbConversionRate) {
+        chartRefs.lbConversionRate.options.onClick = (evt, activeEls) => {
+          const points = chartRefs.lbConversionRate.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
+          if (points && points.length) {
+            const idx = points[0].index;
+            const name = lbAgg.names[idx];
+            openLeadInsight(name, filteredRows);
+          }
+        };
+        chartRefs.lbConversionRate.update();
+      }
         chartRefs.lbCreated = renderSingleBarChart(
           document.getElementById('chartLbCreated'),
           lbAgg.names,
@@ -899,6 +1135,17 @@
           lbAgg.created,
           'rgba(54,162,235,0.6)'
         );
+      if (chartRefs.lbCreated) {
+        chartRefs.lbCreated.options.onClick = (evt, activeEls) => {
+          const points = chartRefs.lbCreated.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
+          if (points && points.length) {
+            const idx = points[0].index;
+            const name = lbAgg.names[idx];
+            openLeadInsight(name, filteredRows);
+          }
+        };
+        chartRefs.lbCreated.update();
+      }
         chartRefs.lbSent = renderSingleBarChart(
           document.getElementById('chartLbSent'),
           lbAgg.names,
@@ -906,6 +1153,17 @@
           lbAgg.sent,
           'rgba(153,102,255,0.6)'
         );
+      if (chartRefs.lbSent) {
+        chartRefs.lbSent.options.onClick = (evt, activeEls) => {
+          const points = chartRefs.lbSent.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
+          if (points && points.length) {
+            const idx = points[0].index;
+            const name = lbAgg.names[idx];
+            openLeadInsight(name, filteredRows);
+          }
+        };
+        chartRefs.lbSent.update();
+      }
         chartRefs.lbPositive = renderSingleBarChart(
           document.getElementById('chartLbPositive'),
           lbAgg.names,
@@ -913,6 +1171,17 @@
           lbAgg.positive,
           'rgba(75,192,192,0.6)'
         );
+      if (chartRefs.lbPositive) {
+        chartRefs.lbPositive.options.onClick = (evt, activeEls) => {
+          const points = chartRefs.lbPositive.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
+          if (points && points.length) {
+            const idx = points[0].index;
+            const name = lbAgg.names[idx];
+            openLeadInsight(name, filteredRows);
+          }
+        };
+        chartRefs.lbPositive.update();
+      }
         chartRefs.lbEvents = renderSingleBarChart(
           document.getElementById('chartLbEvents'),
           lbAgg.names,
@@ -920,6 +1189,17 @@
           lbAgg.events,
           'rgba(255,206,86,0.6)'
         );
+      if (chartRefs.lbEvents) {
+        chartRefs.lbEvents.options.onClick = (evt, activeEls) => {
+          const points = chartRefs.lbEvents.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
+          if (points && points.length) {
+            const idx = points[0].index;
+            const name = lbAgg.names[idx];
+            openLeadInsight(name, filteredRows);
+          }
+        };
+        chartRefs.lbEvents.update();
+      }
       }
 
       // expose re-render for tabs logic
@@ -959,6 +1239,38 @@
         });
       }
 
+      function sortDayData(sortColumn) {
+        if (!currentDayData) return;
+        
+        const sortedNames = Object.keys(currentDayData).sort((a, b) => {
+          const valueA = currentDayData[a][sortColumn] || 0;
+          const valueB = currentDayData[b][sortColumn] || 0;
+          return valueB - valueA; // від більшого до меншого
+        });
+        
+        const totals = { Created: 0, SentRequests: 0, Connected: 0, PositiveReplies: 0, Events: 0 };
+        let html = '';
+        html += '<table class="summary-table">';
+        html += '<thead><tr><th>Name</th><th>Created</th><th>Sent Requests</th><th>Connected</th><th>Positive Replies</th><th>Events</th></tr></thead>';
+        html += '<tbody>';
+        
+        for (const n of sortedNames) {
+          const row = currentDayData[n];
+          totals.Created += row.Created;
+          totals.SentRequests += row.SentRequests;
+          totals.Connected += row.Connected;
+          totals.PositiveReplies += row.PositiveReplies;
+          totals.Events += row.Events;
+          html += `<tr><td>${n}</td><td>${row.Created}</td><td>${row.SentRequests}</td><td>${row.Connected}</td><td>${row.PositiveReplies}</td><td>${row.Events}</td></tr>`;
+        }
+        
+        html += '</tbody>';
+        html += `<tfoot><tr><td>Total</td><td>${totals.Created}</td><td>${totals.SentRequests}</td><td>${totals.Connected}</td><td>${totals.PositiveReplies}</td><td>${totals.Events}</td></tr></tfoot>`;
+        html += '</table>';
+        
+        document.getElementById('daySummaryContainer').innerHTML = html;
+      }
+
       function renderDaySummary(dateObj) {
         const dayRows = getRowsForDay(dateObj);
         // aggregate by Name for the selected day
@@ -981,26 +1293,11 @@
           byName[name].Events += Number(r["Events Created"] || 0);
         }
 
-        const names = Object.keys(byName);
-        const totals = { Created: 0, SentRequests: 0, Connected: 0, PositiveReplies: 0, Events: 0 };
-        let html = '';
-        html += '<table class="summary-table">';
-        html += '<thead><tr><th>Name</th><th>Created</th><th>Sent Requests</th><th>Connected</th><th>Positive Replies</th><th>Events</th></tr></thead>';
-        html += '<tbody>';
-        for (const n of names) {
-          const row = byName[n];
-          totals.Created += row.Created;
-          totals.SentRequests += row.SentRequests;
-          totals.Connected += row.Connected;
-          totals.PositiveReplies += row.PositiveReplies;
-          totals.Events += row.Events;
-          html += `<tr><td>${n}</td><td>${row.Created}</td><td>${row.SentRequests}</td><td>${row.Connected}</td><td>${row.PositiveReplies}</td><td>${row.Events}</td></tr>`;
-        }
-        html += '</tbody>';
-        html += `<tfoot><tr><td>Total</td><td>${totals.Created}</td><td>${totals.SentRequests}</td><td>${totals.Connected}</td><td>${totals.PositiveReplies}</td><td>${totals.Events}</td></tr></tfoot>`;
-        html += '</table>';
-
-        summaryContainer.innerHTML = html;
+        // Зберігаємо дані для сортування і одразу рендеримо за поточним вибором
+        currentDayData = byName;
+        const sortSelect = document.getElementById('sortColumn');
+        const selected = sortSelect ? sortSelect.value : 'Created';
+        sortDayData(selected);
         document.getElementById('dayModalTitle').textContent = `Day Summary — ${toIsoDateInputValue(dateObj)}`;
       }
 
@@ -1044,6 +1341,7 @@
             .forEach(c => c && typeof c.resize === 'function' && c.resize());
         } else if (panelId === 'tab-country') {
           [
+            chartRefs.countryConversionRate,
             chartRefs.countryCreatedFound,
             chartRefs.countrySentConnected,
             chartRefs.countryConnectedReplies,
@@ -1054,10 +1352,10 @@
           [chartRefs.weekCreatedFound, chartRefs.weekSentConnected, chartRefs.weekConnectedReplies, chartRefs.weekRepliesPositive, chartRefs.weekPositiveEvents]
             .forEach(c => c && typeof c.resize === 'function' && c.resize());
         } else if (panelId === 'tab-monthly') {
-          [chartRefs.monthCreatedFound, chartRefs.monthSentConnected, chartRefs.monthConnectedReplies, chartRefs.monthRepliesPositive, chartRefs.monthPositiveEvents]
+          [chartRefs.monthConversionRate, chartRefs.monthCreatedFound, chartRefs.monthSentConnected, chartRefs.monthConnectedReplies, chartRefs.monthRepliesPositive, chartRefs.monthPositiveEvents]
             .forEach(c => c && typeof c.resize === 'function' && c.resize());
         } else if (panelId === 'tab-leaderboard') {
-          [chartRefs.lbCreated, chartRefs.lbSent, chartRefs.lbPositive, chartRefs.lbEvents]
+          [chartRefs.lbConversionRate, chartRefs.lbCreated, chartRefs.lbSent, chartRefs.lbPositive, chartRefs.lbEvents]
             .forEach(c => c && typeof c.resize === 'function' && c.resize());
         }
       }
@@ -1084,8 +1382,247 @@
       tabs.forEach(({btn}) => btn.addEventListener('click', () => activate(btn)));
     }
 
+    // Додаємо listener на кнопку сорту після відкриття модалки (щоб гарантовано була в DOM)
+    (function attachSortListenerOnce() {
+      const btn = document.getElementById('sortButton');
+      if (!btn) return;
+      if (!btn.__hasListener) {
+        btn.addEventListener('click', () => {
+          const sortColumn = (document.getElementById('sortColumn') || {}).value || 'Created';
+          if (typeof sortDayData === 'function') sortDayData(sortColumn);
+        });
+        btn.__hasListener = true;
+      }
+    })();
+
     initTabs();
     initDashboard();
+
+    // ===== Country Insight helpers =====
+    function aggregateCountrySummary(countryName, rows, fromDate, toDate) {
+      const acc = { Created: 0, SentRequests: 0, Connected: 0, Replies: 0, PositiveReplies: 0, Events: 0 };
+      for (const r of rows) {
+        if ((r.Country || 'Unknown') !== countryName) continue;
+        const d = parseDdMmYyyyToDate(r.Date);
+        if (!d) continue;
+        if (fromDate && d < fromDate) continue;
+        if (toDate && d > toDate) continue;
+        acc.Created += Number(r['Created'] || 0);
+        acc.SentRequests += Number(r['Sent Requests'] || 0);
+        acc.Connected += Number(r['Connected'] || 0);
+        acc.Replies += Number(r['Total replies'] || 0);
+        acc.PositiveReplies += Number(r['Positive Replies'] || 0);
+        acc.Events += Number(r['Events Created'] || 0);
+      }
+      return acc;
+    }
+
+    function aggregateCountryMonthly(countryName, rows, fromDate, toDate) {
+      const byMonth = {};
+      for (const r of rows) {
+        if ((r.Country || 'Unknown') !== countryName) continue;
+        const d = parseDdMmYyyyToDate(r.Date);
+        if (!d) continue;
+        if (fromDate && d < fromDate) continue;
+        if (toDate && d > toDate) continue;
+        const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+        if (!byMonth[key]) byMonth[key] = { Created: 0, Events: 0 };
+        byMonth[key].Created += Number(r['Created'] || 0);
+        byMonth[key].Events += Number(r['Events Created'] || 0);
+      }
+      const months = Object.keys(byMonth).sort();
+      return { months, created: months.map(m => byMonth[m].Created), events: months.map(m => byMonth[m].Events) };
+    }
+
+    function aggregateCountryTopGenerators(countryName, rows, fromDate, toDate, limit = 5) {
+      const byName = {};
+      for (const r of rows) {
+        if ((r.Country || 'Unknown') !== countryName) continue;
+        const d = parseDdMmYyyyToDate(r.Date);
+        if (!d) continue;
+        if (fromDate && d < fromDate) continue;
+        if (toDate && d > toDate) continue;
+        const name = r.Name || 'Unknown';
+        if (!byName[name]) byName[name] = { Created: 0, Events: 0 };
+        byName[name].Created += Number(r['Created'] || 0);
+        byName[name].Events += Number(r['Events Created'] || 0);
+      }
+      const entries = Object.entries(byName).map(([name, v]) => ({ name, ...v, cr: v.Created > 0 ? (v.Events / v.Created) * 100 : 0 }));
+      entries.sort((a,b) => b.cr - a.cr || b.Events - a.Events);
+      return entries.slice(0, limit);
+    }
+
+    function openCountryInsight(countryName, rows) {
+      // derive current filter range from inputs
+      const from = new Date(document.getElementById('fromDate').value);
+      const to = new Date(document.getElementById('toDate').value);
+      from.setHours(0,0,0,0);
+      to.setHours(23,59,59,999);
+
+      // summary
+      const sum = aggregateCountrySummary(countryName, rows, from, to);
+      const cr = sum.Created > 0 ? (sum.Events / sum.Created) * 100 : 0;
+      const sentToConn = sum.SentRequests > 0 ? (sum.Connected / sum.SentRequests) * 100 : 0;
+      const posToRep = sum.Replies > 0 ? (sum.PositiveReplies / sum.Replies) * 100 : 0;
+      const summaryHtml = `
+        <div class="summary-table-wrapper">
+          <table class="summary-table">
+            <thead><tr><th>Metric</th><th>Value</th></tr></thead>
+            <tbody>
+              <tr><td>Created</td><td>${sum.Created}</td></tr>
+              <tr><td>Sent Requests</td><td>${sum.SentRequests}</td></tr>
+              <tr><td>Connected</td><td>${sum.Connected}</td></tr>
+              <tr><td>Replies</td><td>${sum.Replies}</td></tr>
+              <tr><td>Positive Replies</td><td>${sum.PositiveReplies}</td></tr>
+              <tr><td>Events</td><td>${sum.Events}</td></tr>
+              <tr><td>CR (Events/Created)</td><td>${cr.toFixed(2)}%</td></tr>
+              <tr><td>C→S (Connected/Sent)</td><td>${sentToConn.toFixed(2)}%</td></tr>
+              <tr><td>P→R (Positive/Replies)</td><td>${posToRep.toFixed(2)}%</td></tr>
+            </tbody>
+          </table>
+        </div>`;
+      document.getElementById('countrySummary').innerHTML = summaryHtml;
+      document.getElementById('countryModalTitle').textContent = `Country Insight — ${countryName}`;
+
+      // monthly chart
+      const monthly = aggregateCountryMonthly(countryName, rows, from, to);
+      if (chartRefs.countryMonthlyPaired) chartRefs.countryMonthlyPaired.destroy();
+      chartRefs.countryMonthlyPaired = renderPairedBarChart(
+        document.getElementById('countryMonthlyPaired'),
+        monthly.months,
+        'Created',
+        monthly.created,
+        'Events',
+        monthly.events
+      );
+
+      // top generators
+      const top = aggregateCountryTopGenerators(countryName, rows, from, to, 5);
+      let topHtml = '<div class="section-break"><div class="label">Top 5 Generators</div></div>';
+      topHtml += '<table class="summary-table">';
+      topHtml += '<thead><tr><th>Name</th><th>Created</th><th>Events</th><th>CR%</th></tr></thead><tbody>';
+      for (const t of top) {
+        topHtml += `<tr><td>${t.name}</td><td>${t.Created}</td><td>${t.Events}</td><td>${t.cr.toFixed(2)}%</td></tr>`;
+      }
+      topHtml += '</tbody></table>';
+      document.getElementById('countryTopGenerators').innerHTML = topHtml;
+
+      // show modal
+      const countryOverlay = document.getElementById('countryModalOverlay');
+      countryOverlay.style.display = 'flex';
+    }
+
+    // ===== Lead Insight helpers =====
+    function aggregateLeadSummary(leadName, rows, fromDate, toDate) {
+      const acc = { Created: 0, SentRequests: 0, Connected: 0, Replies: 0, PositiveReplies: 0, Events: 0 };
+      for (const r of rows) {
+        const name = r.Name || 'Unknown';
+        if (name !== leadName) continue;
+        const d = parseDdMmYyyyToDate(r.Date);
+        if (!d) continue;
+        if (fromDate && d < fromDate) continue;
+        if (toDate && d > toDate) continue;
+        acc.Created += Number(r['Created'] || 0);
+        acc.SentRequests += Number(r['Sent Requests'] || 0);
+        acc.Connected += Number(r['Connected'] || 0);
+        acc.Replies += Number(r['Total replies'] || 0);
+        acc.PositiveReplies += Number(r['Positive Replies'] || 0);
+        acc.Events += Number(r['Events Created'] || 0);
+      }
+      return acc;
+    }
+
+    function aggregateLeadMonthly(leadName, rows, fromDate, toDate) {
+      const byMonth = {};
+      for (const r of rows) {
+        const name = r.Name || 'Unknown';
+        if (name !== leadName) continue;
+        const d = parseDdMmYyyyToDate(r.Date);
+        if (!d) continue;
+        if (fromDate && d < fromDate) continue;
+        if (toDate && d > toDate) continue;
+        const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+        if (!byMonth[key]) byMonth[key] = { Created: 0, Events: 0 };
+        byMonth[key].Created += Number(r['Created'] || 0);
+        byMonth[key].Events += Number(r['Events Created'] || 0);
+      }
+      const months = Object.keys(byMonth).sort();
+      return { months, created: months.map(m => byMonth[m].Created), events: months.map(m => byMonth[m].Events) };
+    }
+
+    function aggregateLeadTopCountries(leadName, rows, fromDate, toDate, limit = 5) {
+      const byCountry = {};
+      for (const r of rows) {
+        const name = r.Name || 'Unknown';
+        if (name !== leadName) continue;
+        const d = parseDdMmYyyyToDate(r.Date);
+        if (!d) continue;
+        if (fromDate && d < fromDate) continue;
+        if (toDate && d > toDate) continue;
+        const country = r.Country || 'Unknown';
+        if (!byCountry[country]) byCountry[country] = { Created: 0, Events: 0 };
+        byCountry[country].Created += Number(r['Created'] || 0);
+        byCountry[country].Events += Number(r['Events Created'] || 0);
+      }
+      const entries = Object.entries(byCountry).map(([country, v]) => ({ country, ...v, cr: v.Created > 0 ? (v.Events / v.Created) * 100 : 0 }));
+      entries.sort((a,b) => b.cr - a.cr || b.Events - a.Events);
+      return entries.slice(0, limit);
+    }
+
+    function openLeadInsight(leadName, rows) {
+      const from = new Date(document.getElementById('fromDate').value);
+      const to = new Date(document.getElementById('toDate').value);
+      from.setHours(0,0,0,0);
+      to.setHours(23,59,59,999);
+
+      const sum = aggregateLeadSummary(leadName, rows, from, to);
+      const cr = sum.Created > 0 ? (sum.Events / sum.Created) * 100 : 0;
+      const sentToConn = sum.SentRequests > 0 ? (sum.Connected / sum.SentRequests) * 100 : 0;
+      const posToRep = sum.Replies > 0 ? (sum.PositiveReplies / sum.Replies) * 100 : 0;
+      const summaryHtml = `
+        <div class="summary-table-wrapper">
+          <table class="summary-table">
+            <thead><tr><th>Metric</th><th>Value</th></tr></thead>
+            <tbody>
+              <tr><td>Created</td><td>${sum.Created}</td></tr>
+              <tr><td>Sent Requests</td><td>${sum.SentRequests}</td></tr>
+              <tr><td>Connected</td><td>${sum.Connected}</td></tr>
+              <tr><td>Replies</td><td>${sum.Replies}</td></tr>
+              <tr><td>Positive Replies</td><td>${sum.PositiveReplies}</td></tr>
+              <tr><td>Events</td><td>${sum.Events}</td></tr>
+              <tr><td>CR (Events/Created)</td><td>${cr.toFixed(2)}%</td></tr>
+              <tr><td>C→S (Connected/Sent)</td><td>${sentToConn.toFixed(2)}%</td></tr>
+              <tr><td>P→R (Positive/Replies)</td><td>${posToRep.toFixed(2)}%</td></tr>
+            </tbody>
+          </table>
+        </div>`;
+      document.getElementById('leadSummary').innerHTML = summaryHtml;
+      document.getElementById('leadModalTitle').textContent = `Lead Insight — ${leadName}`;
+
+      const monthly = aggregateLeadMonthly(leadName, rows, from, to);
+      if (chartRefs.leadMonthlyPaired) chartRefs.leadMonthlyPaired.destroy();
+      chartRefs.leadMonthlyPaired = renderPairedBarChart(
+        document.getElementById('leadMonthlyPaired'),
+        monthly.months,
+        'Created',
+        monthly.created,
+        'Events',
+        monthly.events
+      );
+
+      const top = aggregateLeadTopCountries(leadName, rows, from, to, 5);
+      let topHtml = '<div class="section-break"><div class="label">Top 5 Countries</div></div>';
+      topHtml += '<table class="summary-table">';
+      topHtml += '<thead><tr><th>Country</th><th>Created</th><th>Events</th><th>CR%</th></tr></thead><tbody>';
+      for (const t of top) {
+        topHtml += `<tr><td>${t.country}</td><td>${t.Created}</td><td>${t.Events}</td><td>${t.cr.toFixed(2)}%</td></tr>`;
+      }
+      topHtml += '</tbody></table>';
+      document.getElementById('leadTopCountries').innerHTML = topHtml;
+
+      const leadOverlay = document.getElementById('leadModalOverlay');
+      leadOverlay.style.display = 'flex';
+    }
   </script>
 </body>
 </html>
