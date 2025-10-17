@@ -1,5 +1,5 @@
 {
-  "last_updated": "2025-10-17 19:54:06 UTC",
+  "last_updated": "2025-10-17 20:14:23 UTC",
   "data": [
     {
       "Timestamp": "14/10/2025 16:59:44",
@@ -839,6 +839,26 @@
       "Old Connections Messaged": 0,
       "Notes": "",
       "Source": "Extention",
+      "Calls took place": 0
+    },
+    {
+      "Timestamp": "17/10/2025 22:59:16",
+      "Score": "",
+      "Name": "Anush Iskandarova",
+      "Date": "18/10/2025",
+      "Rate": "Full time",
+      "Updated": 6,
+      "Country": "Sweden",
+      "Created": 20,
+      "Sent Requests": 50,
+      "Connected": 6,
+      "Total replies": 3,
+      "Positive Replies": 1,
+      "Emails sent": 0,
+      "Events Created": 0,
+      "Old Connections Messaged": 112,
+      "Notes": "",
+      "Source": "Job sites",
       "Calls took place": 0
     }
   ]
