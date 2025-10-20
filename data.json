@@ -1,5 +1,5 @@
 {
-  "last_updated": "2025-10-20 14:41:50 UTC",
+  "last_updated": "2025-10-20 15:09:01 UTC",
   "data": [
     {
       "Timestamp": "14/10/2025 16:59:44",
@@ -877,6 +877,46 @@
       "Emails sent": 0,
       "Events Created": 0,
       "Old Connections Messaged": 3,
+      "Notes": "",
+      "Source": "Job sites",
+      "Calls took place": 0
+    },
+    {
+      "Timestamp": "20/10/2025 17:58:15",
+      "Score": "",
+      "Name": "Dana Bindiak",
+      "Date": "20/10/2025",
+      "Rate": "Full time",
+      "Updated": 0,
+      "Country": "France",
+      "Created": 27,
+      "Sent Requests": 67,
+      "Connected": 5,
+      "Total replies": 0,
+      "Positive Replies": 0,
+      "Emails sent": 0,
+      "Events Created": 0,
+      "Old Connections Messaged": 0,
+      "Notes": "",
+      "Source": "Job sites",
+      "Calls took place": 0
+    },
+    {
+      "Timestamp": "20/10/2025 18:02:06",
+      "Score": "",
+      "Name": "Alakbarova Ulviyya Javid",
+      "Date": "20/10/2025",
+      "Rate": "Full time",
+      "Updated": 0,
+      "Country": "Belgium",
+      "Created": 22,
+      "Sent Requests": 51,
+      "Connected": 6,
+      "Total replies": 1,
+      "Positive Replies": 0,
+      "Emails sent": 0,
+      "Events Created": 0,
+      "Old Connections Messaged": 10,
       "Notes": "",
       "Source": "Job sites",
       "Calls took place": 0
