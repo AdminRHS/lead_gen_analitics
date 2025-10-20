@@ -1,5 +1,5 @@
 {
-  "last_updated": "2025-10-20 16:52:09 UTC",
+  "last_updated": "2025-10-20 17:01:31 UTC",
   "data": [
     {
       "Timestamp": "14/10/2025 16:59:44",
@@ -952,6 +952,26 @@
       "Created": 20,
       "Sent Requests": 68,
       "Connected": 0,
+      "Total replies": 0,
+      "Positive Replies": 0,
+      "Emails sent": 0,
+      "Events Created": 0,
+      "Old Connections Messaged": 0,
+      "Notes": "",
+      "Source": "Job sites",
+      "Calls took place": 0
+    },
+    {
+      "Timestamp": "20/10/2025 19:56:40",
+      "Score": "",
+      "Name": "Rybak Nataliia",
+      "Date": "20/10/2025",
+      "Rate": "Full time",
+      "Updated": 0,
+      "Country": "Germany",
+      "Created": 20,
+      "Sent Requests": 60,
+      "Connected": 5,
       "Total replies": 0,
       "Positive Replies": 0,
       "Emails sent": 0,
