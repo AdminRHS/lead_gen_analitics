@@ -1,5 +1,5 @@
 {
-  "last_updated": "2025-10-21 05:14:07 UTC",
+  "last_updated": "2025-10-21 05:33:26 UTC",
   "data": [
     {
       "Timestamp": "14/10/2025 16:59:44",
@@ -979,6 +979,46 @@
       "Old Connections Messaged": 0,
       "Notes": "",
       "Source": "Job sites",
+      "Calls took place": 0
+    },
+    {
+      "Timestamp": "21/10/2025 08:24:54",
+      "Score": "",
+      "Name": "Aizek Archibong",
+      "Date": "20/10/2025",
+      "Rate": "Full time",
+      "Updated": 0,
+      "Country": "United Kingdom",
+      "Created": 26,
+      "Sent Requests": 55,
+      "Connected": 21,
+      "Total replies": 0,
+      "Positive Replies": 0,
+      "Emails sent": 0,
+      "Events Created": 0,
+      "Old Connections Messaged": 0,
+      "Notes": "",
+      "Source": "Job sites",
+      "Calls took place": 0
+    },
+    {
+      "Timestamp": "21/10/2025 08:25:50",
+      "Score": "",
+      "Name": "Aizek Archibong",
+      "Date": "20/10/2025",
+      "Rate": "Full time",
+      "Updated": 0,
+      "Country": "United Kingdom",
+      "Created": 10,
+      "Sent Requests": 16,
+      "Connected": 1,
+      "Total replies": 0,
+      "Positive Replies": 0,
+      "Emails sent": 0,
+      "Events Created": 0,
+      "Old Connections Messaged": 0,
+      "Notes": "",
+      "Source": "Extention",
       "Calls took place": 0
     }
   ]
