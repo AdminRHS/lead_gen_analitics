@@ -1,5 +1,5 @@
 {
-  "last_updated": "2025-10-22 14:45:11 UTC",
+  "last_updated": "2025-10-22 14:56:43 UTC",
   "data": [
     {
       "Timestamp": "14/10/2025 16:59:44",
@@ -1237,6 +1237,26 @@
       "Emails sent": 0,
       "Events Created": 0,
       "Old Connections Messaged": 33,
+      "Notes": "",
+      "Source": "Job sites",
+      "Calls took place": 0
+    },
+    {
+      "Timestamp": "22/10/2025 17:53:25",
+      "Score": "",
+      "Name": "Dana Bindiak",
+      "Date": "22/10/2025",
+      "Rate": "Full time",
+      "Updated": 0,
+      "Country": "France",
+      "Created": 34,
+      "Sent Requests": 89,
+      "Connected": 14,
+      "Total replies": 4,
+      "Positive Replies": 0,
+      "Emails sent": 0,
+      "Events Created": 0,
+      "Old Connections Messaged": 0,
       "Notes": "",
       "Source": "Job sites",
       "Calls took place": 0
