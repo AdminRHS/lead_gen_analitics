@@ -1,5 +1,5 @@
 {
-  "last_updated": "2025-10-22 20:55:07 UTC",
+  "last_updated": "2025-10-22 21:11:57 UTC",
   "data": [
     {
       "Timestamp": "14/10/2025 16:59:44",
@@ -1399,6 +1399,46 @@
       "Old Connections Messaged": 0,
       "Notes": "",
       "Source": "Job sites",
+      "Calls took place": 0
+    },
+    {
+      "Timestamp": "22/10/2025 23:57:53",
+      "Score": "",
+      "Name": "Anush Iskandarova",
+      "Date": "22/10/2025",
+      "Rate": "Full time",
+      "Updated": 20,
+      "Country": "Sweden",
+      "Created": 27,
+      "Sent Requests": 40,
+      "Connected": 17,
+      "Total replies": 5,
+      "Positive Replies": 0,
+      "Emails sent": 0,
+      "Events Created": 0,
+      "Old Connections Messaged": 16,
+      "Notes": "",
+      "Source": "Extention",
+      "Calls took place": 0
+    },
+    {
+      "Timestamp": "22/10/2025 23:59:36",
+      "Score": "",
+      "Name": "Davlatmamadova Firuza",
+      "Date": "22/10/2025",
+      "Rate": "Full time",
+      "Updated": 0,
+      "Country": "Israel",
+      "Created": 23,
+      "Sent Requests": 47,
+      "Connected": 15,
+      "Total replies": 1,
+      "Positive Replies": 1,
+      "Emails sent": 0,
+      "Events Created": 1,
+      "Old Connections Messaged": 27,
+      "Notes": "",
+      "Source": "Extention",
       "Calls took place": 0
     }
   ]
