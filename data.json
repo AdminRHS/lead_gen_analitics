@@ -1,5 +1,5 @@
 {
-  "last_updated": "2025-10-24 14:58:57 UTC",
+  "last_updated": "2025-10-24 15:25:40 UTC",
   "data": [
     {
       "Timestamp": "14/10/2025 16:59:44",
@@ -1639,6 +1639,66 @@
       "Old Connections Messaged": 0,
       "Notes": "",
       "Source": "Extention",
+      "Calls took place": 0
+    },
+    {
+      "Timestamp": "24/10/2025 18:00:06",
+      "Score": "",
+      "Name": "Alakbarova Ulviyya Javid",
+      "Date": "24/10/2025",
+      "Rate": "Full time",
+      "Updated": 0,
+      "Country": "Belgium",
+      "Created": 24,
+      "Sent Requests": 52,
+      "Connected": 10,
+      "Total replies": 1,
+      "Positive Replies": 0,
+      "Emails sent": 0,
+      "Events Created": 0,
+      "Old Connections Messaged": 3,
+      "Notes": "",
+      "Source": "Job sites",
+      "Calls took place": 0
+    },
+    {
+      "Timestamp": "24/10/2025 18:10:05",
+      "Score": "",
+      "Name": "Rybak Nataliia",
+      "Date": "24/10/2025",
+      "Rate": "Part time",
+      "Updated": 0,
+      "Country": "Germany",
+      "Created": 10,
+      "Sent Requests": 30,
+      "Connected": 7,
+      "Total replies": 0,
+      "Positive Replies": 0,
+      "Emails sent": 0,
+      "Events Created": 0,
+      "Old Connections Messaged": 0,
+      "Notes": "",
+      "Source": "Job sites",
+      "Calls took place": 0
+    },
+    {
+      "Timestamp": "24/10/2025 18:17:52",
+      "Score": "",
+      "Name": "Dana Bindiak",
+      "Date": "24/10/2025",
+      "Rate": "Full time",
+      "Updated": 0,
+      "Country": "France",
+      "Created": 43,
+      "Sent Requests": 90,
+      "Connected": 13,
+      "Total replies": 0,
+      "Positive Replies": 0,
+      "Emails sent": 0,
+      "Events Created": 0,
+      "Old Connections Messaged": 0,
+      "Notes": "",
+      "Source": "Job sites",
       "Calls took place": 0
     }
   ]
