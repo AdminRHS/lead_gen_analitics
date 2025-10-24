@@ -1,5 +1,5 @@
 {
-  "last_updated": "2025-10-24 16:58:26 UTC",
+  "last_updated": "2025-10-24 17:19:58 UTC",
   "data": [
     {
       "Timestamp": "14/10/2025 16:59:44",
@@ -1739,6 +1739,26 @@
       "Old Connections Messaged": 0,
       "Notes": "",
       "Source": "Extention",
+      "Calls took place": 0
+    },
+    {
+      "Timestamp": "24/10/2025 20:17:32",
+      "Score": "",
+      "Name": "Hanan Zaheur",
+      "Date": "24/10/2025",
+      "Rate": "Full time",
+      "Updated": 0,
+      "Country": "Finland",
+      "Created": 26,
+      "Sent Requests": 84,
+      "Connected": 14,
+      "Total replies": 1,
+      "Positive Replies": 0,
+      "Emails sent": 0,
+      "Events Created": 0,
+      "Old Connections Messaged": 21,
+      "Notes": "",
+      "Source": "Job sites",
       "Calls took place": 0
     }
   ]
