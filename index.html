@@ -248,6 +248,7 @@
     <button class="tab" role="tab" aria-selected="false" aria-controls="tab-weekly" id="tab-weekly-btn">Weekly</button>
     <button class="tab" role="tab" aria-selected="false" aria-controls="tab-monthly" id="tab-monthly-btn">Monthly</button>
     <button class="tab" role="tab" aria-selected="false" aria-controls="tab-leaderboard" id="tab-leaderboard-btn">Leaderboard</button>
+    <button class="tab" role="tab" aria-selected="false" aria-controls="tab-source" id="tab-source-btn">Source Comparison</button>
     
   </div>
 
@@ -385,6 +386,35 @@
   </div>
   </div>
 
+  <div id="tab-source" class="tabpanel" role="tabpanel" aria-labelledby="tab-source-btn">
+  <div class="dashboard-grid">
+    <div class="chart-card soft-blue">
+      <h3>Source Comparison: Conversion Rate (Created → Events)</h3>
+      <canvas id="chartSourceConversionRate"></canvas>
+    </div>
+    <div class="chart-card soft-blue">
+      <h3>Source Comparison: Created → Sent Requests</h3>
+      <canvas id="chartSourceCreatedToSent"></canvas>
+    </div>
+    <div class="chart-card soft-purple">
+      <h3>Source Comparison: Sent Requests → Connected</h3>
+      <canvas id="chartSourceSentToConnected"></canvas>
+    </div>
+    <div class="chart-card soft-green">
+      <h3>Source Comparison: Connected → Total Replies</h3>
+      <canvas id="chartSourceConnectedToReplies"></canvas>
+    </div>
+    <div class="chart-card soft-orange">
+      <h3>Source Comparison: Total Replies → Positive Replies</h3>
+      <canvas id="chartSourceRepliesToPositive"></canvas>
+    </div>
+    <div class="chart-card soft-red">
+      <h3>Source Comparison: Positive Replies → Events</h3>
+      <canvas id="chartSourcePositiveToEvents"></canvas>
+    </div>
+  </div>
+  </div>
+
   <!-- Modal for single-day summary -->
   <div class="modal-overlay" id="dayModalOverlay">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="dayModalTitle">
@@ -519,6 +549,13 @@
     chartRefs.countryMonthlyPaired = null;
     // Lead modal chart ref
     chartRefs.leadMonthlyPaired = null;
+    // Source comparison chart refs
+    chartRefs.sourceConversionRate = null;
+    chartRefs.sourceCreatedToSent = null;
+    chartRefs.sourceSentToConnected = null;
+    chartRefs.sourceConnectedToReplies = null;
+    chartRefs.sourceRepliesToPositive = null;
+    chartRefs.sourcePositiveToEvents = null;
     let lastFilteredRows = [];
     let rerenderAll = null; // will be assigned inside initDashboard
     let currentDayData = null; // для зберігання даних поточного дня для сортування
@@ -845,6 +882,45 @@
         };
       }
 
+      function buildSourceAggregates(filteredRows) {
+        const bySource = {};
+        for (const row of filteredRows) {
+          const source = row.Source || 'Unknown';
+          if (!bySource[source]) {
+            bySource[source] = {
+              created: 0,
+              sentRequests: 0,
+              connected: 0,
+              totalReplies: 0,
+              positiveReplies: 0,
+              events: 0
+            };
+          }
+          bySource[source].created += Number(row['Created'] || 0);
+          bySource[source].sentRequests += Number(row['Sent Requests'] || 0);
+          bySource[source].connected += Number(row['Connected'] || 0);
+          bySource[source].totalReplies += Number(row['Total replies'] || 0);
+          bySource[source].positiveReplies += Number(row['Positive Replies'] || 0);
+          bySource[source].events += Number(row['Events Created'] || 0);
+        }
+        
+        const sources = Object.keys(bySource);
+        return {
+          sources: sources,
+          created: sources.map(s => bySource[s].created),
+          sentRequests: sources.map(s => bySource[s].sentRequests),
+          connected: sources.map(s => bySource[s].connected),
+          totalReplies: sources.map(s => bySource[s].totalReplies),
+          positiveReplies: sources.map(s => bySource[s].positiveReplies),
+          events: sources.map(s => bySource[s].events),
+          conversionRates: sources.map(s => {
+            const created = bySource[s].created;
+            const events = bySource[s].events;
+            return created > 0 ? (events / created) * 100 : 0;
+          })
+        };
+      }
+
       function renderAll(filteredRows) {
         lastFilteredRows = filteredRows;
         const agg = buildAggregates(filteredRows);
@@ -852,6 +928,7 @@
         const weekAgg = buildWeeklyAggregates(filteredRows);
         const monthAgg = buildMonthlyAggregates(filteredRows);
         const lbAgg = buildLeaderboardAggregates(filteredRows);
+        const sourceAgg = buildSourceAggregates(filteredRows);
         destroyIfExists(chartRefs.createdFound);
         destroyIfExists(chartRefs.sentConnected);
         destroyIfExists(chartRefs.connectedReplies);
@@ -884,6 +961,12 @@
         destroyIfExists(chartRefs.monthConversionRate);
         destroyIfExists(chartRefs.countryConversionRate);
         destroyIfExists(chartRefs.lbConversionRate);
+        destroyIfExists(chartRefs.sourceConversionRate);
+        destroyIfExists(chartRefs.sourceCreatedToSent);
+        destroyIfExists(chartRefs.sourceSentToConnected);
+        destroyIfExists(chartRefs.sourceConnectedToReplies);
+        destroyIfExists(chartRefs.sourceRepliesToPositive);
+        destroyIfExists(chartRefs.sourcePositiveToEvents);
 
         chartRefs.createdFound = renderPairedBarChart(
           document.getElementById("chartCreatedToFound"),
@@ -1222,6 +1305,60 @@
         };
         chartRefs.lbEvents.update();
       }
+
+        // Source comparison charts
+        chartRefs.sourceConversionRate = renderConversionRateChart(
+          document.getElementById('chartSourceConversionRate'),
+          sourceAgg.sources,
+          'Conversion Rate (%)',
+          sourceAgg.conversionRates,
+          'rgba(75,192,192,0.6)'
+        );
+
+        chartRefs.sourceCreatedToSent = renderPairedBarChart(
+          document.getElementById('chartSourceCreatedToSent'),
+          sourceAgg.sources,
+          'Created',
+          sourceAgg.created,
+          'Sent Requests',
+          sourceAgg.sentRequests
+        );
+
+        chartRefs.sourceSentToConnected = renderPairedBarChart(
+          document.getElementById('chartSourceSentToConnected'),
+          sourceAgg.sources,
+          'Sent Requests',
+          sourceAgg.sentRequests,
+          'Connected',
+          sourceAgg.connected
+        );
+
+        chartRefs.sourceConnectedToReplies = renderPairedBarChart(
+          document.getElementById('chartSourceConnectedToReplies'),
+          sourceAgg.sources,
+          'Connected',
+          sourceAgg.connected,
+          'Total Replies',
+          sourceAgg.totalReplies
+        );
+
+        chartRefs.sourceRepliesToPositive = renderPairedBarChart(
+          document.getElementById('chartSourceRepliesToPositive'),
+          sourceAgg.sources,
+          'Total Replies',
+          sourceAgg.totalReplies,
+          'Positive Replies',
+          sourceAgg.positiveReplies
+        );
+
+        chartRefs.sourcePositiveToEvents = renderPairedBarChart(
+          document.getElementById('chartSourcePositiveToEvents'),
+          sourceAgg.sources,
+          'Positive Replies',
+          sourceAgg.positiveReplies,
+          'Events',
+          sourceAgg.events
+        );
       }
 
       // expose re-render for tabs logic
@@ -1353,7 +1490,8 @@
         { btn: document.getElementById('tab-country-btn'), panel: document.getElementById('tab-country') },
         { btn: document.getElementById('tab-weekly-btn'), panel: document.getElementById('tab-weekly') },
         { btn: document.getElementById('tab-monthly-btn'), panel: document.getElementById('tab-monthly') },
-        { btn: document.getElementById('tab-leaderboard-btn'), panel: document.getElementById('tab-leaderboard') }
+        { btn: document.getElementById('tab-leaderboard-btn'), panel: document.getElementById('tab-leaderboard') },
+        { btn: document.getElementById('tab-source-btn'), panel: document.getElementById('tab-source') }
       ];
 
       function resizeChartsFor(panelId) {
@@ -1378,6 +1516,9 @@
             .forEach(c => c && typeof c.resize === 'function' && c.resize());
         } else if (panelId === 'tab-leaderboard') {
           [chartRefs.lbConversionRate, chartRefs.lbCreated, chartRefs.lbSent, chartRefs.lbPositive, chartRefs.lbEvents]
+            .forEach(c => c && typeof c.resize === 'function' && c.resize());
+        } else if (panelId === 'tab-source') {
+          [chartRefs.sourceConversionRate, chartRefs.sourceCreatedToSent, chartRefs.sourceSentToConnected, chartRefs.sourceConnectedToReplies, chartRefs.sourceRepliesToPositive, chartRefs.sourcePositiveToEvents]
             .forEach(c => c && typeof c.resize === 'function' && c.resize());
         }
       }

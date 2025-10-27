@@ -69,6 +69,11 @@ export function renderConversionRateChart(
   seriesData,
   color = "rgba(75,192,192,0.6)"
 ) {
+  // Знаходимо максимальне значення в даних
+  const maxValue = Math.max(...seriesData);
+  // Встановлюємо максимум як 110% від найбільшого значення, але не менше 5%
+  const yMax = Math.max(maxValue * 1.1, 5);
+  
   return new window.Chart(canvasElement, {
     type: "bar",
     data: {
@@ -87,8 +92,8 @@ export function renderConversionRateChart(
       animation: false,
       scales: { 
         y: { 
-          beginAtZero: true, 
-          max: 100, // Максимум 100% для conversion rate
+          beginAtZero: true,
+          max: yMax,
           ticks: {
             callback: function(value) {
               return value.toFixed(1) + '%';
