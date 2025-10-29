@@ -1,5 +1,5 @@
 {
-  "last_updated": "2025-10-29 19:34:39 UTC",
+  "last_updated": "2025-10-29 19:43:29 UTC",
   "data": [
     {
       "Timestamp": "14/10/2025 16:59:44",
@@ -2193,6 +2193,26 @@
       "Sent Requests": 36,
       "Connected": 13,
       "Total replies": 0,
+      "Positive Replies": 0,
+      "Emails sent": 0,
+      "Events Created": 0,
+      "Old Connections Messaged": 0,
+      "Notes": "",
+      "Source": "Job sites",
+      "Calls took place": 0
+    },
+    {
+      "Timestamp": "29/10/2025 21:35:41",
+      "Score": "",
+      "Name": "Aledare Adedoyin Bridget",
+      "Date": "29/10/2025",
+      "Rate": "Full time",
+      "Updated": 0,
+      "Country": "Germany",
+      "Created": 18,
+      "Sent Requests": 48,
+      "Connected": 23,
+      "Total replies": 1,
       "Positive Replies": 0,
       "Emails sent": 0,
       "Events Created": 0,
