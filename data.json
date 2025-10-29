@@ -1,5 +1,5 @@
 {
-  "last_updated": "2025-10-29 20:11:53 UTC",
+  "last_updated": "2025-10-29 20:34:05 UTC",
   "data": [
     {
       "Timestamp": "14/10/2025 16:59:44",
@@ -2217,6 +2217,26 @@
       "Emails sent": 0,
       "Events Created": 0,
       "Old Connections Messaged": 0,
+      "Notes": "",
+      "Source": "Job sites",
+      "Calls took place": 0
+    },
+    {
+      "Timestamp": "29/10/2025 22:23:11",
+      "Score": "",
+      "Name": "Davlatmamadova Firuza",
+      "Date": "29/10/0005",
+      "Rate": "Full time",
+      "Updated": 4,
+      "Country": "Israel",
+      "Created": 30,
+      "Sent Requests": 68,
+      "Connected": 16,
+      "Total replies": 2,
+      "Positive Replies": 0,
+      "Emails sent": 0,
+      "Events Created": 0,
+      "Old Connections Messaged": 35,
       "Notes": "",
       "Source": "Job sites",
       "Calls took place": 0
