@@ -1,5 +1,5 @@
 {
-  "last_updated": "2025-10-29 17:20:45 UTC",
+  "last_updated": "2025-10-29 17:38:30 UTC",
   "data": [
     {
       "Timestamp": "14/10/2025 16:59:44",
@@ -2139,6 +2139,46 @@
       "Old Connections Messaged": 0,
       "Notes": "",
       "Source": "Job sites",
+      "Calls took place": 0
+    },
+    {
+      "Timestamp": "29/10/2025 19:30:59",
+      "Score": "",
+      "Name": "Cynthia Uzoh",
+      "Date": "10/02/2025",
+      "Rate": "Full time",
+      "Updated": 12,
+      "Country": "Netherlands",
+      "Created": 11,
+      "Sent Requests": 27,
+      "Connected": 5,
+      "Total replies": 0,
+      "Positive Replies": 0,
+      "Emails sent": 0,
+      "Events Created": 0,
+      "Old Connections Messaged": 0,
+      "Notes": "",
+      "Source": "Job sites",
+      "Calls took place": 0
+    },
+    {
+      "Timestamp": "29/10/2025 19:32:39",
+      "Score": "",
+      "Name": "Cynthia Uzoh",
+      "Date": "10/02/2025",
+      "Rate": "Full time",
+      "Updated": 0,
+      "Country": "Netherlands",
+      "Created": 5,
+      "Sent Requests": 14,
+      "Connected": 3,
+      "Total replies": 0,
+      "Positive Replies": 0,
+      "Emails sent": 0,
+      "Events Created": 0,
+      "Old Connections Messaged": 0,
+      "Notes": "",
+      "Source": "Extention",
       "Calls took place": 0
     }
   ]
