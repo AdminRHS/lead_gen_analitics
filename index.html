@@ -100,18 +100,28 @@
       max-width: 1240px; 
       margin: 0 auto; 
       position: relative;
-      min-height: 400px; /* Додайте мінімальну висоту */
+      min-height: 400px;
     }
     .tabpanel { 
-      display: none; /* Замість absolute - просто ховаємо */
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      width: 100%;
       opacity: 0;
       transform: translateY(20px);
-      transition: opacity 0.3s ease, transform 0.3s ease;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s ease;
+      will-change: opacity, transform;
     }
     .tabpanel.active { 
-      display: block; /* Показуємо тільки активну */
+      position: relative;
       opacity: 1;
       transform: translateY(0);
+      visibility: visible;
+      pointer-events: auto;
+      will-change: auto;
     }
     .controls-left,
     .controls-right {
@@ -1624,6 +1634,17 @@
           btn.setAttribute('aria-selected', active ? 'true' : 'false');
         });
         
+        // Ховаємо всі панелі, окрім поточної та нової
+        tabs.forEach(({panel}) => {
+          if (panel !== currentActivePanel && panel !== newPanel) {
+            panel.classList.remove('active');
+            panel.style.opacity = '0';
+            panel.style.transform = 'translateY(20px)';
+            panel.style.visibility = 'hidden';
+            panel.style.pointerEvents = 'none';
+          }
+        });
+        
         // Якщо є попередня панель - fade out
         if (currentActivePanel) {
           currentActivePanel.style.opacity = '0';
@@ -1631,23 +1652,34 @@
           
           setTimeout(() => {
             currentActivePanel.classList.remove('active');
+            currentActivePanel.style.visibility = 'hidden';
+            currentActivePanel.style.pointerEvents = 'none';
+            
             // Fade in нової панелі
             if (newPanel) {
               newPanel.classList.add('active');
-              // Даємо браузеру час на рендер display:block
+              // Даємо браузеру час на рендер
               requestAnimationFrame(() => {
-                newPanel.style.opacity = '1';
-                newPanel.style.transform = 'translateY(0)';
+                requestAnimationFrame(() => {
+                  newPanel.style.opacity = '1';
+                  newPanel.style.transform = 'translateY(0)';
+                  newPanel.style.visibility = 'visible';
+                  newPanel.style.pointerEvents = 'auto';
+                });
               });
             }
-          }, 300); // Чекаємо завершення fade out
+          }, 50); // Невелика затримка для початку fade out
         } else {
           // Немає попередньої панелі - просто показуємо нову
           if (newPanel) {
             newPanel.classList.add('active');
             requestAnimationFrame(() => {
-              newPanel.style.opacity = '1';
-              newPanel.style.transform = 'translateY(0)';
+              requestAnimationFrame(() => {
+                newPanel.style.opacity = '1';
+                newPanel.style.transform = 'translateY(0)';
+                newPanel.style.visibility = 'visible';
+                newPanel.style.pointerEvents = 'auto';
+              });
             });
           }
         }
