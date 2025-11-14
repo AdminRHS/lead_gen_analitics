@@ -20,15 +20,18 @@ export function getCachedData() {
 
     // Check if cache exists
     if (!cachedData || !cachedTimestamp) {
+      console.debug('Cache check: No cached data or timestamp found');
       return null;
     }
 
     // Check cache version compatibility
     if (cachedVersion !== CACHE_VERSION) {
-      console.warn('Cache version mismatch, clearing cache');
+      console.warn(`Cache version mismatch (cached: ${cachedVersion}, current: ${CACHE_VERSION}), clearing cache`);
       clearCache();
       return null;
     }
+    
+    console.debug('Cache check: Version OK, parsing data...');
 
     // Parse cached data
     let data;
@@ -42,19 +45,37 @@ export function getCachedData() {
 
     // Validate cache structure
     if (!data || typeof data !== 'object' || !data.hasOwnProperty('data') || !data.hasOwnProperty('last_updated')) {
-      console.warn('Invalid cache structure, clearing cache');
+      console.warn('Invalid cache structure, clearing cache', {
+        hasData: !!data,
+        isObject: typeof data === 'object',
+        hasDataProp: data && data.hasOwnProperty('data'),
+        hasLastUpdated: data && data.hasOwnProperty('last_updated')
+      });
       clearCache();
       return null;
     }
+    
+    console.debug('Cache check: Structure valid');
 
     // Check cache age (fallback if timestamp comparison fails)
-    const cacheAge = Date.now() - new Date(cachedTimestamp).getTime();
-    if (cacheAge > CACHE_DURATION_MS) {
-      console.warn('Cache expired, clearing cache');
-      clearCache();
-      return null;
+    // Only check if we can parse the timestamp correctly
+    try {
+      const timestampDate = new Date(cachedTimestamp);
+      if (!isNaN(timestampDate.getTime())) {
+        const cacheAge = Date.now() - timestampDate.getTime();
+        if (cacheAge > CACHE_DURATION_MS) {
+          console.warn('Cache expired (older than 24 hours), clearing cache');
+          clearCache();
+          return null;
+        }
+      }
+    } catch (e) {
+      // If timestamp parsing fails, don't invalidate cache - just log warning
+      console.debug('Could not parse cache timestamp, but continuing with cache:', e);
     }
 
+    console.debug('Cache check: All validations passed, returning cached data');
+    
     return {
       data: data,
       last_updated: cachedTimestamp,

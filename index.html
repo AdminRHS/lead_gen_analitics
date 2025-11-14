@@ -780,6 +780,11 @@
         const cached = getCachedData();
         
         if (cached && cached.data) {
+          console.log('Using cached data:', {
+            last_updated: cached.last_updated,
+            cached_at: cached.cached_at
+          });
+          
           // Use cached data for immediate display
           json = cached.data;
           fromCache = true;
@@ -796,6 +801,8 @@
           // Continue with dashboard initialization using cached data
           await initializeDashboardWithData(json);
           return;
+        } else {
+          console.log('No valid cache found, will fetch from server');
         }
       }
       
@@ -807,7 +814,12 @@
         
         // Save to cache if localStorage is available
         if (isLocalStorageAvailable()) {
-          setCachedData(json);
+          const cached = setCachedData(json);
+          if (cached) {
+            console.log('Data saved to cache successfully');
+          } else {
+            console.warn('Failed to save data to cache');
+          }
         }
         
         updateStatusUI(updateEl, json, false);
