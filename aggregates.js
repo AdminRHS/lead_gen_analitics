@@ -13,7 +13,6 @@ export function buildAggregates(filteredRows) {
         Connected: 0,
         PositiveReplies: 0,
         Events: 0,
-        TotalFound: 0,
         Replies: 0
       };
     }
@@ -24,7 +23,6 @@ export function buildAggregates(filteredRows) {
     byDate[dateKey].Events += Number(row["Events Created"] || 0);
     // Map Total replies → Replies series
     byDate[dateKey].Replies += Number(row["Total replies"] || 0);
-    // TODO: map TotalFound when confirmed
   }
   const dates = Object.keys(byDate);
   return {
@@ -34,8 +32,7 @@ export function buildAggregates(filteredRows) {
     connected: dates.map(d => byDate[d].Connected),
     replies: dates.map(d => byDate[d].Replies),
     positive: dates.map(d => byDate[d].PositiveReplies),
-    events: dates.map(d => byDate[d].Events),
-    totalFound: dates.map(d => byDate[d].TotalFound)
+    events: dates.map(d => byDate[d].Events)
   };
 }
 
@@ -50,8 +47,7 @@ export function buildCountryAggregates(filteredRows) {
         Connected: 0,
         Replies: 0,
         PositiveReplies: 0,
-        Events: 0,
-        TotalFound: 0
+        Events: 0
       };
     }
     byCountry[country].Created += Number(row["Created"] || 0);
@@ -60,7 +56,6 @@ export function buildCountryAggregates(filteredRows) {
     byCountry[country].Replies += Number(row["Total replies"] || 0);
     byCountry[country].PositiveReplies += Number(row["Positive Replies"] || 0);
     byCountry[country].Events += Number(row["Events Created"] || 0);
-    // TODO: map TotalFound when confirmed
   }
   const countries = Object.keys(byCountry);
   return {
@@ -71,7 +66,6 @@ export function buildCountryAggregates(filteredRows) {
     replies: countries.map(c => byCountry[c].Replies),
     positive: countries.map(c => byCountry[c].PositiveReplies),
     events: countries.map(c => byCountry[c].Events),
-    totalFound: countries.map(c => byCountry[c].TotalFound),
     conversionRates: countries.map(c => {
       const created = byCountry[c].Created;
       const events = byCountry[c].Events;
@@ -94,8 +88,7 @@ export function buildWeeklyAggregates(filteredRows) {
         Connected: 0,
         Replies: 0,
         PositiveReplies: 0,
-        Events: 0,
-        TotalFound: 0
+        Events: 0
       };
     }
     byWeek[key].Created += Number(row["Created"] || 0);
@@ -104,7 +97,6 @@ export function buildWeeklyAggregates(filteredRows) {
     byWeek[key].Replies += Number(row["Total replies"] || 0);
     byWeek[key].PositiveReplies += Number(row["Positive Replies"] || 0);
     byWeek[key].Events += Number(row["Events Created"] || 0);
-    // TODO: map TotalFound when confirmed
   }
   const keys = Object.keys(byWeek).sort((a,b) => {
     const [ay, aw] = a.split('-W').map(Number);
@@ -119,8 +111,7 @@ export function buildWeeklyAggregates(filteredRows) {
     connected: keys.map(k => byWeek[k].Connected),
     replies: keys.map(k => byWeek[k].Replies),
     positive: keys.map(k => byWeek[k].PositiveReplies),
-    events: keys.map(k => byWeek[k].Events),
-    totalFound: keys.map(k => byWeek[k].TotalFound)
+    events: keys.map(k => byWeek[k].Events)
   };
 }
 
@@ -137,8 +128,7 @@ export function buildMonthlyAggregates(filteredRows) {
         Connected: 0,
         Replies: 0,
         PositiveReplies: 0,
-        Events: 0,
-        TotalFound: 0
+        Events: 0
       };
     }
     byMonth[key].Created += Number(row["Created"] || 0);
@@ -147,7 +137,6 @@ export function buildMonthlyAggregates(filteredRows) {
     byMonth[key].Replies += Number(row["Total replies"] || 0);
     byMonth[key].PositiveReplies += Number(row["Positive Replies"] || 0);
     byMonth[key].Events += Number(row["Events Created"] || 0);
-    // TODO: map TotalFound when confirmed
   }
   const keys = Object.keys(byMonth).sort();
   return {
@@ -158,7 +147,6 @@ export function buildMonthlyAggregates(filteredRows) {
     replies: keys.map(k => byMonth[k].Replies),
     positive: keys.map(k => byMonth[k].PositiveReplies),
     events: keys.map(k => byMonth[k].Events),
-    totalFound: keys.map(k => byMonth[k].TotalFound),
     conversionRates: keys.map(k => {
       const created = byMonth[k].Created;
       const events = byMonth[k].Events;
