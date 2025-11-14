@@ -71,21 +71,52 @@ export function getCachedData() {
     
     console.debug('Cache check: Structure valid');
 
-    // Check cache age (fallback if timestamp comparison fails)
-    // Only check if we can parse the timestamp correctly
-    try {
-      const timestampDate = new Date(cachedTimestamp);
-      if (!isNaN(timestampDate.getTime())) {
-        const cacheAge = Date.now() - timestampDate.getTime();
-        if (cacheAge > CACHE_DURATION_MS) {
-          console.warn('Cache expired (older than 24 hours), clearing cache');
-          clearCache();
-          return null;
+    // Check cache age - use cachedAt timestamp (when cache was saved), not last_updated from data
+    // The cachedAt is stored separately and represents when we cached the data
+    const cachedAt = localStorage.getItem('leadGen_cachedAt');
+    
+    if (cachedAt) {
+      try {
+        const cachedAtDate = new Date(cachedAt);
+        if (!isNaN(cachedAtDate.getTime())) {
+          const cacheAge = Date.now() - cachedAtDate.getTime();
+          if (cacheAge > CACHE_DURATION_MS) {
+            console.warn('Cache expired (older than 24 hours), clearing cache', {
+              cachedAt: cachedAt,
+              ageHours: Math.floor(cacheAge / (1000 * 60 * 60)),
+              maxAgeHours: CACHE_DURATION_MS / (1000 * 60 * 60)
+            });
+            clearCache();
+            return null;
+          } else {
+            console.debug('Cache age check passed', {
+              cachedAt: cachedAt,
+              ageHours: Math.floor(cacheAge / (1000 * 60 * 60)),
+              ageMinutes: Math.floor((cacheAge % (1000 * 60 * 60)) / (1000 * 60))
+            });
+          }
         }
+      } catch (e) {
+        // If timestamp parsing fails, don't invalidate cache - just log warning
+        console.debug('Could not parse cachedAt timestamp, but continuing with cache:', e);
       }
-    } catch (e) {
-      // If timestamp parsing fails, don't invalidate cache - just log warning
-      console.debug('Could not parse cache timestamp, but continuing with cache:', e);
+    } else {
+      // If cachedAt is missing, use cachedTimestamp as fallback (but this is less reliable)
+      console.debug('cachedAt not found, using cachedTimestamp as fallback');
+      try {
+        const timestampDate = new Date(cachedTimestamp);
+        if (!isNaN(timestampDate.getTime())) {
+          const cacheAge = Date.now() - timestampDate.getTime();
+          if (cacheAge > CACHE_DURATION_MS) {
+            console.warn('Cache expired (older than 24 hours, using timestamp fallback), clearing cache');
+            clearCache();
+            return null;
+          }
+        }
+      } catch (e) {
+        // If timestamp parsing fails, don't invalidate cache - just log warning
+        console.debug('Could not parse cache timestamp, but continuing with cache:', e);
+      }
     }
 
     console.debug('Cache check: All validations passed, returning cached data');
