@@ -808,6 +808,41 @@
     // Store maxDate for modal usage
     let maxDate = new Date();
 
+    // Apply filter function (defined at module level for accessibility)
+    function applyCurrentFilter() {
+      if (!rows || rows.length === 0) {
+        alert('No data available. Please wait for data to load.');
+        return;
+      }
+      
+      const fromEl = document.getElementById('fromDate');
+      const toEl = document.getElementById('toDate');
+      
+      if (!fromEl || !toEl) {
+        console.error('Date inputs not found');
+        return;
+      }
+      
+      const from = new Date(fromEl.value);
+      const to = new Date(toEl.value);
+      
+      if (isNaN(from.getTime()) || isNaN(to.getTime())) {
+        alert('Please select valid dates.');
+        return;
+      }
+      
+      // normalize times
+      from.setHours(0,0,0,0);
+      to.setHours(23,59,59,999);
+      
+      const filtered = rows.filter(r => {
+        const d = parseDdMmYyyyToDate(r.Date);
+        return d && d >= from && d <= to;
+      });
+      
+      renderAll(filtered);
+    }
+
     // Helper function to fetch data from server
     async function fetchDataFromServer() {
       const res = await fetch("data.json");
@@ -1825,7 +1860,7 @@
 
             // Table header
             doc.setFontSize(12);
-            doc.setFontStyle('bold');
+            doc.setFont('helvetica', 'bold');
             doc.text('Summary by Name', margin, yPos);
             yPos += 10;
             
@@ -1835,6 +1870,7 @@
             let xPos = margin;
             
             doc.setFontSize(9);
+            doc.setFont('helvetica', 'bold');
             headers.forEach((header, idx) => {
               doc.text(header, xPos, yPos);
               xPos += colWidths[idx];
@@ -1842,7 +1878,7 @@
             yPos += lineHeight + 2;
             
             // Table rows
-            doc.setFontStyle('normal');
+            doc.setFont('helvetica', 'normal');
             let totals = { Created: 0, SentRequests: 0, Connected: 0, PositiveReplies: 0, Events: 0 };
             
             sortedNames.forEach(name => {
@@ -1851,13 +1887,13 @@
                 yPos = 20;
                 // Redraw headers
                 xPos = margin;
-                doc.setFontStyle('bold');
+                doc.setFont('helvetica', 'bold');
                 headers.forEach((header, idx) => {
                   doc.text(header, xPos, yPos);
                   xPos += colWidths[idx];
                 });
                 yPos += lineHeight + 2;
-                doc.setFontStyle('normal');
+                doc.setFont('helvetica', 'normal');
               }
               
               const row = byName[name];
@@ -1888,7 +1924,7 @@
               yPos = 20;
             }
             yPos += 3;
-            doc.setFontStyle('bold');
+            doc.setFont('helvetica', 'bold');
             xPos = margin;
             doc.text('TOTAL', xPos, yPos);
             xPos += colWidths[0];
@@ -1923,25 +1959,7 @@
       // also attach to window for safety
       window._rerenderAll = renderAll;
 
-      function applyCurrentFilter() {
-        if (!rows || rows.length === 0) {
-          alert('No data available. Please wait for data to load.');
-          return;
-        }
-        
-        const from = new Date(document.getElementById('fromDate').value);
-        const to = new Date(document.getElementById('toDate').value);
-        // normalize times
-        from.setHours(0,0,0,0);
-        to.setHours(23,59,59,999);
-        const filtered = rows.filter(r => {
-          const d = parseDdMmYyyyToDate(r.Date);
-          return d && d >= from && d <= to;
-        });
-        renderAll(filtered);
-      }
-
-      document.getElementById('applyFilter').addEventListener('click', applyCurrentFilter);
+      // applyCurrentFilter is defined at module level, no need to redefine here
       document.getElementById('resetFilter').addEventListener('click', () => {
         const fromEl = document.getElementById('fromDate');
         const toEl = document.getElementById('toDate');
@@ -2479,7 +2497,7 @@
               yPos = 20;
             }
             
-            doc.setFontStyle(idx === 0 ? 'bold' : 'normal');
+            doc.setFont('helvetica', idx === 0 ? 'bold' : 'normal');
             doc.text(row[0], startX, yPos);
             doc.text(row[1], startX + colWidth, yPos, { align: 'right' });
             yPos += lineHeight;
@@ -2496,13 +2514,13 @@
           }
           
           doc.setFontSize(12);
-          doc.setFontStyle('bold');
+          doc.setFont('helvetica', 'bold');
           doc.text('Top Countries', margin, yPos);
           yPos += 8;
           
           const agg = aggregationCache.country;
           doc.setFontSize(9);
-          doc.setFontStyle('normal');
+          doc.setFont('helvetica', 'normal');
           
           // Show top 10
           const topCount = Math.min(10, agg.countries.length);
@@ -2525,13 +2543,13 @@
           }
           
           doc.setFontSize(12);
-          doc.setFontStyle('bold');
+          doc.setFont('helvetica', 'bold');
           doc.text('Top Lead Generators', margin, yPos);
           yPos += 8;
           
           const agg = aggregationCache.leaderboard;
           doc.setFontSize(9);
-          doc.setFontStyle('normal');
+          doc.setFont('helvetica', 'normal');
           
           // Show top 10
           const topCount = Math.min(10, agg.names.length);
@@ -2578,6 +2596,12 @@
     initTabs();
     initDashboard();
     initExportButtons();
+    
+    // Initialize Apply button (applyCurrentFilter is defined at module level)
+    const applyFilterBtn = document.getElementById('applyFilter');
+    if (applyFilterBtn) {
+      applyFilterBtn.addEventListener('click', applyCurrentFilter);
+    }
 
     // ===== Country Insight helpers =====
     function aggregateCountrySummary(countryName, rows, fromDate, toDate) {
