@@ -449,13 +449,11 @@
         <input type="date" id="toDate" class="input">
       </div>
     </div>
-    <div class="controls-right">
-      <button id="openDaySummary" class="btn btn-secondary">Day Summary</button>
-      <button id="exportExcel" class="btn btn-secondary">📊 Export Excel</button>
-      <button id="exportPDF" class="btn btn-secondary">📄 Export PDF</button>
-      <button id="applyFilter" class="btn btn-primary">Apply</button>
-      <button id="resetFilter" class="btn btn-secondary">Reset</button>
-    </div>
+        <div class="controls-right">
+          <button id="openDaySummary" class="btn btn-secondary">Day Summary</button>
+          <button id="applyFilter" class="btn btn-primary">Apply</button>
+          <button id="resetFilter" class="btn btn-secondary">Reset</button>
+        </div>
   </div>
   <div class="tabs" role="tablist">
     <button class="tab active" role="tab" aria-selected="true" aria-controls="tab-funnel" id="tab-funnel-btn">Funnel</button>
@@ -2579,23 +2577,8 @@
       }
     }
 
-    // Initialize export buttons
-    function initExportButtons() {
-      const exportExcelBtn = document.getElementById('exportExcel');
-      const exportPDFBtn = document.getElementById('exportPDF');
-      
-      if (exportExcelBtn) {
-        exportExcelBtn.addEventListener('click', exportToExcel);
-      }
-      
-      if (exportPDFBtn) {
-        exportPDFBtn.addEventListener('click', exportToPDF);
-      }
-    }
-
     initTabs();
     initDashboard();
-    initExportButtons();
     
     // Initialize Apply button (applyCurrentFilter is defined at module level)
     const applyFilterBtn = document.getElementById('applyFilter');
