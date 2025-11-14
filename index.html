@@ -113,15 +113,16 @@
       pointer-events: none;
       transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s ease;
       will-change: opacity, transform;
+      z-index: 0;
     }
     .tabpanel.active { 
-      position: relative;
-      opacity: 1;
-      transform: translateY(0);
-      visibility: visible;
-      pointer-events: auto;
+      position: relative !important;
+      opacity: 1 !important;
+      transform: translateY(0) !important;
+      visibility: visible !important;
+      pointer-events: auto !important;
       will-change: auto;
-      z-index: 1;
+      z-index: 1 !important;
     }
     .controls-left,
     .controls-right {
@@ -1638,62 +1639,71 @@
         tabs.forEach(({panel}) => {
           if (panel !== currentActivePanel && panel !== newPanel) {
             panel.classList.remove('active');
-            panel.style.position = 'absolute';
-            panel.style.zIndex = '0';
-            panel.style.opacity = '0';
-            panel.style.transform = 'translateY(20px)';
-            panel.style.visibility = 'hidden';
-            panel.style.pointerEvents = 'none';
+            // Очищаємо inline styles, щоб CSS класи працювали правильно
+            panel.style.position = '';
+            panel.style.zIndex = '';
+            panel.style.opacity = '';
+            panel.style.transform = '';
+            panel.style.visibility = '';
+            panel.style.pointerEvents = '';
           }
         });
         
-        // Якщо є попередня панель - синхронно приховуємо її
+        // Якщо є попередня панель - приховуємо її перед показом нової
         if (currentActivePanel) {
-          // Спочатку встановлюємо absolute позицію (панель все ще видима через клас active)
-          currentActivePanel.style.position = 'absolute';
-          currentActivePanel.style.zIndex = '0';
+          // Синхронно приховуємо попередню панель
+          currentActivePanel.classList.remove('active');
+          // Очищаємо inline styles, щоб CSS класи працювали правильно
+          currentActivePanel.style.position = '';
+          currentActivePanel.style.zIndex = '';
+          currentActivePanel.style.opacity = '';
+          currentActivePanel.style.transform = '';
+          currentActivePanel.style.visibility = '';
+          currentActivePanel.style.pointerEvents = '';
           
-          // Встановлюємо початкові значення для анімації (панель все ще має клас active)
-          currentActivePanel.style.opacity = '1';
-          currentActivePanel.style.transform = 'translateY(0)';
-          
-          // Видаляємо клас active та починаємо fade out анімацію
+          // Невелика затримка перед показом нової панелі
           requestAnimationFrame(() => {
-            currentActivePanel.classList.remove('active');
-            // Тепер починаємо анімацію fade out
-            requestAnimationFrame(() => {
-              currentActivePanel.style.opacity = '0';
-              currentActivePanel.style.transform = 'translateY(20px)';
+            // Показуємо нову панель
+            if (newPanel) {
+              // Очищаємо inline styles для нової панелі
+              newPanel.style.position = '';
+              newPanel.style.zIndex = '';
+              newPanel.style.opacity = '';
+              newPanel.style.transform = '';
+              newPanel.style.visibility = '';
+              newPanel.style.pointerEvents = '';
+              newPanel.classList.add('active');
               
-              // Після завершення анімації повністю приховуємо
-              setTimeout(() => {
-                currentActivePanel.style.visibility = 'hidden';
-                currentActivePanel.style.pointerEvents = 'none';
-              }, 300);
-            });
+              // Даємо браузеру час на рендер перед resize
+              requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                  // Resize charts після того, як панель стала видимою
+                  const panelId = targetBtn.getAttribute('aria-controls');
+                  resizeChartsFor(panelId);
+                });
+              });
+            }
           });
-        }
-        
-        // Показуємо нову панель
-        if (newPanel) {
-          // Спочатку встановлюємо стилі для нової панелі
-          newPanel.style.position = 'relative';
-          newPanel.style.zIndex = '1';
-          newPanel.classList.add('active');
-          
-          // Даємо браузеру час на рендер перед анімацією
-          requestAnimationFrame(() => {
+        } else {
+          // Немає попередньої панелі - просто показуємо нову
+          if (newPanel) {
+            // Очищаємо inline styles
+            newPanel.style.position = '';
+            newPanel.style.zIndex = '';
+            newPanel.style.opacity = '';
+            newPanel.style.transform = '';
+            newPanel.style.visibility = '';
+            newPanel.style.pointerEvents = '';
+            newPanel.classList.add('active');
+            
             requestAnimationFrame(() => {
-              newPanel.style.opacity = '1';
-              newPanel.style.transform = 'translateY(0)';
-              newPanel.style.visibility = 'visible';
-              newPanel.style.pointerEvents = 'auto';
-              
-              // Resize charts після того, як панель стала видимою
-              const panelId = targetBtn.getAttribute('aria-controls');
-              resizeChartsFor(panelId);
+              requestAnimationFrame(() => {
+                // Resize charts після того, як панель стала видимою
+                const panelId = targetBtn.getAttribute('aria-controls');
+                resizeChartsFor(panelId);
+              });
             });
-          });
+          }
         }
       }
       tabs.forEach(({btn}) => btn.addEventListener('click', () => activate(btn)));
