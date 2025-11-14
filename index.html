@@ -113,6 +113,7 @@
       left: 0;
       right: 0;
       width: 100%;
+      will-change: opacity, transform;
     }
     .tabpanel.active { 
       opacity: 1;
@@ -121,6 +122,7 @@
       pointer-events: auto;
       position: relative;
       z-index: 1;
+      will-change: auto;
     }
     .controls-left,
     .controls-right {
@@ -1636,12 +1638,22 @@
           if (panel === currentActivePanel) {
             // Start fade out animation for previous panel
             panel.classList.remove('active');
+          } else if (panel !== newPanel) {
+            // Ensure other panels are hidden immediately
+            panel.classList.remove('active');
+            panel.style.opacity = '0';
+            panel.style.transform = 'translateY(20px)';
+            panel.style.visibility = 'hidden';
           }
         });
         
         // After a brief delay, activate new panel (start fade in animation)
         setTimeout(() => {
           if (newPanel) {
+            // Reset styles before adding active class
+            newPanel.style.opacity = '';
+            newPanel.style.transform = '';
+            newPanel.style.visibility = '';
             newPanel.classList.add('active');
           }
         }, 50);
@@ -1650,6 +1662,16 @@
         const panelId = targetBtn.getAttribute('aria-controls');
         // Wait for animation to complete before resizing charts
         setTimeout(() => {
+          // Ensure all non-active panels are completely hidden
+          tabs.forEach(({panel}) => {
+            if (!panel.classList.contains('active')) {
+              panel.style.opacity = '0';
+              panel.style.transform = 'translateY(20px)';
+              panel.style.visibility = 'hidden';
+              panel.style.pointerEvents = 'none';
+            }
+          });
+          
           if (typeof rerenderAll === 'function' && Array.isArray(lastFilteredRows) && lastFilteredRows.length) {
             rerenderAll(lastFilteredRows);
           } else if (window._rerenderAll && Array.isArray(lastFilteredRows) && lastFilteredRows.length) {
