@@ -673,6 +673,9 @@
     
     // Cache DOM elements for better performance
     const chartElements = {};
+    
+    // Store maxDate for modal usage
+    let maxDate = new Date();
 
     // Helper function to fetch data from server
     async function fetchDataFromServer() {
@@ -788,13 +791,490 @@
         .filter(Boolean)
         .sort((a,b) => a - b);
       const minDate = datesList[0] || new Date();
-      const maxDate = datesList[datesList.length - 1] || new Date();
+      maxDate = datesList[datesList.length - 1] || new Date();
 
       const fromEl = document.getElementById('fromDate');
       const toEl = document.getElementById('toDate');
       if (fromEl && toEl) {
         fromEl.value = toIsoDateInputValue(minDate);
         toEl.value = toIsoDateInputValue(maxDate);
+      }
+    }
+    
+    // Helper function to get or cache DOM element
+    function getChartElement(id) {
+      if (!chartElements[id]) {
+        chartElements[id] = document.getElementById(id);
+      }
+      return chartElements[id];
+    }
+
+    // Helper function to render or update chart
+    function renderOrUpdateChart(chartRef, elementId, renderFn, updateFn, ...args) {
+      const element = getChartElement(elementId);
+      if (!element) {
+        console.warn(`Chart element not found: ${elementId}`);
+        return null;
+      }
+
+      if (chartRef && chartRef.data) {
+        // Chart exists, try to update
+        if (updateFn && updateFn(chartRef, ...args)) {
+          return chartRef; // Successfully updated
+        } else {
+          // Update failed, destroy and recreate
+          destroyIfExists(chartRef);
+        }
+      }
+      
+      // Create new chart
+      return renderFn(element, ...args);
+    }
+
+    // Render Funnel charts (tab-funnel)
+    function renderFunnelCharts(filteredRows) {
+      if (shouldRecalculateAggregations(filteredRows, aggregationCache) || !aggregationCache.funnel) {
+        const agg = buildAggregates(filteredRows);
+        aggregationCache.funnel = agg;
+        updateAggregationCache(aggregationCache, filteredRows, { funnel: agg });
+      }
+      const agg = aggregationCache.funnel;
+
+      scheduleChartUpdate(() => {
+        chartRefs.createdFound = renderOrUpdateChart(
+          chartRefs.createdFound,
+          'chartCreatedToFound',
+          renderPairedBarChart,
+          updatePairedBarChart,
+          agg.dates, 'Created', agg.created, 'Sent Requests', agg.sent
+        );
+        
+        chartRefs.sentConnected = renderOrUpdateChart(
+          chartRefs.sentConnected,
+          'chartSentToConnected',
+          renderPairedBarChart,
+          updatePairedBarChart,
+          agg.dates, 'Sent Requests', agg.sent, 'Connected', agg.connected
+        );
+        
+        chartRefs.connectedReplies = renderOrUpdateChart(
+          chartRefs.connectedReplies,
+          'chartConnectedToReplies',
+          renderPairedBarChart,
+          updatePairedBarChart,
+          agg.dates, 'Connected', agg.connected, 'Replies', agg.replies
+        );
+        
+        chartRefs.repliesPositive = renderOrUpdateChart(
+          chartRefs.repliesPositive,
+          'chartRepliesToPositive',
+          renderPairedBarChart,
+          updatePairedBarChart,
+          agg.dates, 'Replies', agg.replies, 'Positive Replies', agg.positive
+        );
+        
+        chartRefs.positiveEvents = renderOrUpdateChart(
+          chartRefs.positiveEvents,
+          'chartPositiveToEvents',
+          renderPairedBarChart,
+          updatePairedBarChart,
+          agg.dates, 'Positive Replies', agg.positive, 'Events', agg.events
+        );
+      });
+    }
+
+    // Render Country charts (tab-country)
+    function renderCountryCharts(filteredRows) {
+      if (shouldRecalculateAggregations(filteredRows, aggregationCache) || !aggregationCache.country) {
+        const countryAgg = buildCountryAggregates(filteredRows);
+        aggregationCache.country = countryAgg;
+        updateAggregationCache(aggregationCache, filteredRows, { country: countryAgg });
+      }
+      const countryAgg = aggregationCache.country;
+
+      scheduleChartUpdate(() => {
+        chartRefs.countryConversionRate = renderOrUpdateChart(
+          chartRefs.countryConversionRate,
+          'chartCountryConversionRate',
+          (el, labels, label, data, color) => {
+            const chart = renderConversionRateChart(el, labels, label, data, color);
+            if (chart) {
+              chart.options.onClick = (evt, activeEls) => {
+                const points = chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
+                if (points && points.length) {
+                  const idx = points[0].index;
+                  const country = labels[idx];
+                  openCountryInsight(country, filteredRows);
+                }
+              };
+            }
+            return chart;
+          },
+          null,
+          countryAgg.countries, 'Conversion Rate (%)', countryAgg.conversionRates, 'rgba(75,192,192,0.6)'
+        );
+
+        chartRefs.countryCreatedFound = renderOrUpdateChart(
+          chartRefs.countryCreatedFound,
+          'chartCountryCreatedToFound',
+          (el, labels, leftLabel, leftData, rightLabel, rightData) => {
+            const chart = renderPairedBarChart(el, labels, leftLabel, leftData, rightLabel, rightData);
+            if (chart) {
+              chart.options.onClick = (evt, activeEls) => {
+                const points = chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
+                if (points && points.length) {
+                  const idx = points[0].index;
+                  const country = labels[idx];
+                  openCountryInsight(country, filteredRows);
+                }
+              };
+            }
+            return chart;
+          },
+          updatePairedBarChart,
+          countryAgg.countries, 'Created', countryAgg.created, 'Sent Requests', countryAgg.sent
+        );
+
+        chartRefs.countrySentConnected = renderOrUpdateChart(
+          chartRefs.countrySentConnected,
+          'chartCountrySentToConnected',
+          (el, labels, leftLabel, leftData, rightLabel, rightData) => {
+            const chart = renderPairedBarChart(el, labels, leftLabel, leftData, rightLabel, rightData);
+            if (chart) {
+              chart.options.onClick = (evt, activeEls) => {
+                const points = chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
+                if (points && points.length) {
+                  const idx = points[0].index;
+                  const country = labels[idx];
+                  openCountryInsight(country, filteredRows);
+                }
+              };
+            }
+            return chart;
+          },
+          updatePairedBarChart,
+          countryAgg.countries, 'Sent Requests', countryAgg.sent, 'Connected', countryAgg.connected
+        );
+
+        chartRefs.countryConnectedReplies = renderOrUpdateChart(
+          chartRefs.countryConnectedReplies,
+          'chartCountryConnectedToReplies',
+          (el, labels, leftLabel, leftData, rightLabel, rightData) => {
+            const chart = renderPairedBarChart(el, labels, leftLabel, leftData, rightLabel, rightData);
+            if (chart) {
+              chart.options.onClick = (evt, activeEls) => {
+                const points = chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
+                if (points && points.length) {
+                  const idx = points[0].index;
+                  const country = labels[idx];
+                  openCountryInsight(country, filteredRows);
+                }
+              };
+            }
+            return chart;
+          },
+          updatePairedBarChart,
+          countryAgg.countries, 'Connected', countryAgg.connected, 'Replies', countryAgg.replies
+        );
+
+        chartRefs.countryRepliesPositive = renderOrUpdateChart(
+          chartRefs.countryRepliesPositive,
+          'chartCountryRepliesToPositive',
+          (el, labels, leftLabel, leftData, rightLabel, rightData) => {
+            const chart = renderPairedBarChart(el, labels, leftLabel, leftData, rightLabel, rightData);
+            if (chart) {
+              chart.options.onClick = (evt, activeEls) => {
+                const points = chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
+                if (points && points.length) {
+                  const idx = points[0].index;
+                  const country = labels[idx];
+                  openCountryInsight(country, filteredRows);
+                }
+              };
+            }
+            return chart;
+          },
+          updatePairedBarChart,
+          countryAgg.countries, 'Replies', countryAgg.replies, 'Positive Replies', countryAgg.positive
+        );
+
+        chartRefs.countryPositiveEvents = renderOrUpdateChart(
+          chartRefs.countryPositiveEvents,
+          'chartCountryPositiveToEvents',
+          (el, labels, leftLabel, leftData, rightLabel, rightData) => {
+            const chart = renderPairedBarChart(el, labels, leftLabel, leftData, rightLabel, rightData);
+            if (chart) {
+              chart.options.onClick = (evt, activeEls) => {
+                const points = chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
+                if (points && points.length) {
+                  const idx = points[0].index;
+                  const country = labels[idx];
+                  openCountryInsight(country, filteredRows);
+                }
+              };
+            }
+            return chart;
+          },
+          updatePairedBarChart,
+          countryAgg.countries, 'Positive Replies', countryAgg.positive, 'Events', countryAgg.events
+        );
+      });
+    }
+
+    // Render Weekly charts (tab-weekly)
+    function renderWeeklyCharts(filteredRows) {
+      if (shouldRecalculateAggregations(filteredRows, aggregationCache) || !aggregationCache.weekly) {
+        const weekAgg = buildWeeklyAggregates(filteredRows);
+        aggregationCache.weekly = weekAgg;
+        updateAggregationCache(aggregationCache, filteredRows, { weekly: weekAgg });
+      }
+      const weekAgg = aggregationCache.weekly;
+
+      scheduleChartUpdate(() => {
+        chartRefs.weekCreatedFound = renderOrUpdateChart(
+          chartRefs.weekCreatedFound, 'chartWeekCreatedToFound', renderPairedBarChart, updatePairedBarChart,
+          weekAgg.weeks, 'Created', weekAgg.created, 'Sent Requests', weekAgg.sent
+        );
+        chartRefs.weekSentConnected = renderOrUpdateChart(
+          chartRefs.weekSentConnected, 'chartWeekSentToConnected', renderPairedBarChart, updatePairedBarChart,
+          weekAgg.weeks, 'Sent Requests', weekAgg.sent, 'Connected', weekAgg.connected
+        );
+        chartRefs.weekConnectedReplies = renderOrUpdateChart(
+          chartRefs.weekConnectedReplies, 'chartWeekConnectedToReplies', renderPairedBarChart, updatePairedBarChart,
+          weekAgg.weeks, 'Connected', weekAgg.connected, 'Replies', weekAgg.replies
+        );
+        chartRefs.weekRepliesPositive = renderOrUpdateChart(
+          chartRefs.weekRepliesPositive, 'chartWeekRepliesToPositive', renderPairedBarChart, updatePairedBarChart,
+          weekAgg.weeks, 'Replies', weekAgg.replies, 'Positive Replies', weekAgg.positive
+        );
+        chartRefs.weekPositiveEvents = renderOrUpdateChart(
+          chartRefs.weekPositiveEvents, 'chartWeekPositiveToEvents', renderPairedBarChart, updatePairedBarChart,
+          weekAgg.weeks, 'Positive Replies', weekAgg.positive, 'Events', weekAgg.events
+        );
+      });
+    }
+
+    // Render Monthly charts (tab-monthly)
+    function renderMonthlyCharts(filteredRows) {
+      if (shouldRecalculateAggregations(filteredRows, aggregationCache) || !aggregationCache.monthly) {
+        const monthAgg = buildMonthlyAggregates(filteredRows);
+        aggregationCache.monthly = monthAgg;
+        updateAggregationCache(aggregationCache, filteredRows, { monthly: monthAgg });
+      }
+      const monthAgg = aggregationCache.monthly;
+
+      scheduleChartUpdate(() => {
+        chartRefs.monthConversionRate = renderOrUpdateChart(
+          chartRefs.monthConversionRate, 'chartMonthConversionRate', renderConversionRateChart, null,
+          monthAgg.months, 'Conversion Rate (%)', monthAgg.conversionRates, 'rgba(75,192,192,0.6)'
+        );
+        chartRefs.monthCreatedFound = renderOrUpdateChart(
+          chartRefs.monthCreatedFound, 'chartMonthCreatedToFound', renderPairedBarChart, updatePairedBarChart,
+          monthAgg.months, 'Created', monthAgg.created, 'Sent Requests', monthAgg.sent
+        );
+        chartRefs.monthSentConnected = renderOrUpdateChart(
+          chartRefs.monthSentConnected, 'chartMonthSentToConnected', renderPairedBarChart, updatePairedBarChart,
+          monthAgg.months, 'Sent Requests', monthAgg.sent, 'Connected', monthAgg.connected
+        );
+        chartRefs.monthConnectedReplies = renderOrUpdateChart(
+          chartRefs.monthConnectedReplies, 'chartMonthConnectedToReplies', renderPairedBarChart, updatePairedBarChart,
+          monthAgg.months, 'Connected', monthAgg.connected, 'Replies', monthAgg.replies
+        );
+        chartRefs.monthRepliesPositive = renderOrUpdateChart(
+          chartRefs.monthRepliesPositive, 'chartMonthRepliesToPositive', renderPairedBarChart, updatePairedBarChart,
+          monthAgg.months, 'Replies', monthAgg.replies, 'Positive Replies', monthAgg.positive
+        );
+        chartRefs.monthPositiveEvents = renderOrUpdateChart(
+          chartRefs.monthPositiveEvents, 'chartMonthPositiveToEvents', renderPairedBarChart, updatePairedBarChart,
+          monthAgg.months, 'Positive Replies', monthAgg.positive, 'Events', monthAgg.events
+        );
+      });
+    }
+
+    // Render Leaderboard charts (tab-leaderboard)
+    function renderLeaderboardCharts(filteredRows) {
+      if (shouldRecalculateAggregations(filteredRows, aggregationCache) || !aggregationCache.leaderboard) {
+        const lbAgg = buildLeaderboardAggregates(filteredRows);
+        aggregationCache.leaderboard = lbAgg;
+        updateAggregationCache(aggregationCache, filteredRows, { leaderboard: lbAgg });
+      }
+      const lbAgg = aggregationCache.leaderboard;
+
+      scheduleChartUpdate(() => {
+        chartRefs.lbConversionRate = renderOrUpdateChart(
+          chartRefs.lbConversionRate,
+          'chartLbConversionRate',
+          (el, labels, label, data, color) => {
+            const chart = renderConversionRateChart(el, labels, label, data, color);
+            if (chart) {
+              chart.options.onClick = (evt, activeEls) => {
+                const points = chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
+                if (points && points.length) {
+                  const idx = points[0].index;
+                  const name = labels[idx];
+                  openLeadInsight(name, filteredRows);
+                }
+              };
+            }
+            return chart;
+          },
+          null,
+          lbAgg.names, 'Conversion Rate (%)', lbAgg.conversionRates, 'rgba(75,192,192,0.6)'
+        );
+
+        chartRefs.lbCreated = renderOrUpdateChart(
+          chartRefs.lbCreated,
+          'chartLbCreated',
+          (el, labels, label, data, color) => {
+            const chart = renderSingleBarChart(el, labels, label, data, color);
+            if (chart) {
+              chart.options.onClick = (evt, activeEls) => {
+                const points = chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
+                if (points && points.length) {
+                  const idx = points[0].index;
+                  const name = labels[idx];
+                  openLeadInsight(name, filteredRows);
+                }
+              };
+            }
+            return chart;
+          },
+          updateSingleBarChart,
+          lbAgg.names, 'Created', lbAgg.created, 'rgba(54,162,235,0.6)'
+        );
+
+        chartRefs.lbSent = renderOrUpdateChart(
+          chartRefs.lbSent,
+          'chartLbSent',
+          (el, labels, label, data, color) => {
+            const chart = renderSingleBarChart(el, labels, label, data, color);
+            if (chart) {
+              chart.options.onClick = (evt, activeEls) => {
+                const points = chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
+                if (points && points.length) {
+                  const idx = points[0].index;
+                  const name = labels[idx];
+                  openLeadInsight(name, filteredRows);
+                }
+              };
+            }
+            return chart;
+          },
+          updateSingleBarChart,
+          lbAgg.names, 'Sent Requests', lbAgg.sent, 'rgba(153,102,255,0.6)'
+        );
+
+        chartRefs.lbPositive = renderOrUpdateChart(
+          chartRefs.lbPositive,
+          'chartLbPositive',
+          (el, labels, label, data, color) => {
+            const chart = renderSingleBarChart(el, labels, label, data, color);
+            if (chart) {
+              chart.options.onClick = (evt, activeEls) => {
+                const points = chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
+                if (points && points.length) {
+                  const idx = points[0].index;
+                  const name = labels[idx];
+                  openLeadInsight(name, filteredRows);
+                }
+              };
+            }
+            return chart;
+          },
+          updateSingleBarChart,
+          lbAgg.names, 'Positive Replies', lbAgg.positive, 'rgba(75,192,192,0.6)'
+        );
+
+        chartRefs.lbEvents = renderOrUpdateChart(
+          chartRefs.lbEvents,
+          'chartLbEvents',
+          (el, labels, label, data, color) => {
+            const chart = renderSingleBarChart(el, labels, label, data, color);
+            if (chart) {
+              chart.options.onClick = (evt, activeEls) => {
+                const points = chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
+                if (points && points.length) {
+                  const idx = points[0].index;
+                  const name = labels[idx];
+                  openLeadInsight(name, filteredRows);
+                }
+              };
+            }
+            return chart;
+          },
+          updateSingleBarChart,
+          lbAgg.names, 'Events Created', lbAgg.events, 'rgba(255,206,86,0.6)'
+        );
+      });
+    }
+
+    // Render Source charts (tab-source)
+    function renderSourceCharts(filteredRows) {
+      if (shouldRecalculateAggregations(filteredRows, aggregationCache) || !aggregationCache.source) {
+        const sourceAgg = buildSourceAggregates(filteredRows);
+        aggregationCache.source = sourceAgg;
+        updateAggregationCache(aggregationCache, filteredRows, { source: sourceAgg });
+      }
+      const sourceAgg = aggregationCache.source;
+
+      scheduleChartUpdate(() => {
+        chartRefs.sourceConversionRate = renderOrUpdateChart(
+          chartRefs.sourceConversionRate, 'chartSourceConversionRate', renderConversionRateChart, null,
+          sourceAgg.sources, 'Conversion Rate (%)', sourceAgg.conversionRates, 'rgba(75,192,192,0.6)'
+        );
+        chartRefs.sourceCreatedToSent = renderOrUpdateChart(
+          chartRefs.sourceCreatedToSent, 'chartSourceCreatedToSent', renderPairedBarChart, updatePairedBarChart,
+          sourceAgg.sources, 'Created', sourceAgg.created, 'Sent Requests', sourceAgg.sentRequests
+        );
+        chartRefs.sourceSentToConnected = renderOrUpdateChart(
+          chartRefs.sourceSentToConnected, 'chartSourceSentToConnected', renderPairedBarChart, updatePairedBarChart,
+          sourceAgg.sources, 'Sent Requests', sourceAgg.sentRequests, 'Connected', sourceAgg.connected
+        );
+        chartRefs.sourceConnectedToReplies = renderOrUpdateChart(
+          chartRefs.sourceConnectedToReplies, 'chartSourceConnectedToReplies', renderPairedBarChart, updatePairedBarChart,
+          sourceAgg.sources, 'Connected', sourceAgg.connected, 'Total Replies', sourceAgg.totalReplies
+        );
+        chartRefs.sourceRepliesToPositive = renderOrUpdateChart(
+          chartRefs.sourceRepliesToPositive, 'chartSourceRepliesToPositive', renderPairedBarChart, updatePairedBarChart,
+          sourceAgg.sources, 'Total Replies', sourceAgg.totalReplies, 'Positive Replies', sourceAgg.positiveReplies
+        );
+        chartRefs.sourcePositiveToEvents = renderOrUpdateChart(
+          chartRefs.sourcePositiveToEvents, 'chartSourcePositiveToEvents', renderPairedBarChart, updatePairedBarChart,
+          sourceAgg.sources, 'Positive Replies', sourceAgg.positiveReplies, 'Events', sourceAgg.events
+        );
+      });
+    }
+
+    // Main render function - now with lazy loading
+    function renderAll(filteredRows) {
+      lastFilteredRows = filteredRows;
+      
+      // Only render charts for active tab
+      const activeTab = document.querySelector('.tabpanel.active')?.id;
+      
+      if (activeTab === 'tab-funnel' || !activeTab) {
+        renderFunnelCharts(filteredRows);
+        renderedTabs.funnel = true;
+      }
+      if (activeTab === 'tab-country') {
+        renderCountryCharts(filteredRows);
+        renderedTabs.country = true;
+      }
+      if (activeTab === 'tab-weekly') {
+        renderWeeklyCharts(filteredRows);
+        renderedTabs.weekly = true;
+      }
+      if (activeTab === 'tab-monthly') {
+        renderMonthlyCharts(filteredRows);
+        renderedTabs.monthly = true;
+      }
+      if (activeTab === 'tab-leaderboard') {
+        renderLeaderboardCharts(filteredRows);
+        renderedTabs.leaderboard = true;
+      }
+      if (activeTab === 'tab-source') {
+        renderSourceCharts(filteredRows);
+        renderedTabs.source = true;
       }
     }
 
@@ -1018,483 +1498,7 @@
       // use shared chartRefs/lastFilteredRows declared above
 
       // All aggregation functions are now imported from './aggregates.js'
-
-      // Helper function to get or cache DOM element
-      function getChartElement(id) {
-        if (!chartElements[id]) {
-          chartElements[id] = document.getElementById(id);
-        }
-        return chartElements[id];
-      }
-
-      // Helper function to render or update chart
-      function renderOrUpdateChart(chartRef, elementId, renderFn, updateFn, ...args) {
-        const element = getChartElement(elementId);
-        if (!element) {
-          console.warn(`Chart element not found: ${elementId}`);
-          return null;
-        }
-
-        if (chartRef && chartRef.data) {
-          // Chart exists, try to update
-          if (updateFn && updateFn(chartRef, ...args)) {
-            return chartRef; // Successfully updated
-          } else {
-            // Update failed, destroy and recreate
-            destroyIfExists(chartRef);
-          }
-        }
-        
-        // Create new chart
-        return renderFn(element, ...args);
-      }
-
-      // Render Funnel charts (tab-funnel)
-      function renderFunnelCharts(filteredRows) {
-        if (shouldRecalculateAggregations(filteredRows, aggregationCache) || !aggregationCache.funnel) {
-          const agg = buildAggregates(filteredRows);
-          aggregationCache.funnel = agg;
-          updateAggregationCache(aggregationCache, filteredRows, { funnel: agg });
-        }
-        const agg = aggregationCache.funnel;
-
-        scheduleChartUpdate(() => {
-          chartRefs.createdFound = renderOrUpdateChart(
-            chartRefs.createdFound,
-            'chartCreatedToFound',
-            renderPairedBarChart,
-            updatePairedBarChart,
-            agg.dates, 'Created', agg.created, 'Sent Requests', agg.sent
-          );
-          
-          chartRefs.sentConnected = renderOrUpdateChart(
-            chartRefs.sentConnected,
-            'chartSentToConnected',
-            renderPairedBarChart,
-            updatePairedBarChart,
-            agg.dates, 'Sent Requests', agg.sent, 'Connected', agg.connected
-          );
-          
-          chartRefs.connectedReplies = renderOrUpdateChart(
-            chartRefs.connectedReplies,
-            'chartConnectedToReplies',
-            renderPairedBarChart,
-            updatePairedBarChart,
-            agg.dates, 'Connected', agg.connected, 'Replies', agg.replies
-          );
-          
-          chartRefs.repliesPositive = renderOrUpdateChart(
-            chartRefs.repliesPositive,
-            'chartRepliesToPositive',
-            renderPairedBarChart,
-            updatePairedBarChart,
-            agg.dates, 'Replies', agg.replies, 'Positive Replies', agg.positive
-          );
-          
-          chartRefs.positiveEvents = renderOrUpdateChart(
-            chartRefs.positiveEvents,
-            'chartPositiveToEvents',
-            renderPairedBarChart,
-            updatePairedBarChart,
-            agg.dates, 'Positive Replies', agg.positive, 'Events', agg.events
-          );
-        });
-      }
-
-      // Render Country charts (tab-country)
-      function renderCountryCharts(filteredRows) {
-        if (shouldRecalculateAggregations(filteredRows, aggregationCache) || !aggregationCache.country) {
-          const countryAgg = buildCountryAggregates(filteredRows);
-          aggregationCache.country = countryAgg;
-          updateAggregationCache(aggregationCache, filteredRows, { country: countryAgg });
-        }
-        const countryAgg = aggregationCache.country;
-
-        scheduleChartUpdate(() => {
-          chartRefs.countryConversionRate = renderOrUpdateChart(
-            chartRefs.countryConversionRate,
-            'chartCountryConversionRate',
-            (el, labels, label, data, color) => {
-              const chart = renderConversionRateChart(el, labels, label, data, color);
-              if (chart) {
-                chart.options.onClick = (evt, activeEls) => {
-                  const points = chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
-                  if (points && points.length) {
-                    const idx = points[0].index;
-                    const country = labels[idx];
-                    openCountryInsight(country, filteredRows);
-                  }
-                };
-              }
-              return chart;
-            },
-            null,
-            countryAgg.countries, 'Conversion Rate (%)', countryAgg.conversionRates, 'rgba(75,192,192,0.6)'
-          );
-
-          chartRefs.countryCreatedFound = renderOrUpdateChart(
-            chartRefs.countryCreatedFound,
-            'chartCountryCreatedToFound',
-            (el, labels, leftLabel, leftData, rightLabel, rightData) => {
-              const chart = renderPairedBarChart(el, labels, leftLabel, leftData, rightLabel, rightData);
-              if (chart) {
-                chart.options.onClick = (evt, activeEls) => {
-                  const points = chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
-                  if (points && points.length) {
-                    const idx = points[0].index;
-                    const country = labels[idx];
-                    openCountryInsight(country, filteredRows);
-                  }
-                };
-              }
-              return chart;
-            },
-            updatePairedBarChart,
-            countryAgg.countries, 'Created', countryAgg.created, 'Sent Requests', countryAgg.sent
-          );
-
-          chartRefs.countrySentConnected = renderOrUpdateChart(
-            chartRefs.countrySentConnected,
-            'chartCountrySentToConnected',
-            (el, labels, leftLabel, leftData, rightLabel, rightData) => {
-              const chart = renderPairedBarChart(el, labels, leftLabel, leftData, rightLabel, rightData);
-              if (chart) {
-                chart.options.onClick = (evt, activeEls) => {
-                  const points = chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
-                  if (points && points.length) {
-                    const idx = points[0].index;
-                    const country = labels[idx];
-                    openCountryInsight(country, filteredRows);
-                  }
-                };
-              }
-              return chart;
-            },
-            updatePairedBarChart,
-            countryAgg.countries, 'Sent Requests', countryAgg.sent, 'Connected', countryAgg.connected
-          );
-
-          chartRefs.countryConnectedReplies = renderOrUpdateChart(
-            chartRefs.countryConnectedReplies,
-            'chartCountryConnectedToReplies',
-            (el, labels, leftLabel, leftData, rightLabel, rightData) => {
-              const chart = renderPairedBarChart(el, labels, leftLabel, leftData, rightLabel, rightData);
-              if (chart) {
-                chart.options.onClick = (evt, activeEls) => {
-                  const points = chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
-                  if (points && points.length) {
-                    const idx = points[0].index;
-                    const country = labels[idx];
-                    openCountryInsight(country, filteredRows);
-                  }
-                };
-              }
-              return chart;
-            },
-            updatePairedBarChart,
-            countryAgg.countries, 'Connected', countryAgg.connected, 'Replies', countryAgg.replies
-          );
-
-          chartRefs.countryRepliesPositive = renderOrUpdateChart(
-            chartRefs.countryRepliesPositive,
-            'chartCountryRepliesToPositive',
-            (el, labels, leftLabel, leftData, rightLabel, rightData) => {
-              const chart = renderPairedBarChart(el, labels, leftLabel, leftData, rightLabel, rightData);
-              if (chart) {
-                chart.options.onClick = (evt, activeEls) => {
-                  const points = chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
-                  if (points && points.length) {
-                    const idx = points[0].index;
-                    const country = labels[idx];
-                    openCountryInsight(country, filteredRows);
-                  }
-                };
-              }
-              return chart;
-            },
-            updatePairedBarChart,
-            countryAgg.countries, 'Replies', countryAgg.replies, 'Positive Replies', countryAgg.positive
-          );
-
-          chartRefs.countryPositiveEvents = renderOrUpdateChart(
-            chartRefs.countryPositiveEvents,
-            'chartCountryPositiveToEvents',
-            (el, labels, leftLabel, leftData, rightLabel, rightData) => {
-              const chart = renderPairedBarChart(el, labels, leftLabel, leftData, rightLabel, rightData);
-              if (chart) {
-                chart.options.onClick = (evt, activeEls) => {
-                  const points = chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
-                  if (points && points.length) {
-                    const idx = points[0].index;
-                    const country = labels[idx];
-                    openCountryInsight(country, filteredRows);
-                  }
-                };
-              }
-              return chart;
-            },
-            updatePairedBarChart,
-            countryAgg.countries, 'Positive Replies', countryAgg.positive, 'Events', countryAgg.events
-          );
-        });
-      }
-
-      // Render Weekly charts (tab-weekly)
-      function renderWeeklyCharts(filteredRows) {
-        if (shouldRecalculateAggregations(filteredRows, aggregationCache) || !aggregationCache.weekly) {
-          const weekAgg = buildWeeklyAggregates(filteredRows);
-          aggregationCache.weekly = weekAgg;
-          updateAggregationCache(aggregationCache, filteredRows, { weekly: weekAgg });
-        }
-        const weekAgg = aggregationCache.weekly;
-
-        scheduleChartUpdate(() => {
-          chartRefs.weekCreatedFound = renderOrUpdateChart(
-            chartRefs.weekCreatedFound, 'chartWeekCreatedToFound', renderPairedBarChart, updatePairedBarChart,
-            weekAgg.weeks, 'Created', weekAgg.created, 'Sent Requests', weekAgg.sent
-          );
-          chartRefs.weekSentConnected = renderOrUpdateChart(
-            chartRefs.weekSentConnected, 'chartWeekSentToConnected', renderPairedBarChart, updatePairedBarChart,
-            weekAgg.weeks, 'Sent Requests', weekAgg.sent, 'Connected', weekAgg.connected
-          );
-          chartRefs.weekConnectedReplies = renderOrUpdateChart(
-            chartRefs.weekConnectedReplies, 'chartWeekConnectedToReplies', renderPairedBarChart, updatePairedBarChart,
-            weekAgg.weeks, 'Connected', weekAgg.connected, 'Replies', weekAgg.replies
-          );
-          chartRefs.weekRepliesPositive = renderOrUpdateChart(
-            chartRefs.weekRepliesPositive, 'chartWeekRepliesToPositive', renderPairedBarChart, updatePairedBarChart,
-            weekAgg.weeks, 'Replies', weekAgg.replies, 'Positive Replies', weekAgg.positive
-          );
-          chartRefs.weekPositiveEvents = renderOrUpdateChart(
-            chartRefs.weekPositiveEvents, 'chartWeekPositiveToEvents', renderPairedBarChart, updatePairedBarChart,
-            weekAgg.weeks, 'Positive Replies', weekAgg.positive, 'Events', weekAgg.events
-          );
-        });
-      }
-
-      // Render Monthly charts (tab-monthly)
-      function renderMonthlyCharts(filteredRows) {
-        if (shouldRecalculateAggregations(filteredRows, aggregationCache) || !aggregationCache.monthly) {
-          const monthAgg = buildMonthlyAggregates(filteredRows);
-          aggregationCache.monthly = monthAgg;
-          updateAggregationCache(aggregationCache, filteredRows, { monthly: monthAgg });
-        }
-        const monthAgg = aggregationCache.monthly;
-
-        scheduleChartUpdate(() => {
-          chartRefs.monthConversionRate = renderOrUpdateChart(
-            chartRefs.monthConversionRate, 'chartMonthConversionRate', renderConversionRateChart, null,
-            monthAgg.months, 'Conversion Rate (%)', monthAgg.conversionRates, 'rgba(75,192,192,0.6)'
-          );
-          chartRefs.monthCreatedFound = renderOrUpdateChart(
-            chartRefs.monthCreatedFound, 'chartMonthCreatedToFound', renderPairedBarChart, updatePairedBarChart,
-            monthAgg.months, 'Created', monthAgg.created, 'Sent Requests', monthAgg.sent
-          );
-          chartRefs.monthSentConnected = renderOrUpdateChart(
-            chartRefs.monthSentConnected, 'chartMonthSentToConnected', renderPairedBarChart, updatePairedBarChart,
-            monthAgg.months, 'Sent Requests', monthAgg.sent, 'Connected', monthAgg.connected
-          );
-          chartRefs.monthConnectedReplies = renderOrUpdateChart(
-            chartRefs.monthConnectedReplies, 'chartMonthConnectedToReplies', renderPairedBarChart, updatePairedBarChart,
-            monthAgg.months, 'Connected', monthAgg.connected, 'Replies', monthAgg.replies
-          );
-          chartRefs.monthRepliesPositive = renderOrUpdateChart(
-            chartRefs.monthRepliesPositive, 'chartMonthRepliesToPositive', renderPairedBarChart, updatePairedBarChart,
-            monthAgg.months, 'Replies', monthAgg.replies, 'Positive Replies', monthAgg.positive
-          );
-          chartRefs.monthPositiveEvents = renderOrUpdateChart(
-            chartRefs.monthPositiveEvents, 'chartMonthPositiveToEvents', renderPairedBarChart, updatePairedBarChart,
-            monthAgg.months, 'Positive Replies', monthAgg.positive, 'Events', monthAgg.events
-          );
-        });
-      }
-
-      // Render Leaderboard charts (tab-leaderboard)
-      function renderLeaderboardCharts(filteredRows) {
-        if (shouldRecalculateAggregations(filteredRows, aggregationCache) || !aggregationCache.leaderboard) {
-          const lbAgg = buildLeaderboardAggregates(filteredRows);
-          aggregationCache.leaderboard = lbAgg;
-          updateAggregationCache(aggregationCache, filteredRows, { leaderboard: lbAgg });
-        }
-        const lbAgg = aggregationCache.leaderboard;
-
-        scheduleChartUpdate(() => {
-          chartRefs.lbConversionRate = renderOrUpdateChart(
-            chartRefs.lbConversionRate,
-            'chartLbConversionRate',
-            (el, labels, label, data, color) => {
-              const chart = renderConversionRateChart(el, labels, label, data, color);
-              if (chart) {
-                chart.options.onClick = (evt, activeEls) => {
-                  const points = chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
-                  if (points && points.length) {
-                    const idx = points[0].index;
-                    const name = labels[idx];
-                    openLeadInsight(name, filteredRows);
-                  }
-                };
-              }
-              return chart;
-            },
-            null,
-            lbAgg.names, 'Conversion Rate (%)', lbAgg.conversionRates, 'rgba(75,192,192,0.6)'
-          );
-
-          chartRefs.lbCreated = renderOrUpdateChart(
-            chartRefs.lbCreated,
-            'chartLbCreated',
-            (el, labels, label, data, color) => {
-              const chart = renderSingleBarChart(el, labels, label, data, color);
-              if (chart) {
-                chart.options.onClick = (evt, activeEls) => {
-                  const points = chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
-                  if (points && points.length) {
-                    const idx = points[0].index;
-                    const name = labels[idx];
-                    openLeadInsight(name, filteredRows);
-                  }
-                };
-              }
-              return chart;
-            },
-            updateSingleBarChart,
-            lbAgg.names, 'Created', lbAgg.created, 'rgba(54,162,235,0.6)'
-          );
-
-          chartRefs.lbSent = renderOrUpdateChart(
-            chartRefs.lbSent,
-            'chartLbSent',
-            (el, labels, label, data, color) => {
-              const chart = renderSingleBarChart(el, labels, label, data, color);
-              if (chart) {
-                chart.options.onClick = (evt, activeEls) => {
-                  const points = chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
-                  if (points && points.length) {
-                    const idx = points[0].index;
-                    const name = labels[idx];
-                    openLeadInsight(name, filteredRows);
-                  }
-                };
-              }
-              return chart;
-            },
-            updateSingleBarChart,
-            lbAgg.names, 'Sent Requests', lbAgg.sent, 'rgba(153,102,255,0.6)'
-          );
-
-          chartRefs.lbPositive = renderOrUpdateChart(
-            chartRefs.lbPositive,
-            'chartLbPositive',
-            (el, labels, label, data, color) => {
-              const chart = renderSingleBarChart(el, labels, label, data, color);
-              if (chart) {
-                chart.options.onClick = (evt, activeEls) => {
-                  const points = chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
-                  if (points && points.length) {
-                    const idx = points[0].index;
-                    const name = labels[idx];
-                    openLeadInsight(name, filteredRows);
-                  }
-                };
-              }
-              return chart;
-            },
-            updateSingleBarChart,
-            lbAgg.names, 'Positive Replies', lbAgg.positive, 'rgba(75,192,192,0.6)'
-          );
-
-          chartRefs.lbEvents = renderOrUpdateChart(
-            chartRefs.lbEvents,
-            'chartLbEvents',
-            (el, labels, label, data, color) => {
-              const chart = renderSingleBarChart(el, labels, label, data, color);
-              if (chart) {
-                chart.options.onClick = (evt, activeEls) => {
-                  const points = chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
-                  if (points && points.length) {
-                    const idx = points[0].index;
-                    const name = labels[idx];
-                    openLeadInsight(name, filteredRows);
-                  }
-                };
-              }
-              return chart;
-            },
-            updateSingleBarChart,
-            lbAgg.names, 'Events Created', lbAgg.events, 'rgba(255,206,86,0.6)'
-          );
-        });
-      }
-
-      // Render Source charts (tab-source)
-      function renderSourceCharts(filteredRows) {
-        if (shouldRecalculateAggregations(filteredRows, aggregationCache) || !aggregationCache.source) {
-          const sourceAgg = buildSourceAggregates(filteredRows);
-          aggregationCache.source = sourceAgg;
-          updateAggregationCache(aggregationCache, filteredRows, { source: sourceAgg });
-        }
-        const sourceAgg = aggregationCache.source;
-
-        scheduleChartUpdate(() => {
-          chartRefs.sourceConversionRate = renderOrUpdateChart(
-            chartRefs.sourceConversionRate, 'chartSourceConversionRate', renderConversionRateChart, null,
-            sourceAgg.sources, 'Conversion Rate (%)', sourceAgg.conversionRates, 'rgba(75,192,192,0.6)'
-          );
-          chartRefs.sourceCreatedToSent = renderOrUpdateChart(
-            chartRefs.sourceCreatedToSent, 'chartSourceCreatedToSent', renderPairedBarChart, updatePairedBarChart,
-            sourceAgg.sources, 'Created', sourceAgg.created, 'Sent Requests', sourceAgg.sentRequests
-          );
-          chartRefs.sourceSentToConnected = renderOrUpdateChart(
-            chartRefs.sourceSentToConnected, 'chartSourceSentToConnected', renderPairedBarChart, updatePairedBarChart,
-            sourceAgg.sources, 'Sent Requests', sourceAgg.sentRequests, 'Connected', sourceAgg.connected
-          );
-          chartRefs.sourceConnectedToReplies = renderOrUpdateChart(
-            chartRefs.sourceConnectedToReplies, 'chartSourceConnectedToReplies', renderPairedBarChart, updatePairedBarChart,
-            sourceAgg.sources, 'Connected', sourceAgg.connected, 'Total Replies', sourceAgg.totalReplies
-          );
-          chartRefs.sourceRepliesToPositive = renderOrUpdateChart(
-            chartRefs.sourceRepliesToPositive, 'chartSourceRepliesToPositive', renderPairedBarChart, updatePairedBarChart,
-            sourceAgg.sources, 'Total Replies', sourceAgg.totalReplies, 'Positive Replies', sourceAgg.positiveReplies
-          );
-          chartRefs.sourcePositiveToEvents = renderOrUpdateChart(
-            chartRefs.sourcePositiveToEvents, 'chartSourcePositiveToEvents', renderPairedBarChart, updatePairedBarChart,
-            sourceAgg.sources, 'Positive Replies', sourceAgg.positiveReplies, 'Events', sourceAgg.events
-          );
-        });
-      }
-
-      // Main render function - now with lazy loading
-      function renderAll(filteredRows) {
-        lastFilteredRows = filteredRows;
-        
-        // Only render charts for active tab
-        const activeTab = document.querySelector('.tabpanel.active')?.id;
-        
-        if (activeTab === 'tab-funnel' || !activeTab) {
-          renderFunnelCharts(filteredRows);
-          renderedTabs.funnel = true;
-        }
-        if (activeTab === 'tab-country') {
-          renderCountryCharts(filteredRows);
-          renderedTabs.country = true;
-        }
-        if (activeTab === 'tab-weekly') {
-          renderWeeklyCharts(filteredRows);
-          renderedTabs.weekly = true;
-        }
-        if (activeTab === 'tab-monthly') {
-          renderMonthlyCharts(filteredRows);
-          renderedTabs.monthly = true;
-        }
-        if (activeTab === 'tab-leaderboard') {
-          renderLeaderboardCharts(filteredRows);
-          renderedTabs.leaderboard = true;
-        }
-        if (activeTab === 'tab-source') {
-          renderSourceCharts(filteredRows);
-          renderedTabs.source = true;
-        }
-      }
+      // Chart rendering functions are defined at module level above
 
       // expose re-render for tabs logic
       rerenderAll = renderAll;
