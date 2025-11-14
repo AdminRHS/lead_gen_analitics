@@ -18,6 +18,14 @@ export function getCachedData() {
     const cachedTimestamp = localStorage.getItem(CACHE_KEY_TIMESTAMP);
     const cachedVersion = localStorage.getItem(CACHE_KEY_VERSION);
 
+    console.debug('Cache check: Reading from localStorage', {
+      hasData: !!cachedData,
+      hasTimestamp: !!cachedTimestamp,
+      hasVersion: !!cachedVersion,
+      version: cachedVersion,
+      timestamp: cachedTimestamp
+    });
+
     // Check if cache exists
     if (!cachedData || !cachedTimestamp) {
       console.debug('Cache check: No cached data or timestamp found');
@@ -25,8 +33,14 @@ export function getCachedData() {
     }
 
     // Check cache version compatibility
-    if (cachedVersion !== CACHE_VERSION) {
-      console.warn(`Cache version mismatch (cached: ${cachedVersion}, current: ${CACHE_VERSION}), clearing cache`);
+    // If version is null/undefined, it means old cache format without version - clear it
+    // If version exists but doesn't match, also clear it
+    if (!cachedVersion || cachedVersion !== CACHE_VERSION) {
+      if (cachedVersion) {
+        console.warn(`Cache version mismatch (cached: ${cachedVersion}, current: ${CACHE_VERSION}), clearing cache`);
+      } else {
+        console.warn(`Cache has no version (old format), clearing cache. Current version: ${CACHE_VERSION}`);
+      }
       clearCache();
       return null;
     }
@@ -123,8 +137,24 @@ export function setCachedData(jsonData) {
     localStorage.setItem(CACHE_KEY_VERSION, CACHE_VERSION);
     localStorage.setItem('leadGen_cachedAt', new Date().toISOString());
 
-    console.log('Data cached successfully');
-    return true;
+    // Verify that cache was saved correctly
+    const verifyVersion = localStorage.getItem(CACHE_KEY_VERSION);
+    const verifyData = localStorage.getItem(CACHE_KEY_DATA);
+    if (verifyVersion === CACHE_VERSION && verifyData) {
+      console.log('Data cached successfully', {
+        version: verifyVersion,
+        timestamp: jsonData.last_updated,
+        dataSize: dataString.length
+      });
+      return true;
+    } else {
+      console.error('Cache verification failed', {
+        expectedVersion: CACHE_VERSION,
+        actualVersion: verifyVersion,
+        hasData: !!verifyData
+      });
+      return false;
+    }
   } catch (error) {
     console.error('Error saving to cache:', error);
     
