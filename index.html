@@ -778,6 +778,7 @@
     let lastFilteredRows = [];
     let rerenderAll = null; // will be assigned inside initDashboard
     let currentDayData = null; // для зберігання даних поточного дня для сортування
+    let rows = []; // Store all rows for export functionality
     
     // Aggregation cache for performance optimization
     const aggregationCache = {
@@ -860,6 +861,10 @@
         if (isLocalStorageAvailable()) {
           setCachedData(json);
         }
+        // Ensure rows is initialized before processing
+        if (typeof rows === 'undefined') {
+          rows = [];
+        }
         processDashboardData(json);
         await initializeDashboardWithData(json);
         updateStatusUI(updateEl, json, false);
@@ -892,6 +897,10 @@
             setCachedData(json);
           }
           // Silently update the dashboard if user is still on the page
+          // Ensure rows is initialized before processing
+          if (typeof rows === 'undefined') {
+            rows = [];
+          }
           processDashboardData(json);
           await initializeDashboardWithData(json);
           const updateEl = document.getElementById("update");
@@ -907,7 +916,12 @@
 
     // Process dashboard data (extracted for reuse)
     function processDashboardData(json) {
-      rows = json.data; // Store globally for export
+      if (!json || !json.data) {
+        console.error('Invalid data structure in processDashboardData:', json);
+        return;
+      }
+      
+      rows = json.data || []; // Store globally for export
       
       // Hide any error messages
       const existingError = document.querySelector('.error-message');
@@ -916,6 +930,11 @@
       }
 
       // Precompute min/max dates for controls
+      if (!rows || rows.length === 0) {
+        console.warn('No rows data available in processDashboardData');
+        return;
+      }
+      
       const datesList = rows
         .map(r => parseDdMmYyyyToDate(r.Date))
         .filter(Boolean)
@@ -1436,6 +1455,10 @@
           updateStatusUI(updateEl, json, true);
           
           // Process cached data immediately
+          // Ensure rows is initialized before processing
+          if (typeof rows === 'undefined') {
+            rows = [];
+          }
           processDashboardData(json);
           
           // Start background update check
@@ -1468,6 +1491,10 @@
         }
         
         updateStatusUI(updateEl, json, false);
+        // Ensure rows is initialized before processing
+        if (typeof rows === 'undefined') {
+          rows = [];
+        }
         processDashboardData(json);
         await initializeDashboardWithData(json);
         
@@ -1482,6 +1509,10 @@
             json = cached.data;
             fromCache = true;
             updateStatusUI(updateEl, json, true);
+            // Ensure rows is initialized before processing
+            if (typeof rows === 'undefined') {
+              rows = [];
+            }
             processDashboardData(json);
             await initializeDashboardWithData(json);
             
@@ -2208,7 +2239,13 @@
         const activeTab = document.querySelector('.tabpanel.active')?.id;
         const tabName = activeTab ? activeTab.replace('tab-', '') : 'dashboard';
         
-        // Get filtered rows
+        // Get filtered rows - ensure rows is defined
+        if (typeof rows === 'undefined') {
+          console.error('rows is not defined in exportToExcel');
+          alert('Data not loaded yet. Please wait for data to load.');
+          return;
+        }
+        
         const filteredRows = lastFilteredRows.length > 0 ? lastFilteredRows : (rows || []);
         
         if (!filteredRows || filteredRows.length === 0) {
@@ -2388,7 +2425,13 @@
         doc.text(`Active Tab: ${tabName.charAt(0).toUpperCase() + tabName.slice(1)}`, margin, yPos);
         yPos += 10;
         
-        // Add summary table
+        // Add summary table - ensure rows is defined
+        if (typeof rows === 'undefined') {
+          console.error('rows is not defined in exportToPDF');
+          alert('Data not loaded yet. Please wait for data to load.');
+          return;
+        }
+        
         const filteredRows = lastFilteredRows.length > 0 ? lastFilteredRows : (rows || []);
         if (filteredRows && filteredRows.length > 0) {
           // Calculate totals
