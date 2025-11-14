@@ -657,6 +657,8 @@
       </div>
       <div class="modal-actions">
         <button id="exportDayCsv" class="btn btn-secondary">Export CSV</button>
+        <button id="exportDayExcel" class="btn btn-secondary">📊 Export Excel</button>
+        <button id="exportDayPDF" class="btn btn-secondary">📄 Export PDF</button>
         <button id="doneDay" class="btn btn-primary">Done</button>
       </div>
     </div>
@@ -905,7 +907,7 @@
 
     // Process dashboard data (extracted for reuse)
     function processDashboardData(json) {
-      const rows = json.data;
+      rows = json.data; // Store globally for export
       
       // Hide any error messages
       const existingError = document.querySelector('.error-message');
@@ -1623,6 +1625,263 @@
         URL.revokeObjectURL(url);
       });
 
+      // Export Day Summary to Excel
+      const exportDayExcelBtn = document.getElementById('exportDayExcel');
+      if (exportDayExcelBtn) {
+        exportDayExcelBtn.addEventListener('click', () => {
+          try {
+            if (!window.XLSX) {
+              alert('Excel library not loaded. Please refresh the page.');
+              return;
+            }
+
+            const d = new Date(dayPicker.value);
+            const dataForDay = getRowsForDay(d);
+            
+            if (!dataForDay || dataForDay.length === 0) {
+              alert('No data available for selected day.');
+              return;
+            }
+
+            // Create workbook
+            const wb = XLSX.utils.book_new();
+            
+            // Convert day data to table format
+            const byName = {};
+            for (const r of dataForDay) {
+              const name = r.Name || 'Unknown';
+              if (!byName[name]) {
+                byName[name] = { Created: 0, SentRequests: 0, Connected: 0, PositiveReplies: 0, Events: 0 };
+              }
+              byName[name].Created += Number(r["Created"] || 0);
+              byName[name].SentRequests += Number(r["Sent Requests"] || 0);
+              byName[name].Connected += Number(r["Connected"] || 0);
+              byName[name].PositiveReplies += Number(r["Positive Replies"] || 0);
+              byName[name].Events += Number(r["Events Created"] || 0);
+            }
+
+            // Convert to array format
+            const tableData = Object.keys(byName).map(name => ({
+              Name: name,
+              Created: byName[name].Created,
+              'Sent Requests': byName[name].SentRequests,
+              Connected: byName[name].Connected,
+              'Positive Replies': byName[name].PositiveReplies,
+              Events: byName[name].Events
+            }));
+
+            // Sort by current sort column if available
+            const sortSelect = document.getElementById('sortColumn');
+            const sortCol = sortSelect ? sortSelect.value : 'Created';
+            const sortMap = {
+              'Created': 'Created',
+              'SentRequests': 'Sent Requests',
+              'Connected': 'Connected',
+              'PositiveReplies': 'Positive Replies',
+              'Events': 'Events'
+            };
+            const sortKey = sortMap[sortCol] || 'Created';
+            tableData.sort((a, b) => (b[sortKey] || 0) - (a[sortKey] || 0));
+
+            // Add totals row
+            const totals = tableData.reduce((acc, row) => {
+              acc.Created += row.Created;
+              acc['Sent Requests'] += row['Sent Requests'];
+              acc.Connected += row.Connected;
+              acc['Positive Replies'] += row['Positive Replies'];
+              acc.Events += row.Events;
+              return acc;
+            }, { Created: 0, 'Sent Requests': 0, Connected: 0, 'Positive Replies': 0, Events: 0 });
+            
+            tableData.push({
+              Name: 'TOTAL',
+              Created: totals.Created,
+              'Sent Requests': totals['Sent Requests'],
+              Connected: totals.Connected,
+              'Positive Replies': totals['Positive Replies'],
+              Events: totals.Events
+            });
+
+            const ws = XLSX.utils.json_to_sheet(tableData);
+            XLSX.utils.book_append_sheet(wb, ws, 'Day Summary');
+            
+            // Also add raw data sheet
+            const wsRaw = XLSX.utils.json_to_sheet(dataForDay);
+            XLSX.utils.book_append_sheet(wb, wsRaw, 'Raw Data');
+            
+            const filename = `day-summary-${toIsoDateInputValue(d)}.xlsx`;
+            XLSX.writeFile(wb, filename);
+            
+            console.log('Day Summary Excel export completed:', filename);
+          } catch (error) {
+            console.error('Error exporting day summary to Excel:', error);
+            alert('Error exporting to Excel: ' + error.message);
+          }
+        });
+      }
+
+      // Export Day Summary to PDF
+      const exportDayPDFBtn = document.getElementById('exportDayPDF');
+      if (exportDayPDFBtn) {
+        exportDayPDFBtn.addEventListener('click', async () => {
+          try {
+            if (!window.jspdf) {
+              alert('PDF library not loaded. Please refresh the page.');
+              return;
+            }
+
+            const { jsPDF } = window.jspdf;
+            const d = new Date(dayPicker.value);
+            const dataForDay = getRowsForDay(d);
+            
+            if (!dataForDay || dataForDay.length === 0) {
+              alert('No data available for selected day.');
+              return;
+            }
+
+            const doc = new jsPDF('portrait', 'mm', 'a4');
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
+            let yPos = 20;
+            const margin = 15;
+            const lineHeight = 7;
+            
+            // Title
+            doc.setFontSize(20);
+            doc.text('Day Summary', margin, yPos);
+            yPos += 10;
+            
+            // Date
+            doc.setFontSize(12);
+            doc.text(`Date: ${toIsoDateInputValue(d)}`, margin, yPos);
+            yPos += 10;
+            
+            // Export date
+            doc.setFontSize(10);
+            doc.text(`Exported: ${new Date().toLocaleString('uk-UA')}`, margin, yPos);
+            yPos += 15;
+            
+            // Build table data
+            const byName = {};
+            for (const r of dataForDay) {
+              const name = r.Name || 'Unknown';
+              if (!byName[name]) {
+                byName[name] = { Created: 0, SentRequests: 0, Connected: 0, PositiveReplies: 0, Events: 0 };
+              }
+              byName[name].Created += Number(r["Created"] || 0);
+              byName[name].SentRequests += Number(r["Sent Requests"] || 0);
+              byName[name].Connected += Number(r["Connected"] || 0);
+              byName[name].PositiveReplies += Number(r["Positive Replies"] || 0);
+              byName[name].Events += Number(r["Events Created"] || 0);
+            }
+
+            // Sort by current sort column
+            const sortSelect = document.getElementById('sortColumn');
+            const sortCol = sortSelect ? sortSelect.value : 'Created';
+            const sortMap = {
+              'Created': 'Created',
+              'SentRequests': 'Sent Requests',
+              'Connected': 'Connected',
+              'PositiveReplies': 'Positive Replies',
+              'Events': 'Events'
+            };
+            const sortKey = sortMap[sortCol] || 'Created';
+            const sortedNames = Object.keys(byName).sort((a, b) => {
+              const valueA = byName[a][sortKey] || 0;
+              const valueB = byName[b][sortKey] || 0;
+              return valueB - valueA;
+            });
+
+            // Table header
+            doc.setFontSize(12);
+            doc.setFontStyle('bold');
+            doc.text('Summary by Name', margin, yPos);
+            yPos += 10;
+            
+            // Table columns
+            const colWidths = [50, 30, 35, 30, 35, 25];
+            const headers = ['Name', 'Created', 'Sent Req', 'Connected', 'Pos Replies', 'Events'];
+            let xPos = margin;
+            
+            doc.setFontSize(9);
+            headers.forEach((header, idx) => {
+              doc.text(header, xPos, yPos);
+              xPos += colWidths[idx];
+            });
+            yPos += lineHeight + 2;
+            
+            // Table rows
+            doc.setFontStyle('normal');
+            let totals = { Created: 0, SentRequests: 0, Connected: 0, PositiveReplies: 0, Events: 0 };
+            
+            sortedNames.forEach(name => {
+              if (yPos > pageHeight - 20) {
+                doc.addPage();
+                yPos = 20;
+                // Redraw headers
+                xPos = margin;
+                doc.setFontStyle('bold');
+                headers.forEach((header, idx) => {
+                  doc.text(header, xPos, yPos);
+                  xPos += colWidths[idx];
+                });
+                yPos += lineHeight + 2;
+                doc.setFontStyle('normal');
+              }
+              
+              const row = byName[name];
+              totals.Created += row.Created;
+              totals.SentRequests += row.SentRequests;
+              totals.Connected += row.Connected;
+              totals.PositiveReplies += row.PositiveReplies;
+              totals.Events += row.Events;
+              
+              xPos = margin;
+              doc.text(name.substring(0, 20), xPos, yPos);
+              xPos += colWidths[0];
+              doc.text(row.Created.toString(), xPos, yPos, { align: 'right' });
+              xPos += colWidths[1];
+              doc.text(row.SentRequests.toString(), xPos, yPos, { align: 'right' });
+              xPos += colWidths[2];
+              doc.text(row.Connected.toString(), xPos, yPos, { align: 'right' });
+              xPos += colWidths[3];
+              doc.text(row.PositiveReplies.toString(), xPos, yPos, { align: 'right' });
+              xPos += colWidths[4];
+              doc.text(row.Events.toString(), xPos, yPos, { align: 'right' });
+              yPos += lineHeight;
+            });
+            
+            // Totals row
+            if (yPos > pageHeight - 20) {
+              doc.addPage();
+              yPos = 20;
+            }
+            yPos += 3;
+            doc.setFontStyle('bold');
+            xPos = margin;
+            doc.text('TOTAL', xPos, yPos);
+            xPos += colWidths[0];
+            doc.text(totals.Created.toString(), xPos, yPos, { align: 'right' });
+            xPos += colWidths[1];
+            doc.text(totals.SentRequests.toString(), xPos, yPos, { align: 'right' });
+            xPos += colWidths[2];
+            doc.text(totals.Connected.toString(), xPos, yPos, { align: 'right' });
+            xPos += colWidths[3];
+            doc.text(totals.PositiveReplies.toString(), xPos, yPos, { align: 'right' });
+            xPos += colWidths[4];
+            doc.text(totals.Events.toString(), xPos, yPos, { align: 'right' });
+            
+            const filename = `day-summary-${toIsoDateInputValue(d)}.pdf`;
+            doc.save(filename);
+            
+            console.log('Day Summary PDF export completed:', filename);
+          } catch (error) {
+            console.error('Error exporting day summary to PDF:', error);
+            alert('Error exporting to PDF: ' + error.message);
+          }
+        });
+      }
+
       // use shared chartRefs/lastFilteredRows declared above
 
       // All aggregation functions are now imported from './aggregates.js'
@@ -1634,6 +1893,11 @@
       window._rerenderAll = renderAll;
 
       function applyCurrentFilter() {
+        if (!rows || rows.length === 0) {
+          alert('No data available. Please wait for data to load.');
+          return;
+        }
+        
         const from = new Date(document.getElementById('fromDate').value);
         const to = new Date(document.getElementById('toDate').value);
         // normalize times
