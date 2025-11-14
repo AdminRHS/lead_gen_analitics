@@ -29,6 +29,10 @@ export function renderPairedBarChart(
       responsive: true,
       maintainAspectRatio: false,
       animation: false,
+      interaction: {
+        intersect: false,
+        mode: 'index'
+      },
       scales: { y: { beginAtZero: true } }
     }
   });
@@ -57,6 +61,10 @@ export function renderSingleBarChart(
       responsive: true,
       maintainAspectRatio: false,
       animation: false,
+      interaction: {
+        intersect: false,
+        mode: 'index'
+      },
       scales: { y: { beginAtZero: true } }
     }
   });
@@ -108,7 +116,14 @@ export function renderConversionRateChart(
               return context.dataset.label + ': ' + context.parsed.y.toFixed(2) + '%';
             }
           }
+        },
+        legend: {
+          display: false
         }
+      },
+      interaction: {
+        intersect: false,
+        mode: 'index'
       }
     }
   });
