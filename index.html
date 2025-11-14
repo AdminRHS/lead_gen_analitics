@@ -96,9 +96,32 @@
       font-weight: 600;
     }
     .tab.active { background: #fff; color: #111; box-shadow: 0 -2px 8px rgba(0,0,0,0.04); }
-    .tabpanels { max-width: 1240px; margin: 0 auto; }
-    .tabpanel { display: none; }
-    .tabpanel.active { display: block; }
+    .tabpanels { 
+      max-width: 1240px; 
+      margin: 0 auto; 
+      position: relative;
+    }
+    .tabpanel { 
+      display: block;
+      opacity: 0;
+      transform: translateY(20px);
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s ease;
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      width: 100%;
+    }
+    .tabpanel.active { 
+      opacity: 1;
+      transform: translateY(0);
+      visibility: visible;
+      pointer-events: auto;
+      position: relative;
+      z-index: 1;
+    }
     .controls-left,
     .controls-right {
       display: flex;
@@ -157,13 +180,15 @@
     .modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.4);
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(2px);
       display: none;
       align-items: flex-start;
       justify-content: center;
       z-index: 1000;
       overflow-y: auto;
       padding: 20px;
+      transition: background 0.2s ease, backdrop-filter 0.2s ease;
     }
     .modal {
       width: min(900px, 92vw);
@@ -673,8 +698,14 @@
       doneLeadBtn.addEventListener('click', closeLeadModal);
       leadOverlay.addEventListener('click', (e) => { if (e.target === leadOverlay) closeLeadModal(); });
 
-      function openModal() { overlay.style.display = 'flex'; }
-      function closeModal() { overlay.style.display = 'none'; }
+      function openModal() { 
+        overlay.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+      }
+      function closeModal() { 
+        overlay.style.display = 'none';
+        document.body.style.overflow = '';
+      }
       openBtn.addEventListener('click', () => {
         dayPicker.value = toIsoDateInputValue(maxDate);
         renderDaySummary(new Date(dayPicker.value));
@@ -1590,15 +1621,34 @@
       }
 
       function activate(targetBtn) {
+        // Find current active panel
+        const currentActivePanel = tabs.find(({panel}) => panel.classList.contains('active'))?.panel;
+        const newPanel = tabs.find(({btn}) => btn === targetBtn)?.panel;
+        
+        // If clicking the same tab, do nothing
+        if (currentActivePanel === newPanel) return;
+        
+        // Remove active from all tabs and panels (start fade out animation)
         tabs.forEach(({btn, panel}) => {
           const active = btn === targetBtn;
           btn.classList.toggle('active', active);
           btn.setAttribute('aria-selected', active ? 'true' : 'false');
-          panel.classList.toggle('active', active);
+          if (panel === currentActivePanel) {
+            // Start fade out animation for previous panel
+            panel.classList.remove('active');
+          }
         });
+        
+        // After a brief delay, activate new panel (start fade in animation)
+        setTimeout(() => {
+          if (newPanel) {
+            newPanel.classList.add('active');
+          }
+        }, 50);
+        
         // After DOM visibility change, trigger chart resize for the newly active panel
         const panelId = targetBtn.getAttribute('aria-controls');
-        // Always rebuild after activating a tab to ensure charts mount into visible containers
+        // Wait for animation to complete before resizing charts
         setTimeout(() => {
           if (typeof rerenderAll === 'function' && Array.isArray(lastFilteredRows) && lastFilteredRows.length) {
             rerenderAll(lastFilteredRows);
@@ -1606,7 +1656,7 @@
             window._rerenderAll(lastFilteredRows);
           }
           resizeChartsFor(panelId);
-        }, 80);
+        }, 350); // Wait for animation to complete (300ms + 50ms buffer)
       }
       tabs.forEach(({btn}) => btn.addEventListener('click', () => activate(btn)));
     }
