@@ -5,12 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Lead Generation Dashboard</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script type="module" src="./charts.js"></script>
   <style>
+    * {
+      box-sizing: border-box;
+    }
     body {
       font-family: "Segoe UI", sans-serif;
       background: #fafafa;
-      margin: 30px;
+      margin: 0;
+      padding: 20px;
     }
     h1 {
       text-align: center;
@@ -260,11 +267,130 @@
       max-width: 1200px;
       margin: 0 auto;
     }
+    /* Responsive Design */
     @media (max-width: 1200px) {
-      .dashboard-grid { grid-template-columns: repeat(2, minmax(420px, 1fr)); }
+      .dashboard-grid { 
+        grid-template-columns: repeat(2, minmax(420px, 1fr)); 
+      }
+      body {
+        padding: 16px;
+      }
     }
     @media (max-width: 900px) {
-      .dashboard-grid { grid-template-columns: 1fr; }
+      .dashboard-grid { 
+        grid-template-columns: 1fr; 
+        gap: 16px;
+      }
+      .chart-card canvas {
+        height: 300px !important;
+      }
+      .controls {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .controls-left,
+      .controls-right {
+        width: 100%;
+        justify-content: space-between;
+      }
+      .tabs {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+      }
+      .tabs::-webkit-scrollbar {
+        height: 4px;
+      }
+      .tab {
+        white-space: nowrap;
+        font-size: 13px;
+        padding: 8px 12px;
+      }
+      body {
+        padding: 12px;
+      }
+      h1 {
+        font-size: 24px;
+        margin-bottom: 16px;
+      }
+    }
+    @media (max-width: 600px) {
+      .dashboard-grid {
+        gap: 12px;
+      }
+      .chart-card {
+        padding: 12px;
+      }
+      .chart-card canvas {
+        height: 250px !important;
+      }
+      .chart-card h3 {
+        font-size: 14px;
+        margin-bottom: 8px;
+      }
+      .controls {
+        padding: 12px;
+        gap: 12px;
+      }
+      .field {
+        flex: 1;
+        min-width: 0;
+      }
+      .input {
+        font-size: 14px;
+        padding: 8px 10px;
+      }
+      .btn {
+        padding: 8px 12px;
+        font-size: 13px;
+      }
+      .tabs {
+        gap: 4px;
+      }
+      .tab {
+        padding: 6px 10px;
+        font-size: 12px;
+      }
+      .modal {
+        width: 95vw;
+        max-height: calc(100vh - 20px);
+      }
+      .modal-body {
+        padding: 12px;
+      }
+      .summary-table {
+        font-size: 12px;
+      }
+      .summary-table th,
+      .summary-table td {
+        padding: 6px 8px;
+      }
+      body {
+        padding: 8px;
+      }
+      h1 {
+        font-size: 20px;
+      }
+      #update {
+        font-size: 13px;
+        margin-bottom: 20px;
+      }
+    }
+    @media (max-width: 400px) {
+      .chart-card canvas {
+        height: 200px !important;
+      }
+      .controls-left,
+      .controls-right {
+        flex-direction: column;
+        gap: 8px;
+      }
+      .field {
+        width: 100%;
+      }
+      .btn {
+        width: 100%;
+      }
     }
     .dashboard-grid .chart-card {
       background: #fff;
@@ -325,6 +451,8 @@
     </div>
     <div class="controls-right">
       <button id="openDaySummary" class="btn btn-secondary">Day Summary</button>
+      <button id="exportExcel" class="btn btn-secondary">📊 Export Excel</button>
+      <button id="exportPDF" class="btn btn-secondary">📄 Export PDF</button>
       <button id="applyFilter" class="btn btn-primary">Apply</button>
       <button id="resetFilter" class="btn btn-secondary">Reset</button>
     </div>
@@ -1396,7 +1524,7 @@
 
     // Initialize dashboard components with data
     async function initializeDashboardWithData(json) {
-      const rows = json.data;
+      rows = json.data; // Store globally for export
 
       // Modal wiring
       const overlay = document.getElementById('dayModalOverlay');
@@ -1805,8 +1933,344 @@
       }
     })();
 
+    // Export functions
+    function exportToExcel() {
+      try {
+        if (!window.XLSX) {
+          alert('Excel library not loaded. Please refresh the page.');
+          return;
+        }
+
+        const activeTab = document.querySelector('.tabpanel.active')?.id;
+        const tabName = activeTab ? activeTab.replace('tab-', '') : 'dashboard';
+        
+        // Get filtered rows
+        const filteredRows = lastFilteredRows.length > 0 ? lastFilteredRows : (rows || []);
+        
+        if (!filteredRows || filteredRows.length === 0) {
+          alert('No data available to export. Please wait for data to load.');
+          return;
+        }
+
+        // Create workbook
+        const wb = XLSX.utils.book_new();
+        
+        // Main data sheet
+        const wsData = XLSX.utils.json_to_sheet(filteredRows);
+        XLSX.utils.book_append_sheet(wb, wsData, 'Data');
+        
+        // Add aggregated data sheets based on active tab
+        if (aggregationCache.funnel) {
+          const funnelData = [];
+          const agg = aggregationCache.funnel;
+          for (let i = 0; i < agg.dates.length; i++) {
+            funnelData.push({
+              Date: agg.dates[i],
+              Created: agg.created[i],
+              'Sent Requests': agg.sent[i],
+              Connected: agg.connected[i],
+              Replies: agg.replies[i],
+              'Positive Replies': agg.positive[i],
+              Events: agg.events[i]
+            });
+          }
+          const wsFunnel = XLSX.utils.json_to_sheet(funnelData);
+          XLSX.utils.book_append_sheet(wb, wsFunnel, 'Funnel');
+        }
+        
+        if (aggregationCache.country) {
+          const countryData = [];
+          const agg = aggregationCache.country;
+          for (let i = 0; i < agg.countries.length; i++) {
+            countryData.push({
+              Country: agg.countries[i],
+              Created: agg.created[i],
+              'Sent Requests': agg.sent[i],
+              Connected: agg.connected[i],
+              Replies: agg.replies[i],
+              'Positive Replies': agg.positive[i],
+              Events: agg.events[i],
+              'Conversion Rate %': agg.conversionRates[i]
+            });
+          }
+          const wsCountry = XLSX.utils.json_to_sheet(countryData);
+          XLSX.utils.book_append_sheet(wb, wsCountry, 'Countries');
+        }
+        
+        if (aggregationCache.weekly) {
+          const weekData = [];
+          const agg = aggregationCache.weekly;
+          for (let i = 0; i < agg.weeks.length; i++) {
+            weekData.push({
+              Week: agg.weeks[i],
+              Created: agg.created[i],
+              'Sent Requests': agg.sent[i],
+              Connected: agg.connected[i],
+              Replies: agg.replies[i],
+              'Positive Replies': agg.positive[i],
+              Events: agg.events[i]
+            });
+          }
+          const wsWeek = XLSX.utils.json_to_sheet(weekData);
+          XLSX.utils.book_append_sheet(wb, wsWeek, 'Weekly');
+        }
+        
+        if (aggregationCache.monthly) {
+          const monthData = [];
+          const agg = aggregationCache.monthly;
+          for (let i = 0; i < agg.months.length; i++) {
+            monthData.push({
+              Month: agg.months[i],
+              Created: agg.created[i],
+              'Sent Requests': agg.sent[i],
+              Connected: agg.connected[i],
+              Replies: agg.replies[i],
+              'Positive Replies': agg.positive[i],
+              Events: agg.events[i],
+              'Conversion Rate %': agg.conversionRates[i]
+            });
+          }
+          const wsMonth = XLSX.utils.json_to_sheet(monthData);
+          XLSX.utils.book_append_sheet(wb, wsMonth, 'Monthly');
+        }
+        
+        if (aggregationCache.leaderboard) {
+          const lbData = [];
+          const agg = aggregationCache.leaderboard;
+          for (let i = 0; i < agg.names.length; i++) {
+            lbData.push({
+              Name: agg.names[i],
+              Created: agg.created[i],
+              'Sent Requests': agg.sent[i],
+              'Positive Replies': agg.positive[i],
+              Events: agg.events[i],
+              'Conversion Rate %': agg.conversionRates[i]
+            });
+          }
+          const wsLb = XLSX.utils.json_to_sheet(lbData);
+          XLSX.utils.book_append_sheet(wb, wsLb, 'Leaderboard');
+        }
+        
+        if (aggregationCache.source) {
+          const sourceData = [];
+          const agg = aggregationCache.source;
+          for (let i = 0; i < agg.sources.length; i++) {
+            sourceData.push({
+              Source: agg.sources[i],
+              Created: agg.created[i],
+              'Sent Requests': agg.sentRequests[i],
+              Connected: agg.connected[i],
+              'Total Replies': agg.totalReplies[i],
+              'Positive Replies': agg.positiveReplies[i],
+              Events: agg.events[i],
+              'Conversion Rate %': agg.conversionRates[i]
+            });
+          }
+          const wsSource = XLSX.utils.json_to_sheet(sourceData);
+          XLSX.utils.book_append_sheet(wb, wsSource, 'Source');
+        }
+        
+        // Generate filename with date
+        const dateStr = new Date().toISOString().split('T')[0];
+        const filename = `lead-gen-dashboard-${dateStr}.xlsx`;
+        
+        // Write file
+        XLSX.writeFile(wb, filename);
+        
+        console.log('Excel export completed:', filename);
+      } catch (error) {
+        console.error('Error exporting to Excel:', error);
+        alert('Error exporting to Excel: ' + error.message);
+      }
+    }
+
+    async function exportToPDF() {
+      try {
+        if (!window.jspdf) {
+          alert('PDF library not loaded. Please refresh the page.');
+          return;
+        }
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('landscape', 'mm', 'a4');
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        let yPos = 20;
+        const margin = 15;
+        const lineHeight = 7;
+        
+        // Title
+        doc.setFontSize(20);
+        doc.text('Lead Generation Dashboard', margin, yPos);
+        yPos += 10;
+        
+        // Date range
+        const fromDate = document.getElementById('fromDate')?.value || 'N/A';
+        const toDate = document.getElementById('toDate')?.value || 'N/A';
+        doc.setFontSize(12);
+        doc.text(`Date Range: ${fromDate} to ${toDate}`, margin, yPos);
+        yPos += 10;
+        
+        // Export date
+        doc.setFontSize(10);
+        doc.text(`Exported: ${new Date().toLocaleString('uk-UA')}`, margin, yPos);
+        yPos += 15;
+        
+        // Get active tab data
+        const activeTab = document.querySelector('.tabpanel.active')?.id;
+        const tabName = activeTab ? activeTab.replace('tab-', '').replace('-', ' ') : 'dashboard';
+        
+        doc.setFontSize(14);
+        doc.text(`Active Tab: ${tabName.charAt(0).toUpperCase() + tabName.slice(1)}`, margin, yPos);
+        yPos += 10;
+        
+        // Add summary table
+        const filteredRows = lastFilteredRows.length > 0 ? lastFilteredRows : (rows || []);
+        if (filteredRows && filteredRows.length > 0) {
+          // Calculate totals
+          const totals = {
+            Created: 0,
+            'Sent Requests': 0,
+            Connected: 0,
+            'Total replies': 0,
+            'Positive Replies': 0,
+            'Events Created': 0
+          };
+          
+          filteredRows.forEach(row => {
+            totals.Created += Number(row['Created'] || 0);
+            totals['Sent Requests'] += Number(row['Sent Requests'] || 0);
+            totals.Connected += Number(row['Connected'] || 0);
+            totals['Total replies'] += Number(row['Total replies'] || 0);
+            totals['Positive Replies'] += Number(row['Positive Replies'] || 0);
+            totals['Events Created'] += Number(row['Events Created'] || 0);
+          });
+          
+          // Create summary table
+          const tableData = [
+            ['Metric', 'Total'],
+            ['Created', totals.Created.toString()],
+            ['Sent Requests', totals['Sent Requests'].toString()],
+            ['Connected', totals.Connected.toString()],
+            ['Total Replies', totals['Total replies'].toString()],
+            ['Positive Replies', totals['Positive Replies'].toString()],
+            ['Events Created', totals['Events Created'].toString()]
+          ];
+          
+          doc.setFontSize(12);
+          doc.text('Summary Totals', margin, yPos);
+          yPos += 8;
+          
+          // Simple table
+          doc.setFontSize(10);
+          let startX = margin;
+          const colWidth = (pageWidth - 2 * margin) / 2;
+          
+          tableData.forEach((row, idx) => {
+            if (yPos > pageHeight - 20) {
+              doc.addPage();
+              yPos = 20;
+            }
+            
+            doc.setFontStyle(idx === 0 ? 'bold' : 'normal');
+            doc.text(row[0], startX, yPos);
+            doc.text(row[1], startX + colWidth, yPos, { align: 'right' });
+            yPos += lineHeight;
+          });
+          
+          yPos += 10;
+        }
+        
+        // Add aggregated data based on active tab
+        if (activeTab === 'tab-country' && aggregationCache.country) {
+          if (yPos > pageHeight - 30) {
+            doc.addPage();
+            yPos = 20;
+          }
+          
+          doc.setFontSize(12);
+          doc.setFontStyle('bold');
+          doc.text('Top Countries', margin, yPos);
+          yPos += 8;
+          
+          const agg = aggregationCache.country;
+          doc.setFontSize(9);
+          doc.setFontStyle('normal');
+          
+          // Show top 10
+          const topCount = Math.min(10, agg.countries.length);
+          for (let i = 0; i < topCount; i++) {
+            if (yPos > pageHeight - 15) {
+              doc.addPage();
+              yPos = 20;
+            }
+            
+            const text = `${i + 1}. ${agg.countries[i]}: ${agg.events[i]} Events (${agg.conversionRates[i].toFixed(2)}% CR)`;
+            doc.text(text, margin, yPos);
+            yPos += lineHeight;
+          }
+        }
+        
+        if (activeTab === 'tab-leaderboard' && aggregationCache.leaderboard) {
+          if (yPos > pageHeight - 30) {
+            doc.addPage();
+            yPos = 20;
+          }
+          
+          doc.setFontSize(12);
+          doc.setFontStyle('bold');
+          doc.text('Top Lead Generators', margin, yPos);
+          yPos += 8;
+          
+          const agg = aggregationCache.leaderboard;
+          doc.setFontSize(9);
+          doc.setFontStyle('normal');
+          
+          // Show top 10
+          const topCount = Math.min(10, agg.names.length);
+          for (let i = 0; i < topCount; i++) {
+            if (yPos > pageHeight - 15) {
+              doc.addPage();
+              yPos = 20;
+            }
+            
+            const text = `${i + 1}. ${agg.names[i]}: ${agg.events[i]} Events (${agg.conversionRates[i].toFixed(2)}% CR)`;
+            doc.text(text, margin, yPos);
+            yPos += lineHeight;
+          }
+        }
+        
+        // Generate filename
+        const dateStr = new Date().toISOString().split('T')[0];
+        const filename = `lead-gen-dashboard-${dateStr}.pdf`;
+        
+        // Save PDF
+        doc.save(filename);
+        
+        console.log('PDF export completed:', filename);
+      } catch (error) {
+        console.error('Error exporting to PDF:', error);
+        alert('Error exporting to PDF: ' + error.message);
+      }
+    }
+
+    // Initialize export buttons
+    function initExportButtons() {
+      const exportExcelBtn = document.getElementById('exportExcel');
+      const exportPDFBtn = document.getElementById('exportPDF');
+      
+      if (exportExcelBtn) {
+        exportExcelBtn.addEventListener('click', exportToExcel);
+      }
+      
+      if (exportPDFBtn) {
+        exportPDFBtn.addEventListener('click', exportToPDF);
+      }
+    }
+
     initTabs();
     initDashboard();
+    initExportButtons();
 
     // ===== Country Insight helpers =====
     function aggregateCountrySummary(countryName, rows, fromDate, toDate) {
