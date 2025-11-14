@@ -21,6 +21,39 @@
       color: gray;
       margin-bottom: 40px;
     }
+    /* Loading spinner */
+    .spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(0,0,0,0.1);
+      border-radius: 50%;
+      border-top-color: #336dff;
+      animation: spin 0.8s linear infinite;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .error-message {
+      color: #d32f2f;
+      background: #ffebee;
+      padding: 12px 16px;
+      border-radius: 8px;
+      border: 1px solid #ffcdd2;
+      margin: 20px auto;
+      max-width: 600px;
+    }
+    .error-message::before {
+      content: "⚠️ ";
+      margin-right: 4px;
+    }
+    .loading-container {
+      text-align: center;
+      padding: 40px;
+      color: #666;
+    }
     .chart-container {
       max-width: 900px;
       margin: 40px auto;
@@ -507,6 +540,43 @@
       return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}`;
     }
 
+    // Data validation function
+    function validateData(json) {
+      if (!json || typeof json !== 'object') {
+        throw new Error('Invalid data format: expected object');
+      }
+      
+      if (!json.hasOwnProperty('data')) {
+        throw new Error('Invalid data format: missing "data" property');
+      }
+      
+      if (!Array.isArray(json.data)) {
+        throw new Error('Invalid data format: "data" must be an array');
+      }
+      
+      if (json.data.length === 0) {
+        console.warn('Warning: data array is empty');
+        return true; // Empty data is valid, just warn
+      }
+      
+      // Validate first few records have expected structure
+      const sampleSize = Math.min(5, json.data.length);
+      const requiredFields = ['Date', 'Name', 'Country'];
+      for (let i = 0; i < sampleSize; i++) {
+        const record = json.data[i];
+        if (!record || typeof record !== 'object') {
+          throw new Error(`Invalid record at index ${i}: expected object`);
+        }
+        for (const field of requiredFields) {
+          if (!record.hasOwnProperty(field)) {
+            console.warn(`Warning: record at index ${i} missing field "${field}"`);
+          }
+        }
+      }
+      
+      return true;
+    }
+
     // Shared state across tabs/renderers
     let chartRefs = {
       createdFound: null,
@@ -561,11 +631,39 @@
     let currentDayData = null; // для зберігання даних поточного дня для сортування
 
     async function initDashboard() {
-      const res = await fetch("data.json");
-      const json = await res.json();
-      const rows = json.data;
-      document.getElementById("update").textContent =
-        "Last updated: " + json.last_updated;
+      const updateEl = document.getElementById("update");
+      
+      // Show loading state
+      updateEl.innerHTML = '<span class="spinner"></span>Завантаження даних...';
+      
+      try {
+        // Fetch data with error handling
+        const res = await fetch("data.json");
+        
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status} ${res.statusText}`);
+        }
+        
+        let json;
+        try {
+          json = await res.json();
+        } catch (parseError) {
+          throw new Error(`Failed to parse JSON: ${parseError.message}`);
+        }
+        
+        // Validate data structure
+        validateData(json);
+        
+        const rows = json.data;
+        
+        // Update status message
+        updateEl.textContent = "Last updated: " + (json.last_updated || 'Unknown');
+        
+        // Hide any error messages
+        const existingError = document.querySelector('.error-message');
+        if (existingError) {
+          existingError.remove();
+        }
 
       // Precompute min/max dates for controls
       const datesList = rows
@@ -1480,6 +1578,34 @@
           csv += `${name},${r.Created},${r.SentRequests},${r.Connected},${r.PositiveReplies},${r.Events}\n`;
         }
         return csv;
+      }
+      
+      } catch (error) {
+        // Handle errors gracefully
+        console.error('Error initializing dashboard:', error);
+        
+        // Show error message to user
+        updateEl.innerHTML = '';
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'error-message';
+        errorDiv.innerHTML = `
+          <strong>Помилка завантаження даних</strong><br>
+          ${error.message}<br>
+          <small>Перевірте консоль браузера для деталей. Спробуйте оновити сторінку.</small>
+        `;
+        document.body.insertBefore(errorDiv, document.querySelector('.controls'));
+        
+        // Hide controls and tabs on error
+        const controls = document.querySelector('.controls');
+        const tabs = document.querySelector('.tabs');
+        const tabpanels = document.querySelector('.tabpanels');
+        if (controls) controls.style.display = 'none';
+        if (tabs) tabs.style.display = 'none';
+        if (tabpanels) tabpanels.style.display = 'none';
+        
+        // Update status
+        updateEl.textContent = '❌ Помилка завантаження';
+        updateEl.style.color = '#d32f2f';
       }
     }
 
