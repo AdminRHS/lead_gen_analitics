@@ -100,29 +100,18 @@
       max-width: 1240px; 
       margin: 0 auto; 
       position: relative;
+      min-height: 400px; /* Додайте мінімальну висоту */
     }
     .tabpanel { 
-      display: block;
+      display: none; /* Замість absolute - просто ховаємо */
       opacity: 0;
       transform: translateY(20px);
-      visibility: hidden;
-      pointer-events: none;
-      transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s ease;
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      width: 100%;
-      will-change: opacity, transform;
+      transition: opacity 0.3s ease, transform 0.3s ease;
     }
     .tabpanel.active { 
+      display: block; /* Показуємо тільки активну */
       opacity: 1;
       transform: translateY(0);
-      visibility: visible;
-      pointer-events: auto;
-      position: relative;
-      z-index: 1;
-      will-change: auto;
     }
     .controls-left,
     .controls-right {
@@ -1623,62 +1612,54 @@
       }
 
       function activate(targetBtn) {
-        // Find current active panel
         const currentActivePanel = tabs.find(({panel}) => panel.classList.contains('active'))?.panel;
         const newPanel = tabs.find(({btn}) => btn === targetBtn)?.panel;
         
-        // If clicking the same tab, do nothing
         if (currentActivePanel === newPanel) return;
         
-        // Remove active from all tabs and panels (start fade out animation)
-        tabs.forEach(({btn, panel}) => {
+        // Оновлюємо кнопки
+        tabs.forEach(({btn}) => {
           const active = btn === targetBtn;
           btn.classList.toggle('active', active);
           btn.setAttribute('aria-selected', active ? 'true' : 'false');
-          if (panel === currentActivePanel) {
-            // Start fade out animation for previous panel
-            panel.classList.remove('active');
-          } else if (panel !== newPanel) {
-            // Ensure other panels are hidden immediately
-            panel.classList.remove('active');
-            panel.style.opacity = '0';
-            panel.style.transform = 'translateY(20px)';
-            panel.style.visibility = 'hidden';
-          }
         });
         
-        // After a brief delay, activate new panel (start fade in animation)
-        setTimeout(() => {
-          if (newPanel) {
-            // Reset styles before adding active class
-            newPanel.style.opacity = '';
-            newPanel.style.transform = '';
-            newPanel.style.visibility = '';
-            newPanel.classList.add('active');
-          }
-        }, 50);
-        
-        // After DOM visibility change, trigger chart resize for the newly active panel
-        const panelId = targetBtn.getAttribute('aria-controls');
-        // Wait for animation to complete before resizing charts
-        setTimeout(() => {
-          // Ensure all non-active panels are completely hidden
-          tabs.forEach(({panel}) => {
-            if (!panel.classList.contains('active')) {
-              panel.style.opacity = '0';
-              panel.style.transform = 'translateY(20px)';
-              panel.style.visibility = 'hidden';
-              panel.style.pointerEvents = 'none';
-            }
-          });
+        // Якщо є попередня панель - fade out
+        if (currentActivePanel) {
+          currentActivePanel.style.opacity = '0';
+          currentActivePanel.style.transform = 'translateY(20px)';
           
+          setTimeout(() => {
+            currentActivePanel.classList.remove('active');
+            // Fade in нової панелі
+            if (newPanel) {
+              newPanel.classList.add('active');
+              // Даємо браузеру час на рендер display:block
+              requestAnimationFrame(() => {
+                newPanel.style.opacity = '1';
+                newPanel.style.transform = 'translateY(0)';
+              });
+            }
+          }, 300); // Чекаємо завершення fade out
+        } else {
+          // Немає попередньої панелі - просто показуємо нову
+          if (newPanel) {
+            newPanel.classList.add('active');
+            requestAnimationFrame(() => {
+              newPanel.style.opacity = '1';
+              newPanel.style.transform = 'translateY(0)';
+            });
+          }
+        }
+        
+        // Resize charts після завершення анімації
+        setTimeout(() => {
+          const panelId = targetBtn.getAttribute('aria-controls');
           if (typeof rerenderAll === 'function' && Array.isArray(lastFilteredRows) && lastFilteredRows.length) {
             rerenderAll(lastFilteredRows);
-          } else if (window._rerenderAll && Array.isArray(lastFilteredRows) && lastFilteredRows.length) {
-            window._rerenderAll(lastFilteredRows);
           }
           resizeChartsFor(panelId);
-        }, 350); // Wait for animation to complete (300ms + 50ms buffer)
+        }, 350);
       }
       tabs.forEach(({btn}) => btn.addEventListener('click', () => activate(btn)));
     }
