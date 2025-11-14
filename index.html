@@ -20,6 +20,45 @@
       text-align: center;
       color: gray;
       margin-bottom: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .cache-indicator {
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      background: #e3f2fd;
+      color: #1976d2;
+      border: 1px solid #90caf9;
+    }
+    .cache-indicator.server {
+      background: #f3e5f5;
+      color: #7b1fa2;
+      border-color: #ce93d8;
+    }
+    .refresh-btn {
+      padding: 4px 12px;
+      font-size: 12px;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+      background: #fff;
+      color: #333;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .refresh-btn:hover {
+      background: #f5f5f5;
+      border-color: #bbb;
+    }
+    .refresh-btn:active {
+      transform: scale(0.98);
+    }
+    .refresh-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
     }
     /* Loading spinner */
     .spinner {
@@ -545,6 +584,7 @@
     import { renderPairedBarChart, renderSingleBarChart, renderConversionRateChart } from './charts.js';
     import { parseDdMmYyyyToDate, toIsoDateInputValue, validateData, destroyIfExists, getIsoWeekInfo } from './utils.js';
     import { buildAggregates, buildCountryAggregates, buildWeeklyAggregates, buildMonthlyAggregates, buildLeaderboardAggregates, buildSourceAggregates } from './aggregates.js';
+    import { getCachedData, setCachedData, isCacheValid, clearCache, getCacheInfo, isLocalStorageAvailable } from './cache.js';
 
     // Shared state across tabs/renderers
     let chartRefs = {
@@ -599,40 +639,113 @@
     let rerenderAll = null; // will be assigned inside initDashboard
     let currentDayData = null; // для зберігання даних поточного дня для сортування
 
-    async function initDashboard() {
-      const updateEl = document.getElementById("update");
+    // Helper function to fetch data from server
+    async function fetchDataFromServer() {
+      const res = await fetch("data.json");
       
-      // Show loading state
-      updateEl.innerHTML = '<span class="spinner"></span>Завантаження даних...';
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status} ${res.statusText}`);
+      }
+      
+      let json;
+      try {
+        json = await res.json();
+      } catch (parseError) {
+        throw new Error(`Failed to parse JSON: ${parseError.message}`);
+      }
+      
+      // Validate data structure
+      validateData(json);
+      
+      return json;
+    }
+
+    // Helper function to update UI with data source indicator
+    function updateStatusUI(updateEl, json, fromCache = false) {
+      const statusText = `Last updated: ${json.last_updated || 'Unknown'}`;
+      const indicator = fromCache 
+        ? '<span class="cache-indicator">📦 З кешу</span>'
+        : '<span class="cache-indicator server">🔄 З сервера</span>';
+      const refreshBtn = '<button class="refresh-btn" id="refreshDataBtn" title="Оновити дані">🔄</button>';
+      
+      updateEl.innerHTML = `<span>${statusText}</span>${indicator}${refreshBtn}`;
+      
+      // Attach refresh button handler
+      const refreshBtnEl = document.getElementById('refreshDataBtn');
+      if (refreshBtnEl) {
+        refreshBtnEl.addEventListener('click', handleManualRefresh);
+      }
+    }
+
+    // Handle manual refresh button click
+    async function handleManualRefresh() {
+      const updateEl = document.getElementById("update");
+      const refreshBtn = document.getElementById('refreshDataBtn');
+      
+      if (refreshBtn) {
+        refreshBtn.disabled = true;
+        refreshBtn.textContent = '⏳';
+      }
       
       try {
-        // Fetch data with error handling
-        const res = await fetch("data.json");
-        
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status} ${res.statusText}`);
+        const json = await fetchDataFromServer();
+        if (isLocalStorageAvailable()) {
+          setCachedData(json);
         }
-        
-        let json;
-        try {
-          json = await res.json();
-        } catch (parseError) {
-          throw new Error(`Failed to parse JSON: ${parseError.message}`);
+        processDashboardData(json);
+        await initializeDashboardWithData(json);
+        updateStatusUI(updateEl, json, false);
+      } catch (error) {
+        console.error('Error refreshing data:', error);
+        // Show error but don't break the UI
+        if (refreshBtn) {
+          refreshBtn.textContent = '❌';
+          setTimeout(() => {
+            refreshBtn.textContent = '🔄';
+            refreshBtn.disabled = false;
+          }, 2000);
         }
-        
-        // Validate data structure
-        validateData(json);
-        
-        const rows = json.data;
-        
-        // Update status message
-        updateEl.textContent = "Last updated: " + (json.last_updated || 'Unknown');
-        
-        // Hide any error messages
-        const existingError = document.querySelector('.error-message');
-        if (existingError) {
-          existingError.remove();
+      } finally {
+        if (refreshBtn) {
+          refreshBtn.disabled = false;
         }
+      }
+    }
+
+    // Background update check (silent)
+    async function updateDataInBackground() {
+      try {
+        const json = await fetchDataFromServer();
+        const cached = getCachedData();
+        
+        // Only update if server has newer data
+        if (!cached || !isCacheValid(cached.last_updated, json.last_updated)) {
+          if (isLocalStorageAvailable()) {
+            setCachedData(json);
+          }
+          // Silently update the dashboard if user is still on the page
+          processDashboardData(json);
+          await initializeDashboardWithData(json);
+          const updateEl = document.getElementById("update");
+          if (updateEl) {
+            updateStatusUI(updateEl, json, false);
+          }
+        }
+      } catch (error) {
+        // Silent fail for background updates
+        console.debug('Background update failed:', error);
+      }
+    }
+
+    // Process dashboard data (extracted for reuse)
+    function processDashboardData(json) {
+      const rows = json.data;
+      
+      // Hide any error messages
+      const existingError = document.querySelector('.error-message');
+      if (existingError) {
+        existingError.remove();
+      }
 
       // Precompute min/max dates for controls
       const datesList = rows
@@ -644,8 +757,119 @@
 
       const fromEl = document.getElementById('fromDate');
       const toEl = document.getElementById('toDate');
-      fromEl.value = toIsoDateInputValue(minDate);
-      toEl.value = toIsoDateInputValue(maxDate);
+      if (fromEl && toEl) {
+        fromEl.value = toIsoDateInputValue(minDate);
+        toEl.value = toIsoDateInputValue(maxDate);
+      }
+    }
+
+    // Initialize dashboard with caching support
+    async function initDashboard() {
+      const updateEl = document.getElementById("update");
+      
+      // Check if localStorage is available
+      if (!isLocalStorageAvailable()) {
+        console.warn('localStorage is not available, caching disabled');
+      }
+      
+      let json;
+      let fromCache = false;
+      
+      // Try to get data from cache first
+      if (isLocalStorageAvailable()) {
+        const cached = getCachedData();
+        
+        if (cached && cached.data) {
+          // Use cached data for immediate display
+          json = cached.data;
+          fromCache = true;
+          updateStatusUI(updateEl, json, true);
+          
+          // Process cached data immediately
+          processDashboardData(json);
+          
+          // Start background update check
+          setTimeout(() => {
+            updateDataInBackground();
+          }, 1000); // Wait 1 second before background check
+          
+          // Continue with dashboard initialization using cached data
+          await initializeDashboardWithData(json);
+          return;
+        }
+      }
+      
+      // No cache available, fetch from server
+      updateEl.innerHTML = '<span class="spinner"></span>Завантаження даних...';
+      
+      try {
+        json = await fetchDataFromServer();
+        
+        // Save to cache if localStorage is available
+        if (isLocalStorageAvailable()) {
+          setCachedData(json);
+        }
+        
+        updateStatusUI(updateEl, json, false);
+        processDashboardData(json);
+        await initializeDashboardWithData(json);
+        
+      } catch (error) {
+        // If server fetch fails, try to use cache as fallback
+        console.error('Error fetching data from server:', error);
+        
+        if (isLocalStorageAvailable()) {
+          const cached = getCachedData();
+          if (cached && cached.data) {
+            console.log('Using cached data as fallback');
+            json = cached.data;
+            fromCache = true;
+            updateStatusUI(updateEl, json, true);
+            processDashboardData(json);
+            await initializeDashboardWithData(json);
+            
+            // Show warning about using cached data
+            const warningDiv = document.createElement('div');
+            warningDiv.className = 'error-message';
+            warningDiv.style.background = '#fff3cd';
+            warningDiv.style.borderColor = '#ffc107';
+            warningDiv.innerHTML = `
+              <strong>⚠️ Увага</strong><br>
+              Не вдалося завантажити дані з сервера. Використовуються закешовані дані.<br>
+              <small>Спробуйте оновити сторінку або натисніть кнопку оновлення.</small>
+            `;
+            document.body.insertBefore(warningDiv, document.querySelector('.controls'));
+            return;
+          }
+        }
+        
+        // No cache available, show error
+        updateEl.innerHTML = '';
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'error-message';
+        errorDiv.innerHTML = `
+          <strong>Помилка завантаження даних</strong><br>
+          ${error.message}<br>
+          <small>Перевірте консоль браузера для деталей. Спробуйте оновити сторінку.</small>
+        `;
+        document.body.insertBefore(errorDiv, document.querySelector('.controls'));
+        
+        // Hide controls and tabs on error
+        const controls = document.querySelector('.controls');
+        const tabs = document.querySelector('.tabs');
+        const tabpanels = document.querySelector('.tabpanels');
+        if (controls) controls.style.display = 'none';
+        if (tabs) tabs.style.display = 'none';
+        if (tabpanels) tabpanels.style.display = 'none';
+        
+        updateEl.textContent = '❌ Помилка завантаження';
+        updateEl.style.color = '#d32f2f';
+      }
+    }
+
+    // Initialize dashboard components with data
+    async function initializeDashboardWithData(json) {
+      const rows = json.data;
 
       // Modal wiring
       const overlay = document.getElementById('dayModalOverlay');
@@ -1208,8 +1432,18 @@
 
       document.getElementById('applyFilter').addEventListener('click', applyCurrentFilter);
       document.getElementById('resetFilter').addEventListener('click', () => {
-        fromEl.value = toIsoDateInputValue(minDate);
-        toEl.value = toIsoDateInputValue(maxDate);
+        const fromEl = document.getElementById('fromDate');
+        const toEl = document.getElementById('toDate');
+        const datesList = rows
+          .map(r => parseDdMmYyyyToDate(r.Date))
+          .filter(Boolean)
+          .sort((a,b) => a - b);
+        const minDate = datesList[0] || new Date();
+        const maxDate = datesList[datesList.length - 1] || new Date();
+        if (fromEl && toEl) {
+          fromEl.value = toIsoDateInputValue(minDate);
+          toEl.value = toIsoDateInputValue(maxDate);
+        }
         renderAll(rows);
       });
 
@@ -1307,34 +1541,6 @@
           csv += `${name},${r.Created},${r.SentRequests},${r.Connected},${r.PositiveReplies},${r.Events}\n`;
         }
         return csv;
-      }
-      
-      } catch (error) {
-        // Handle errors gracefully
-        console.error('Error initializing dashboard:', error);
-        
-        // Show error message to user
-        updateEl.innerHTML = '';
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'error-message';
-        errorDiv.innerHTML = `
-          <strong>Помилка завантаження даних</strong><br>
-          ${error.message}<br>
-          <small>Перевірте консоль браузера для деталей. Спробуйте оновити сторінку.</small>
-        `;
-        document.body.insertBefore(errorDiv, document.querySelector('.controls'));
-        
-        // Hide controls and tabs on error
-        const controls = document.querySelector('.controls');
-        const tabs = document.querySelector('.tabs');
-        const tabpanels = document.querySelector('.tabpanels');
-        if (controls) controls.style.display = 'none';
-        if (tabs) tabs.style.display = 'none';
-        if (tabpanels) tabpanels.style.display = 'none';
-        
-        // Update status
-        updateEl.textContent = '❌ Помилка завантаження';
-        updateEl.style.color = '#d32f2f';
       }
     }
 
