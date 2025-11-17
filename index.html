@@ -130,6 +130,24 @@
       padding: 16px 20px;
       box-shadow: 0 4px 16px rgba(0,0,0,0.06);
       border: 1px solid #eee;
+      position: relative;
+      overflow: hidden;
+    }
+    .controls::after {
+      content: "";
+      position: absolute;
+      inset: -30%;
+      background: radial-gradient(circle at 50% 50%, rgba(79, 140, 255, 0.18), transparent 60%);
+      opacity: 0;
+      transition: opacity 0.4s ease;
+      pointer-events: none;
+    }
+    .controls:hover::after {
+      opacity: 1;
+    }
+    body.dark-theme .controls::after {
+      opacity: 1;
+      filter: blur(18px);
     }
     /* Tabs */
     .tabs {
@@ -233,7 +251,13 @@
       z-index: 1000;
       overflow-y: auto;
       padding: 20px;
-      transition: background 0.2s ease, backdrop-filter 0.2s ease;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease, backdrop-filter 0.2s ease;
+    }
+    .modal-overlay.visible {
+      opacity: 1;
+      pointer-events: auto;
     }
     .modal {
       width: min(900px, 92vw);
@@ -246,6 +270,13 @@
       margin: auto;
       display: flex;
       flex-direction: column;
+      opacity: 0;
+      transform: translateY(30px) scale(0.98);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    .modal-overlay.visible .modal {
+      opacity: 1;
+      transform: translateY(0) scale(1);
     }
     .modal-body {
       padding: 16px;
@@ -509,7 +540,21 @@
       border-color: #44506a;
     }
     body.dark-theme .btn-primary {
-      box-shadow: 0 10px 25px rgba(51,109,255,0.45);
+      box-shadow: 0 0 25px rgba(79,140,255,0.5), 0 12px 30px rgba(15,23,42,0.9);
+      position: relative;
+    }
+    body.dark-theme .btn-primary::after {
+      content: "";
+      position: absolute;
+      inset: 8%;
+      border-radius: inherit;
+      background: radial-gradient(circle at 50% 50%, rgba(79,140,255,0.3), transparent 70%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+    }
+    body.dark-theme .btn-primary:hover::after {
+      opacity: 1;
     }
     body.dark-theme .tabs {
       border-color: #253045;
@@ -806,7 +851,6 @@
             <option value="PositiveReplies">Positive Replies</option>
             <option value="Events">Events</option>
           </select>
-          <button id="sortButton" class="btn btn-secondary">Sort</button>
         </div>
         <div id="daySummaryContainer"></div>
       </div>
@@ -1093,6 +1137,44 @@
       applyTheme(initialTheme, { persist: false });
       updateThemeToggleButton(initialTheme);
       setupSystemThemeListener();
+    }
+
+    // ===== Modal helpers =====
+    let openModalCount = 0;
+
+    function showModalOverlay(overlay) {
+      if (!overlay || overlay.classList.contains('visible')) return;
+      overlay.style.display = 'flex';
+      // Force reflow before adding the class to ensure transition
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          overlay.classList.add('visible');
+        });
+      });
+      openModalCount += 1;
+      document.body.style.overflow = 'hidden';
+    }
+
+    function hideModalOverlay(overlay) {
+      if (!overlay) return;
+      const handleTransitionEnd = (event) => {
+        if (event.target !== overlay) return;
+        overlay.style.display = 'none';
+        overlay.removeEventListener('transitionend', handleTransitionEnd);
+      };
+      overlay.addEventListener('transitionend', handleTransitionEnd);
+      overlay.classList.remove('visible');
+      setTimeout(() => {
+        overlay.removeEventListener('transitionend', handleTransitionEnd);
+        if (!overlay.classList.contains('visible')) {
+          overlay.style.display = 'none';
+        }
+      }, 400);
+
+      openModalCount = Math.max(0, openModalCount - 1);
+      if (openModalCount === 0) {
+        document.body.style.overflow = '';
+      }
     }
 
     // Apply filter function (defined at module level for accessibility)
@@ -1895,12 +1977,10 @@
       const closeCountryBtn = document.getElementById('closeCountryModal');
       const doneCountryBtn = document.getElementById('doneCountry');
       function openCountryModal() { 
-        countryOverlay.style.display = 'flex'; 
-        document.body.style.overflow = 'hidden';
+        showModalOverlay(countryOverlay);
       }
       function closeCountryModal() { 
-        countryOverlay.style.display = 'none'; 
-        document.body.style.overflow = '';
+        hideModalOverlay(countryOverlay);
       }
       closeCountryBtn.addEventListener('click', closeCountryModal);
       doneCountryBtn.addEventListener('click', closeCountryModal);
@@ -1911,46 +1991,34 @@
       const closeLeadBtn = document.getElementById('closeLeadModal');
       const doneLeadBtn = document.getElementById('doneLead');
       function openLeadModal() { 
-        leadOverlay.style.display = 'flex'; 
-        document.body.style.overflow = 'hidden';
+        showModalOverlay(leadOverlay);
       }
       function closeLeadModal() { 
-        leadOverlay.style.display = 'none'; 
-        document.body.style.overflow = '';
+        hideModalOverlay(leadOverlay);
       }
       closeLeadBtn.addEventListener('click', closeLeadModal);
       doneLeadBtn.addEventListener('click', closeLeadModal);
       leadOverlay.addEventListener('click', (e) => { if (e.target === leadOverlay) closeLeadModal(); });
 
       function openModal() { 
-        overlay.style.display = 'flex';
-        document.body.style.overflow = 'hidden';
+        showModalOverlay(overlay);
       }
       function closeModal() { 
-        overlay.style.display = 'none';
-        document.body.style.overflow = '';
+        hideModalOverlay(overlay);
       }
       openBtn.addEventListener('click', () => {
         dayPicker.value = toIsoDateInputValue(maxDate);
         renderDaySummary(new Date(dayPicker.value));
-        // після первинного рендера одразу відсортуємо за вибраною колонкою
         const sortSelect = document.getElementById('sortColumn');
-        if (sortSelect) sortDayData(sortSelect.value || 'Created');
-        // підвісимо слухачі на елементи сортування щоразу при відкритті
-        const sortBtn = document.getElementById('sortButton');
-        if (sortBtn && !sortBtn.__bound) {
-          sortBtn.addEventListener('click', () => {
-            const col = (document.getElementById('sortColumn') || {}).value || 'Created';
-            sortDayData(col);
-          });
-          sortBtn.__bound = true;
-        }
-        if (sortSelect && !sortSelect.__bound) {
-          sortSelect.addEventListener('change', () => {
-            const col = sortSelect.value || 'Created';
-            sortDayData(col);
-          });
-          sortSelect.__bound = true;
+        if (sortSelect) {
+          if (!sortSelect.__bound) {
+            sortSelect.addEventListener('change', () => {
+              const col = sortSelect.value || 'Created';
+              sortDayData(col);
+            });
+            sortSelect.__bound = true;
+          }
+          sortDayData(sortSelect.value || 'Created');
         }
         openModal();
       });
@@ -2519,19 +2587,6 @@
       }
       tabs.forEach(({btn}) => btn.addEventListener('click', () => activate(btn)));
     }
-
-    // Додаємо listener на кнопку сорту після відкриття модалки (щоб гарантовано була в DOM)
-    (function attachSortListenerOnce() {
-      const btn = document.getElementById('sortButton');
-      if (!btn) return;
-      if (!btn.__hasListener) {
-        btn.addEventListener('click', () => {
-          const sortColumn = (document.getElementById('sortColumn') || {}).value || 'Created';
-          if (typeof sortDayData === 'function') sortDayData(sortColumn);
-        });
-        btn.__hasListener = true;
-      }
-    })();
 
     // Export functions
     function exportToExcel() {
