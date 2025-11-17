@@ -2,6 +2,7 @@ import { initializeLanguage } from './i18nSupport.js';
 import { initializeTheme, initThemeToggle } from './theme.js';
 import { initTabs } from './tabs.js';
 import { initDashboard, applyCurrentFilter } from './dashboard.js';
+import { initControlsParallax } from './uiEffects.js';
 
 function attachFilterHandler() {
   const applyFilterBtn = document.getElementById('applyFilter');
@@ -17,6 +18,7 @@ function bootstrap() {
   initTabs();
   initDashboard();
   initThemeToggle();
+  initControlsParallax();
   attachFilterHandler();
 }
 

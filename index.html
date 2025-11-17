@@ -126,6 +126,9 @@
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
     .controls {
+      --glow-x: 50%;
+      --glow-y: 50%;
+      --glow-opacity: 0;
       max-width: 1200px;
       margin: 10px auto 30px auto;
       display: flex;
@@ -145,16 +148,12 @@
       content: "";
       position: absolute;
       inset: -30%;
-      background: radial-gradient(circle at 50% 50%, rgba(79, 140, 255, 0.18), transparent 60%);
-      opacity: 0;
+      background: radial-gradient(circle at var(--glow-x) var(--glow-y), rgba(79, 140, 255, 0.18), transparent 60%);
+      opacity: var(--glow-opacity);
       transition: opacity 0.4s ease;
       pointer-events: none;
     }
-    .controls:hover::after {
-      opacity: 1;
-    }
     body.dark-theme .controls::after {
-      opacity: 1;
       filter: blur(18px);
     }
     /* Tabs */
@@ -198,6 +197,11 @@
       display: flex;
       gap: 12px;
       align-items: center;
+      flex-wrap: wrap;
+    }
+    .controls-actions {
+      display: flex;
+      gap: 12px;
       flex-wrap: wrap;
     }
     .field {
@@ -682,6 +686,10 @@
         <label for="toDate" data-i18n="common.to">To</label>
         <input type="date" id="toDate" class="input">
       </div>
+      <div class="controls-actions">
+        <button id="applyFilter" class="btn btn-primary" data-i18n="common.apply">Apply</button>
+        <button id="resetFilter" class="btn btn-secondary" data-i18n="common.reset">Reset</button>
+      </div>
     </div>
     <div class="controls-right">
         <div class="field language-field">
@@ -691,8 +699,6 @@
         </div>
           <button id="themeToggle" class="btn btn-secondary theme-toggle" aria-pressed="false">🌙 Dark Mode</button>
           <button id="openDaySummary" class="btn btn-secondary" data-i18n="common.daySummary">Day Summary</button>
-          <button id="applyFilter" class="btn btn-primary" data-i18n="common.apply">Apply</button>
-          <button id="resetFilter" class="btn btn-secondary" data-i18n="common.reset">Reset</button>
     </div>
   </div>
   <div class="tabs" role="tablist">
