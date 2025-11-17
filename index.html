@@ -13,11 +13,20 @@
     * {
       box-sizing: border-box;
     }
+    :root {
+      color-scheme: light;
+    }
     body {
       font-family: "Segoe UI", sans-serif;
       background: #fafafa;
+      color: #1b1f2f;
       margin: 0;
       padding: 20px;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+    body.dark-theme {
+      background: #0f172a;
+      color: #e2e8f0;
     }
     h1 {
       text-align: center;
@@ -433,6 +442,153 @@
       font-size: 16px;
       color: #333;
     }
+    .theme-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 140px;
+      justify-content: center;
+    }
+    body.dark-theme h1 {
+      color: #f8fafc;
+    }
+    body.dark-theme #update {
+      color: #c7d2fe;
+    }
+    body.dark-theme .cache-indicator {
+      background: rgba(79, 140, 255, 0.2);
+      color: #9cc4ff;
+      border-color: rgba(79, 140, 255, 0.4);
+    }
+    body.dark-theme .cache-indicator.server {
+      background: rgba(171, 103, 255, 0.2);
+      color: #e0b6ff;
+      border-color: rgba(171, 103, 255, 0.4);
+    }
+    body.dark-theme .refresh-btn {
+      background: #1f2937;
+      color: #e2e8f0;
+      border-color: #374151;
+    }
+    body.dark-theme .refresh-btn:hover {
+      background: #273449;
+      border-color: #4b5563;
+    }
+    body.dark-theme .error-message {
+      color: #fecdd3;
+      background: rgba(190, 24, 93, 0.15);
+      border-color: rgba(244, 114, 182, 0.35);
+    }
+    body.dark-theme .controls {
+      background: #1e293b;
+      border-color: #2f3c52;
+      box-shadow: 0 8px 30px rgba(2, 6, 23, 0.75);
+    }
+    body.dark-theme .field label {
+      color: #a5b4fc;
+    }
+    body.dark-theme .input {
+      background: #0f172a;
+      border-color: #334155;
+      color: #e2e8f0;
+    }
+    body.dark-theme .input::placeholder {
+      color: #94a3b8;
+    }
+    body.dark-theme .input:focus {
+      border-color: #7aa7ff;
+      box-shadow: 0 0 0 3px rgba(79, 140, 255, 0.35);
+    }
+    body.dark-theme .btn-secondary {
+      background: #1f293b;
+      color: #e2e8f0;
+      border-color: #334155;
+    }
+    body.dark-theme .btn-secondary:hover {
+      background: #273449;
+      border-color: #44506a;
+    }
+    body.dark-theme .btn-primary {
+      box-shadow: 0 10px 25px rgba(51,109,255,0.45);
+    }
+    body.dark-theme .tabs {
+      border-color: #253045;
+    }
+    body.dark-theme .tab {
+      background: #1b2539;
+      color: #d1d9f0;
+      border-color: #2a3550;
+    }
+    body.dark-theme .tab.active {
+      background: #243042;
+      color: #fff;
+      box-shadow: 0 -2px 12px rgba(3, 7, 18, 0.8);
+      border-color: #2f3c52;
+    }
+    body.dark-theme .chart-card {
+      background: #1e293b;
+      border-color: #2f3c52;
+      box-shadow: 0 12px 32px rgba(2, 6, 23, 0.9);
+    }
+    body.dark-theme .chart-card h3 {
+      color: #f1f5f9;
+    }
+    body.dark-theme .chart-card.soft-blue {
+      background: linear-gradient(180deg, rgba(30,41,59,0.95), rgba(15,23,42,0.95));
+      border-color: #2f3c52;
+    }
+    body.dark-theme .chart-card.soft-purple {
+      background: linear-gradient(180deg, rgba(46,16,101,0.65), rgba(30,22,54,0.95));
+      border-color: #3c2d5f;
+    }
+    body.dark-theme .chart-card.soft-green {
+      background: linear-gradient(180deg, rgba(12,68,40,0.65), rgba(8,47,35,0.95));
+      border-color: #1d3e33;
+    }
+    body.dark-theme .chart-card.soft-yellow {
+      background: linear-gradient(180deg, rgba(100,75,7,0.45), rgba(59,45,7,0.85));
+      border-color: #4c3f17;
+    }
+    body.dark-theme .chart-card.soft-pink {
+      background: linear-gradient(180deg, rgba(97,26,67,0.45), rgba(55,16,37,0.85));
+      border-color: #4f1f37;
+    }
+    body.dark-theme .modal {
+      background: #0f172a;
+      border-color: #1f2a3c;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+    }
+    body.dark-theme .modal-header,
+    body.dark-theme .modal-actions {
+      background: #111c31;
+      border-color: #1f2a3c;
+    }
+    body.dark-theme .modal-title {
+      color: #e2e8f0;
+    }
+    body.dark-theme .modal-body {
+      color: #e2e8f0;
+    }
+    body.dark-theme .summary-table th,
+    body.dark-theme .summary-table td {
+      border-color: rgba(148, 163, 184, 0.2);
+      color: #e2e8f0;
+    }
+    body.dark-theme .summary-table thead th {
+      color: #cbd5f5;
+    }
+    body.dark-theme .summary-table tfoot td {
+      color: #f8fafc;
+    }
+    body.dark-theme .link-btn {
+      color: #7aa7ff;
+    }
+    body.dark-theme .tabs::-webkit-scrollbar {
+      background: transparent;
+    }
+    body.dark-theme .tabs::-webkit-scrollbar-thumb {
+      background: #334155;
+    }
   </style>
 </head>
 <body>
@@ -450,6 +606,7 @@
       </div>
     </div>
         <div class="controls-right">
+          <button id="themeToggle" class="btn btn-secondary theme-toggle" aria-pressed="false">🌙 Dark Mode</button>
           <button id="openDaySummary" class="btn btn-secondary">Day Summary</button>
           <button id="applyFilter" class="btn btn-primary">Apply</button>
           <button id="resetFilter" class="btn btn-secondary">Reset</button>
@@ -777,6 +934,12 @@
     let rerenderAll = null; // will be assigned inside initDashboard
     let currentDayData = null; // для зберігання даних поточного дня для сортування
     let rows = []; // Store all rows for export functionality
+    const THEME_STORAGE_KEY = 'leadGenDashboardTheme';
+    let currentTheme = 'light';
+    let userHasExplicitTheme = false;
+    const prefersDarkSchemeQuery = typeof window !== 'undefined' && window.matchMedia
+      ? window.matchMedia('(prefers-color-scheme: dark)')
+      : null;
     
     // Aggregation cache for performance optimization
     const aggregationCache = {
@@ -805,6 +968,132 @@
     
     // Store maxDate for modal usage
     let maxDate = new Date();
+
+    // ===== Theme handling =====
+    function getStoredThemePreference() {
+      if (!isLocalStorageAvailable()) return null;
+      try {
+        const stored = localStorage.getItem(THEME_STORAGE_KEY);
+        if (stored === 'dark' || stored === 'light') {
+          userHasExplicitTheme = true;
+          return stored;
+        }
+      } catch (error) {
+        console.warn('Unable to read stored theme preference:', error);
+      }
+      return null;
+    }
+
+    function getInitialThemePreference() {
+      const stored = getStoredThemePreference();
+      if (stored) {
+        return stored;
+      }
+      return prefersDarkSchemeQuery && prefersDarkSchemeQuery.matches ? 'dark' : 'light';
+    }
+
+    function updateThemeToggleButton(theme = currentTheme) {
+      const toggleBtn = document.getElementById('themeToggle');
+      if (!toggleBtn) return;
+      const isDark = theme === 'dark';
+      toggleBtn.textContent = isDark ? '☀️ Light Mode' : '🌙 Dark Mode';
+      toggleBtn.setAttribute('aria-pressed', isDark ? 'true' : 'false');
+    }
+
+    function updateChartTheme(isDarkModeEnabled) {
+      if (!window.Chart) return;
+      const textColor = isDarkModeEnabled ? '#e2e8f0' : '#1b1f2f';
+      const gridColor = isDarkModeEnabled ? 'rgba(148,163,184,0.3)' : 'rgba(0,0,0,0.08)';
+      window.Chart.defaults.color = textColor;
+      window.Chart.defaults.borderColor = gridColor;
+
+      Object.values(chartRefs || {}).forEach((chartInstance) => {
+        if (!chartInstance || typeof chartInstance.update !== 'function') return;
+
+        const { options } = chartInstance;
+        if (options?.scales) {
+          Object.keys(options.scales).forEach((scaleKey) => {
+            const scale = options.scales[scaleKey];
+            if (!scale) return;
+            scale.ticks = scale.ticks || {};
+            scale.ticks.color = textColor;
+            scale.grid = scale.grid || {};
+            scale.grid.color = gridColor;
+            if (scale.border) {
+              scale.border.color = gridColor;
+            } else {
+              scale.border = { color: gridColor };
+            }
+          });
+        }
+
+        if (options?.plugins?.legend) {
+          options.plugins.legend.labels = options.plugins.legend.labels || {};
+          options.plugins.legend.labels.color = textColor;
+        }
+
+        chartInstance.update('none');
+      });
+    }
+
+    function applyTheme(theme, { persist = true } = {}) {
+      const normalized = theme === 'dark' ? 'dark' : 'light';
+      currentTheme = normalized;
+      document.body.classList.toggle('dark-theme', normalized === 'dark');
+      document.documentElement.style.setProperty('color-scheme', normalized === 'dark' ? 'dark' : 'light');
+      updateThemeToggleButton(normalized);
+      updateChartTheme(normalized === 'dark');
+
+      if (persist && isLocalStorageAvailable()) {
+        try {
+          localStorage.setItem(THEME_STORAGE_KEY, normalized);
+          userHasExplicitTheme = true;
+        } catch (error) {
+          console.warn('Unable to persist theme preference:', error);
+        }
+      }
+    }
+
+    function initThemeToggle() {
+      const toggleBtn = document.getElementById('themeToggle');
+      if (!toggleBtn) return;
+      toggleBtn.addEventListener('click', () => {
+        const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        applyTheme(nextTheme);
+      });
+      updateThemeToggleButton();
+    }
+
+    function setupSystemThemeListener() {
+      if (!prefersDarkSchemeQuery) return;
+      const handleChange = (event) => {
+        if (isLocalStorageAvailable()) {
+          try {
+            const stored = localStorage.getItem(THEME_STORAGE_KEY);
+            if (stored === 'dark' || stored === 'light') {
+              return;
+            }
+          } catch (error) {
+            console.warn('Unable to read stored theme preference during change event:', error);
+          }
+        }
+        if (userHasExplicitTheme) return;
+        applyTheme(event.matches ? 'dark' : 'light', { persist: false });
+      };
+
+      if (typeof prefersDarkSchemeQuery.addEventListener === 'function') {
+        prefersDarkSchemeQuery.addEventListener('change', handleChange);
+      } else if (typeof prefersDarkSchemeQuery.addListener === 'function') {
+        prefersDarkSchemeQuery.addListener(handleChange);
+      }
+    }
+
+    function initializeTheme() {
+      const initialTheme = getInitialThemePreference();
+      applyTheme(initialTheme, { persist: false });
+      updateThemeToggleButton(initialTheme);
+      setupSystemThemeListener();
+    }
 
     // Apply filter function (defined at module level for accessibility)
     function applyCurrentFilter() {
@@ -2577,8 +2866,10 @@
       }
     }
 
+    initializeTheme();
     initTabs();
     initDashboard();
+    initThemeToggle();
     
     // Initialize Apply button (applyCurrentFilter is defined at module level)
     const applyFilterBtn = document.getElementById('applyFilter');
