@@ -208,13 +208,27 @@
     .language-field {
       min-width: 150px;
     }
+    .language-select-wrapper {
+      position: relative;
+      width: 100%;
+    }
+    .language-select-wrapper::after {
+      content: '▾';
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #7aa7ff;
+      pointer-events: none;
+      font-size: 14px;
+    }
+    body.dark-theme .language-select-wrapper::after {
+      color: #cbd5ff;
+    }
     .language-select {
       min-width: 150px;
       appearance: none;
-      background-image: linear-gradient(45deg, transparent 50%, #7aa7ff 50%), linear-gradient(135deg, #7aa7ff 50%, transparent 50%);
-      background-position: calc(100% - 18px) calc(50% - 3px), calc(100% - 12px) calc(50% - 3px);
-      background-size: 6px 6px, 6px 6px;
-      background-repeat: no-repeat;
+      padding-right: 36px;
     }
     .field label {
       font-size: 12px;
@@ -670,10 +684,11 @@
       </div>
     </div>
     <div class="controls-right">
-          <div class="field language-field">
-            <label for="languageSelect" data-i18n="common.language">Language</label>
-            <select id="languageSelect" class="input language-select"></select>
+        <div class="field language-field">
+          <div class="language-select-wrapper">
+            <select id="languageSelect" class="input language-select" aria-label="Language" data-i18n-attr="aria-label"></select>
           </div>
+        </div>
           <button id="themeToggle" class="btn btn-secondary theme-toggle" aria-pressed="false">🌙 Dark Mode</button>
           <button id="openDaySummary" class="btn btn-secondary" data-i18n="common.daySummary">Day Summary</button>
           <button id="applyFilter" class="btn btn-primary" data-i18n="common.apply">Apply</button>
@@ -1243,34 +1258,40 @@
       const gridColor = isDarkModeEnabled ? 'rgba(148,163,184,0.3)' : 'rgba(0,0,0,0.08)';
       window.Chart.defaults.color = textColor;
       window.Chart.defaults.borderColor = gridColor;
+      window.Chart.defaults.scale = window.Chart.defaults.scale || {};
+      window.Chart.defaults.scale.grid = window.Chart.defaults.scale.grid || {};
+      window.Chart.defaults.scale.grid.color = gridColor;
+      window.Chart.defaults.scale.border = window.Chart.defaults.scale.border || {};
+      window.Chart.defaults.scale.border.color = gridColor;
+      window.Chart.defaults.scale.ticks = window.Chart.defaults.scale.ticks || {};
+      window.Chart.defaults.scale.ticks.color = textColor;
+      window.Chart.defaults.plugins = window.Chart.defaults.plugins || {};
+      window.Chart.defaults.plugins.legend = window.Chart.defaults.plugins.legend || {};
+      window.Chart.defaults.plugins.legend.labels = window.Chart.defaults.plugins.legend.labels || {};
+      window.Chart.defaults.plugins.legend.labels.color = textColor;
+    }
 
-      Object.values(chartRefs || {}).forEach((chartInstance) => {
-        if (!chartInstance || typeof chartInstance.update !== 'function') return;
-
-        const { options } = chartInstance;
-        if (options?.scales) {
-          Object.keys(options.scales).forEach((scaleKey) => {
-            const scale = options.scales[scaleKey];
-            if (!scale) return;
-            scale.ticks = scale.ticks || {};
-            scale.ticks.color = textColor;
-            scale.grid = scale.grid || {};
-            scale.grid.color = gridColor;
-            if (scale.border) {
-              scale.border.color = gridColor;
-            } else {
-              scale.border = { color: gridColor };
-            }
-          });
+    function destroyAllCharts() {
+      Object.keys(chartRefs).forEach((key) => {
+        if (chartRefs[key]) {
+          destroyIfExists(chartRefs[key]);
+          chartRefs[key] = null;
         }
-
-        if (options?.plugins?.legend) {
-          options.plugins.legend.labels = options.plugins.legend.labels || {};
-          options.plugins.legend.labels.color = textColor;
-        }
-
-        chartInstance.update('none');
       });
+    }
+
+    function resetRenderedTabs() {
+      Object.keys(renderedTabs).forEach((key) => {
+        renderedTabs[key] = false;
+      });
+    }
+
+    function refreshChartsForTheme() {
+      if (!rows || rows.length === 0 || typeof rerenderAll !== 'function') return;
+      destroyAllCharts();
+      resetRenderedTabs();
+      const sourceRows = lastFilteredRows.length > 0 ? lastFilteredRows : rows;
+      rerenderAll(sourceRows);
     }
 
     function applyTheme(theme, { persist = true } = {}) {
@@ -1280,6 +1301,7 @@
       document.documentElement.style.setProperty('color-scheme', normalized === 'dark' ? 'dark' : 'light');
       updateThemeToggleButton(normalized);
       updateChartTheme(normalized === 'dark');
+      refreshChartsForTheme();
 
       if (persist && isLocalStorageAvailable()) {
         try {
