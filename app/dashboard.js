@@ -15,7 +15,7 @@ function updateStatusUI(updateEl, json, fromCache = false) {
   const indicatorClass = fromCache ? 'cache-indicator' : 'cache-indicator server';
   const indicatorText = fromCache ? t('common.cacheFromCache') : t('common.cacheFromServer');
   const refreshTitle = t('common.refreshTooltip');
-  updateEl.innerHTML = `<span>${statusText}</span><span class="${indicatorClass}">${indicatorText}</span><button class="refresh-btn" id="refreshDataBtn" title="${refreshTitle}">í´„</button>`;
+  updateEl.innerHTML = `<span>${statusText}</span><span class="${indicatorClass}">${indicatorText}</span><button class="refresh-btn" id="refreshDataBtn" title="${refreshTitle}">ðŸ”„</button>`;
   const refreshBtnEl = document.getElementById('refreshDataBtn');
   if (refreshBtnEl && !refreshBtnEl.dataset.bound) {
     refreshBtnEl.addEventListener('click', handleManualRefresh);
@@ -119,7 +119,7 @@ async function handleManualRefresh() {
     if (refreshBtn) {
       refreshBtn.textContent = 'âŒ';
       setTimeout(() => {
-        refreshBtn.textContent = 'í´„';
+        refreshBtn.textContent = 'ðŸ”„';
         refreshBtn.disabled = false;
       }, 2000);
     }

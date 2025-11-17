@@ -27,7 +27,7 @@ export function updateThemeToggleButton(theme = state.currentTheme) {
   if (!toggleBtn) return;
   const isDark = theme === 'dark';
   const label = isDark ? t('common.themeLight') : t('common.themeDark');
-  toggleBtn.textContent = `${isDark ? 'â˜€ï¸ ' : 'í¼™ '}${label}`;
+  toggleBtn.textContent = `${isDark ? 'â˜€ï¸ ' : 'ğŸŒ™ '}${label}`;
   toggleBtn.setAttribute('aria-pressed', isDark ? 'true' : 'false');
 }
 
