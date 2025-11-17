@@ -31,13 +31,7 @@
       margin: 0;
       padding: 20px;
       transition: background 0.3s ease, color 0.3s ease;
-      /* -ms-overflow-style: none; IE/Edge */
-      /* scrollbar-width: none; Firefox */
     }
-    /* body::-webkit-scrollbar {
-      width: 0;
-      height: 0;
-    } */
     body.dark-theme {
       background: #0f172a;
       color: #e2e8f0;
@@ -210,6 +204,17 @@
       display: flex;
       flex-direction: column;
       gap: 6px;
+    }
+    .language-field {
+      min-width: 150px;
+    }
+    .language-select {
+      min-width: 150px;
+      appearance: none;
+      background-image: linear-gradient(45deg, transparent 50%, #7aa7ff 50%), linear-gradient(135deg, #7aa7ff 50%, transparent 50%);
+      background-position: calc(100% - 18px) calc(50% - 3px), calc(100% - 12px) calc(50% - 3px);
+      background-size: 6px 6px, 6px 6px;
+      background-repeat: no-repeat;
     }
     .field label {
       font-size: 12px;
@@ -651,33 +656,37 @@
   </style>
 </head>
 <body>
-  <h1>Lead Generation Dashboard</h1>
-  <div id="update">Loading...</div>
+  <h1 data-i18n="common.title">Lead Generation Dashboard</h1>
+  <div id="update" data-i18n="common.loading">Loading...</div>
   <div class="controls">
     <div class="controls-left">
       <div class="field">
-        <label for="fromDate">From</label>
+        <label for="fromDate" data-i18n="common.from">From</label>
         <input type="date" id="fromDate" class="input">
       </div>
       <div class="field">
-        <label for="toDate">To</label>
+        <label for="toDate" data-i18n="common.to">To</label>
         <input type="date" id="toDate" class="input">
       </div>
     </div>
-        <div class="controls-right">
+    <div class="controls-right">
+          <div class="field language-field">
+            <label for="languageSelect" data-i18n="common.language">Language</label>
+            <select id="languageSelect" class="input language-select"></select>
+          </div>
           <button id="themeToggle" class="btn btn-secondary theme-toggle" aria-pressed="false">🌙 Dark Mode</button>
-          <button id="openDaySummary" class="btn btn-secondary">Day Summary</button>
-          <button id="applyFilter" class="btn btn-primary">Apply</button>
-          <button id="resetFilter" class="btn btn-secondary">Reset</button>
-        </div>
+          <button id="openDaySummary" class="btn btn-secondary" data-i18n="common.daySummary">Day Summary</button>
+          <button id="applyFilter" class="btn btn-primary" data-i18n="common.apply">Apply</button>
+          <button id="resetFilter" class="btn btn-secondary" data-i18n="common.reset">Reset</button>
+    </div>
   </div>
   <div class="tabs" role="tablist">
-    <button class="tab active" role="tab" aria-selected="true" aria-controls="tab-funnel" id="tab-funnel-btn">Funnel</button>
-    <button class="tab" role="tab" aria-selected="false" aria-controls="tab-country" id="tab-country-btn">Countries</button>
-    <button class="tab" role="tab" aria-selected="false" aria-controls="tab-weekly" id="tab-weekly-btn">Weekly</button>
-    <button class="tab" role="tab" aria-selected="false" aria-controls="tab-monthly" id="tab-monthly-btn">Monthly</button>
-    <button class="tab" role="tab" aria-selected="false" aria-controls="tab-leaderboard" id="tab-leaderboard-btn">Leaderboard</button>
-    <button class="tab" role="tab" aria-selected="false" aria-controls="tab-source" id="tab-source-btn">Source Comparison</button>
+    <button class="tab active" role="tab" aria-selected="true" aria-controls="tab-funnel" id="tab-funnel-btn" data-i18n="tabs.funnel">Funnel</button>
+    <button class="tab" role="tab" aria-selected="false" aria-controls="tab-country" id="tab-country-btn" data-i18n="tabs.countries">Countries</button>
+    <button class="tab" role="tab" aria-selected="false" aria-controls="tab-weekly" id="tab-weekly-btn" data-i18n="tabs.weekly">Weekly</button>
+    <button class="tab" role="tab" aria-selected="false" aria-controls="tab-monthly" id="tab-monthly-btn" data-i18n="tabs.monthly">Monthly</button>
+    <button class="tab" role="tab" aria-selected="false" aria-controls="tab-leaderboard" id="tab-leaderboard-btn" data-i18n="tabs.leaderboard">Leaderboard</button>
+    <button class="tab" role="tab" aria-selected="false" aria-controls="tab-source" id="tab-source-btn" data-i18n="tabs.source">Source Comparison</button>
     
   </div>
 
@@ -685,23 +694,23 @@
   <div id="tab-funnel" class="tabpanel active" role="tabpanel" aria-labelledby="tab-funnel-btn">
   <div class="dashboard-grid">
     <div class="chart-card soft-blue">
-      <h3>Created → Sent Requests</h3>
+      <h3 data-i18n="charts.funnel.createdToSent">Created → Sent Requests</h3>
       <canvas id="chartCreatedToFound"></canvas>
     </div>
     <div class="chart-card soft-purple">
-      <h3>Sent Requests → Connected</h3>
+      <h3 data-i18n="charts.funnel.sentToConnected">Sent Requests → Connected</h3>
       <canvas id="chartSentToConnected"></canvas>
     </div>
     <div class="chart-card soft-green">
-      <h3>Connected → Replies</h3>
+      <h3 data-i18n="charts.funnel.connectedToReplies">Connected → Replies</h3>
       <canvas id="chartConnectedToReplies"></canvas>
     </div>
     <div class="chart-card soft-yellow">
-      <h3>Replies → Positive Replies</h3>
+      <h3 data-i18n="charts.funnel.repliesToPositive">Replies → Positive Replies</h3>
       <canvas id="chartRepliesToPositive"></canvas>
     </div>
     <div class="chart-card soft-pink">
-      <h3>Positive Replies → Events</h3>
+      <h3 data-i18n="charts.funnel.positiveToEvents">Positive Replies → Events</h3>
       <canvas id="chartPositiveToEvents"></canvas>
     </div>
   </div>
@@ -710,27 +719,27 @@
   <div id="tab-country" class="tabpanel" role="tabpanel" aria-labelledby="tab-country-btn">
   <div class="dashboard-grid" id="countryDashboard">
     <div class="chart-card soft-blue">
-      <h3>Conversion Rate (Created → Events) by Country</h3>
+      <h3 data-i18n="charts.countries.conversionRate">Conversion Rate (Created → Events) by Country</h3>
       <canvas id="chartCountryConversionRate"></canvas>
     </div>
     <div class="chart-card soft-blue">
-      <h3>Created → Sent Requests (by Country)</h3>
+      <h3 data-i18n="charts.countries.createdToSent">Created → Sent Requests (by Country)</h3>
       <canvas id="chartCountryCreatedToFound"></canvas>
     </div>
     <div class="chart-card soft-purple">
-      <h3>Sent Requests → Connected (by Country)</h3>
+      <h3 data-i18n="charts.countries.sentToConnected">Sent Requests → Connected (by Country)</h3>
       <canvas id="chartCountrySentToConnected"></canvas>
     </div>
     <div class="chart-card soft-green">
-      <h3>Connected → Replies (by Country)</h3>
+      <h3 data-i18n="charts.countries.connectedToReplies">Connected → Replies (by Country)</h3>
       <canvas id="chartCountryConnectedToReplies"></canvas>
     </div>
     <div class="chart-card soft-yellow">
-      <h3>Replies → Positive Replies (by Country)</h3>
+      <h3 data-i18n="charts.countries.repliesToPositive">Replies → Positive Replies (by Country)</h3>
       <canvas id="chartCountryRepliesToPositive"></canvas>
     </div>
     <div class="chart-card soft-pink">
-      <h3>Positive Replies → Events (by Country)</h3>
+      <h3 data-i18n="charts.countries.positiveToEvents">Positive Replies → Events (by Country)</h3>
       <canvas id="chartCountryPositiveToEvents"></canvas>
     </div>
   </div>
@@ -738,23 +747,23 @@
   <div id="tab-weekly" class="tabpanel" role="tabpanel" aria-labelledby="tab-weekly-btn">
   <div class="dashboard-grid">
     <div class="chart-card soft-blue">
-      <h3>Weekly: Created → Sent Requests</h3>
+      <h3 data-i18n="charts.weekly.createdToSent">Weekly: Created → Sent Requests</h3>
       <canvas id="chartWeekCreatedToFound"></canvas>
     </div>
     <div class="chart-card soft-purple">
-      <h3>Weekly: Sent Requests → Connected</h3>
+      <h3 data-i18n="charts.weekly.sentToConnected">Weekly: Sent Requests → Connected</h3>
       <canvas id="chartWeekSentToConnected"></canvas>
     </div>
     <div class="chart-card soft-green">
-      <h3>Weekly: Connected → Replies</h3>
+      <h3 data-i18n="charts.weekly.connectedToReplies">Weekly: Connected → Replies</h3>
       <canvas id="chartWeekConnectedToReplies"></canvas>
     </div>
     <div class="chart-card soft-yellow">
-      <h3>Weekly: Replies → Positive Replies</h3>
+      <h3 data-i18n="charts.weekly.repliesToPositive">Weekly: Replies → Positive Replies</h3>
       <canvas id="chartWeekRepliesToPositive"></canvas>
     </div>
     <div class="chart-card soft-pink">
-      <h3>Weekly: Positive Replies → Events</h3>
+      <h3 data-i18n="charts.weekly.positiveToEvents">Weekly: Positive Replies → Events</h3>
       <canvas id="chartWeekPositiveToEvents"></canvas>
     </div>
   </div>
@@ -762,27 +771,27 @@
   <div id="tab-monthly" class="tabpanel" role="tabpanel" aria-labelledby="tab-monthly-btn">
   <div class="dashboard-grid">
     <div class="chart-card soft-blue">
-      <h3>Monthly: Conversion Rate (Created → Events)</h3>
+      <h3 data-i18n="charts.monthly.conversionRate">Monthly: Conversion Rate (Created → Events)</h3>
       <canvas id="chartMonthConversionRate"></canvas>
     </div>
     <div class="chart-card soft-blue">
-      <h3>Monthly: Created → Sent Requests</h3>
+      <h3 data-i18n="charts.monthly.createdToSent">Monthly: Created → Sent Requests</h3>
       <canvas id="chartMonthCreatedToFound"></canvas>
     </div>
     <div class="chart-card soft-purple">
-      <h3>Monthly: Sent Requests → Connected</h3>
+      <h3 data-i18n="charts.monthly.sentToConnected">Monthly: Sent Requests → Connected</h3>
       <canvas id="chartMonthSentToConnected"></canvas>
     </div>
     <div class="chart-card soft-green">
-      <h3>Monthly: Connected → Replies</h3>
+      <h3 data-i18n="charts.monthly.connectedToReplies">Monthly: Connected → Replies</h3>
       <canvas id="chartMonthConnectedToReplies"></canvas>
     </div>
     <div class="chart-card soft-yellow">
-      <h3>Monthly: Replies → Positive Replies</h3>
+      <h3 data-i18n="charts.monthly.repliesToPositive">Monthly: Replies → Positive Replies</h3>
       <canvas id="chartMonthRepliesToPositive"></canvas>
     </div>
     <div class="chart-card soft-pink">
-      <h3>Monthly: Positive Replies → Events</h3>
+      <h3 data-i18n="charts.monthly.positiveToEvents">Monthly: Positive Replies → Events</h3>
       <canvas id="chartMonthPositiveToEvents"></canvas>
     </div>
   </div>
@@ -791,23 +800,23 @@
   <div id="tab-leaderboard" class="tabpanel" role="tabpanel" aria-labelledby="tab-leaderboard-btn">
   <div class="dashboard-grid">
     <div class="chart-card soft-blue">
-      <h3>Conversion Rate (Created → Events) by Lead Generator</h3>
+      <h3 data-i18n="charts.leaderboard.conversionRate">Conversion Rate (Created → Events) by Lead Generator</h3>
       <canvas id="chartLbConversionRate"></canvas>
     </div>
     <div class="chart-card soft-blue">
-      <h3>Created by Lead Generator (month/range)</h3>
+      <h3 data-i18n="charts.leaderboard.created">Created by Lead Generator (month/range)</h3>
       <canvas id="chartLbCreated"></canvas>
     </div>
     <div class="chart-card soft-purple">
-      <h3>Sent Requests by Lead Generator</h3>
+      <h3 data-i18n="charts.leaderboard.sent">Sent Requests by Lead Generator</h3>
       <canvas id="chartLbSent"></canvas>
     </div>
     <div class="chart-card soft-green">
-      <h3>Positive Replies by Lead Generator</h3>
+      <h3 data-i18n="charts.leaderboard.positive">Positive Replies by Lead Generator</h3>
       <canvas id="chartLbPositive"></canvas>
     </div>
     <div class="chart-card soft-yellow">
-      <h3>Events Created by Lead Generator</h3>
+      <h3 data-i18n="charts.leaderboard.events">Events Created by Lead Generator</h3>
       <canvas id="chartLbEvents"></canvas>
     </div>
   </div>
@@ -818,27 +827,27 @@
   <div id="tab-source" class="tabpanel" role="tabpanel" aria-labelledby="tab-source-btn">
   <div class="dashboard-grid">
     <div class="chart-card soft-blue">
-      <h3>Source Comparison: Conversion Rate (Created → Events)</h3>
+      <h3 data-i18n="charts.source.conversionRate">Source Comparison: Conversion Rate (Created → Events)</h3>
       <canvas id="chartSourceConversionRate"></canvas>
     </div>
     <div class="chart-card soft-blue">
-      <h3>Source Comparison: Created → Sent Requests</h3>
+      <h3 data-i18n="charts.source.createdToSent">Source Comparison: Created → Sent Requests</h3>
       <canvas id="chartSourceCreatedToSent"></canvas>
     </div>
     <div class="chart-card soft-purple">
-      <h3>Source Comparison: Sent Requests → Connected</h3>
+      <h3 data-i18n="charts.source.sentToConnected">Source Comparison: Sent Requests → Connected</h3>
       <canvas id="chartSourceSentToConnected"></canvas>
     </div>
     <div class="chart-card soft-green">
-      <h3>Source Comparison: Connected → Total Replies</h3>
+      <h3 data-i18n="charts.source.connectedToReplies">Source Comparison: Connected → Total Replies</h3>
       <canvas id="chartSourceConnectedToReplies"></canvas>
     </div>
     <div class="chart-card soft-orange">
-      <h3>Source Comparison: Total Replies → Positive Replies</h3>
+      <h3 data-i18n="charts.source.repliesToPositive">Source Comparison: Total Replies → Positive Replies</h3>
       <canvas id="chartSourceRepliesToPositive"></canvas>
     </div>
     <div class="chart-card soft-red">
-      <h3>Source Comparison: Positive Replies → Events</h3>
+      <h3 data-i18n="charts.source.positiveToEvents">Source Comparison: Positive Replies → Events</h3>
       <canvas id="chartSourcePositiveToEvents"></canvas>
     </div>
   </div>
@@ -849,30 +858,30 @@
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="dayModalTitle">
       <div class="modal-header">
         <div class="modal-title" id="dayModalTitle">Day Summary</div>
-        <button id="closeDayModal" class="link-btn">Close</button>
+        <button id="closeDayModal" class="link-btn" data-i18n="common.close">Close</button>
       </div>
       <div class="modal-body">
         <div class="summary-controls">
-          <label for="dayPicker">Pick a date:</label>
+          <label for="dayPicker" data-i18n="modals.pickDate">Pick a date:</label>
           <input type="date" id="dayPicker" class="input">
         </div>
         <div class="sort-controls" style="margin: 10px 0;">
-          <label for="sortColumn">Sort by:</label>
+          <label for="sortColumn" data-i18n="modals.sortBy">Sort by:</label>
           <select id="sortColumn" class="input">
-            <option value="Created">Created</option>
-            <option value="SentRequests">Sent Requests</option>
-            <option value="Connected">Connected</option>
-            <option value="PositiveReplies">Positive Replies</option>
-            <option value="Events">Events</option>
+            <option value="Created" data-i18n="table.created">Created</option>
+            <option value="SentRequests" data-i18n="table.sentRequests">Sent Requests</option>
+            <option value="Connected" data-i18n="table.connected">Connected</option>
+            <option value="PositiveReplies" data-i18n="table.positiveReplies">Positive Replies</option>
+            <option value="Events" data-i18n="table.events">Events</option>
           </select>
         </div>
         <div id="daySummaryContainer"></div>
       </div>
       <div class="modal-actions">
-        <button id="exportDayCsv" class="btn btn-secondary">Export CSV</button>
-        <button id="exportDayExcel" class="btn btn-secondary">📊 Export Excel</button>
-        <button id="exportDayPDF" class="btn btn-secondary">📄 Export PDF</button>
-        <button id="doneDay" class="btn btn-primary">Done</button>
+        <button id="exportDayCsv" class="btn btn-secondary" data-i18n="common.exportCsv">Export CSV</button>
+        <button id="exportDayExcel" class="btn btn-secondary" data-i18n="common.exportExcel">📊 Export Excel</button>
+        <button id="exportDayPDF" class="btn btn-secondary" data-i18n="common.exportPdf">📄 Export PDF</button>
+        <button id="doneDay" class="btn btn-primary" data-i18n="common.done">Done</button>
       </div>
     </div>
   </div>
@@ -882,20 +891,20 @@
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="countryModalTitle">
       <div class="modal-header">
         <div class="modal-title" id="countryModalTitle">Country Insight</div>
-        <button id="closeCountryModal" class="link-btn">Close</button>
+        <button id="closeCountryModal" class="link-btn" data-i18n="common.close">Close</button>
       </div>
       <div class="modal-body">
         <div id="countrySummary"></div>
         <div class="dashboard-grid" style="grid-template-columns: 1fr;">
           <div class="chart-card soft-blue">
-            <h3>Monthly Created vs Events</h3>
+            <h3 data-i18n="charts.modal.monthlyCreatedEvents">Monthly Created vs Events</h3>
             <canvas id="countryMonthlyPaired"></canvas>
           </div>
         </div>
         <div id="countryTopGenerators"></div>
       </div>
       <div class="modal-actions">
-        <button id="doneCountry" class="btn btn-primary">Done</button>
+        <button id="doneCountry" class="btn btn-primary" data-i18n="common.done">Done</button>
       </div>
     </div>
   </div>
@@ -905,25 +914,26 @@
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="leadModalTitle">
       <div class="modal-header">
         <div class="modal-title" id="leadModalTitle">Lead Insight</div>
-        <button id="closeLeadModal" class="link-btn">Close</button>
+        <button id="closeLeadModal" class="link-btn" data-i18n="common.close">Close</button>
       </div>
       <div class="modal-body">
         <div id="leadSummary"></div>
         <div class="dashboard-grid" style="grid-template-columns: 1fr;">
           <div class="chart-card soft-blue">
-            <h3>Monthly Created vs Events</h3>
+            <h3 data-i18n="charts.modal.monthlyCreatedEvents">Monthly Created vs Events</h3>
             <canvas id="leadMonthlyPaired"></canvas>
           </div>
         </div>
         <div id="leadTopCountries"></div>
       </div>
       <div class="modal-actions">
-        <button id="doneLead" class="btn btn-primary">Done</button>
+        <button id="doneLead" class="btn btn-primary" data-i18n="common.done">Done</button>
       </div>
     </div>
   </div>
 
   <script type="module">
+    import { translations, localeMap } from './i18n/index.js';
     import { renderPairedBarChart, renderSingleBarChart, renderConversionRateChart } from './charts.js';
     import { parseDdMmYyyyToDate, toIsoDateInputValue, validateData, destroyIfExists, getIsoWeekInfo } from './utils.js';
     import { buildAggregates, buildCountryAggregates, buildWeeklyAggregates, buildMonthlyAggregates, buildLeaderboardAggregates, buildSourceAggregates } from './aggregates.js';
@@ -939,7 +949,174 @@
       batchChartUpdates
     } from './chartOptimizer.js';
 
+    const LANGUAGE_STORAGE_KEY = 'leadGenDashboardLang';
+    const supportedLanguages = ['en', 'uk', 'ru', 'de'];
+    const languageDisplayNames = {
+      en: 'English',
+      uk: 'Українська',
+      ru: 'Русский',
+      de: 'Deutsch'
+    };
+    let currentLanguage = 'en';
+    const storedLanguagePreference = getStoredLanguagePreference();
+    if (storedLanguagePreference) {
+      currentLanguage = storedLanguagePreference;
+    }
+
     // Shared state across tabs/renderers
+    function getStoredLanguagePreference() {
+      if (!isLocalStorageAvailable()) return null;
+      try {
+        const stored = localStorage.getItem(LANGUAGE_STORAGE_KEY);
+        return supportedLanguages.includes(stored) ? stored : null;
+      } catch (error) {
+        console.warn('Unable to read stored language preference:', error);
+        return null;
+      }
+    }
+
+    function getTranslationValue(locale, keyPath) {
+      if (!locale || !keyPath) return null;
+      return keyPath.split('.').reduce((acc, segment) => {
+        if (acc && Object.prototype.hasOwnProperty.call(acc, segment)) {
+          return acc[segment];
+        }
+        return null;
+      }, locale);
+    }
+
+    function t(keyPath) {
+      const localeValue = getTranslationValue(translations[currentLanguage], keyPath);
+      if (localeValue !== null && localeValue !== undefined) return localeValue;
+      const fallbackValue = getTranslationValue(translations.en, keyPath);
+      return fallbackValue !== null && fallbackValue !== undefined ? fallbackValue : keyPath;
+    }
+
+    function updateLoadingText() {
+      if (lastStatusPayload) return;
+      const updateEl = document.getElementById('update');
+      if (updateEl) {
+        updateEl.textContent = t('common.loading');
+      }
+    }
+
+    function formatLocaleDateTime(date) {
+      return date.toLocaleString(localeMap[currentLanguage] || 'en-US');
+    }
+
+    function getActiveTabLabel(activeTabId) {
+      if (!activeTabId) return t('common.title');
+      const tabKey = activeTabId.replace('tab-', '');
+      const translationMap = {
+        funnel: 'tabs.funnel',
+        country: 'tabs.countries',
+        weekly: 'tabs.weekly',
+        monthly: 'tabs.monthly',
+        leaderboard: 'tabs.leaderboard',
+        source: 'tabs.source'
+      };
+      const key = translationMap[tabKey];
+      return key ? t(key) : t('common.title');
+    }
+
+    function applyTranslations() {
+      const translatableElements = document.querySelectorAll('[data-i18n]');
+      translatableElements.forEach((el) => {
+        const key = el.getAttribute('data-i18n');
+        const attr = el.getAttribute('data-i18n-attr');
+        const translation = t(key);
+        if (translation === null || translation === undefined) return;
+        if (attr) {
+          el.setAttribute(attr, translation);
+        } else {
+          el.textContent = translation;
+        }
+      });
+
+      updateThemeToggleButton();
+      updateLanguageSelector();
+      updateLoadingText();
+
+      if (lastStatusPayload) {
+        const updateEl = document.getElementById('update');
+        if (updateEl) {
+          updateStatusUI(updateEl, lastStatusPayload.json, lastStatusPayload.fromCache);
+        }
+      }
+
+      if (typeof rerenderAll === 'function' && rows && rows.length > 0) {
+        const sourceRows = lastFilteredRows.length > 0 ? lastFilteredRows : rows;
+        rerenderAll(sourceRows);
+      }
+    }
+
+    function initLanguageSelector() {
+      const select = document.getElementById('languageSelect');
+      if (!select) return;
+      select.innerHTML = '';
+      supportedLanguages.forEach((lang) => {
+        const option = document.createElement('option');
+        option.value = lang;
+        option.textContent = languageDisplayNames[lang] || lang.toUpperCase();
+        select.appendChild(option);
+      });
+      select.value = currentLanguage;
+      select.addEventListener('change', (event) => {
+        setLanguage(event.target.value);
+      });
+    }
+
+    function updateLanguageSelector() {
+      const select = document.getElementById('languageSelect');
+      if (!select) return;
+      select.value = currentLanguage;
+    }
+
+    function setLanguage(lang) {
+      const normalized = supportedLanguages.includes(lang) ? lang : 'en';
+      currentLanguage = normalized;
+      if (isLocalStorageAvailable()) {
+        try {
+          localStorage.setItem(LANGUAGE_STORAGE_KEY, normalized);
+        } catch (error) {
+          console.warn('Unable to store language preference:', error);
+        }
+      }
+      applyTranslations();
+    }
+
+    function initializeLanguage() {
+      initLanguageSelector();
+      applyTranslations();
+    }
+
+    const DAY_SUMMARY_METRICS = [
+      { key: 'Created', labelKey: 'table.created' },
+      { key: 'SentRequests', labelKey: 'table.sentRequests' },
+      { key: 'Connected', labelKey: 'table.connected' },
+      { key: 'PositiveReplies', labelKey: 'table.positiveReplies' },
+      { key: 'Events', labelKey: 'table.events' }
+    ];
+    const metricTranslationMap = {
+      Created: 'table.created',
+      'Sent Requests': 'table.sentRequests',
+      SentRequests: 'table.sentRequests',
+      Connected: 'table.connected',
+      Replies: 'table.replies',
+      'Total replies': 'table.replies',
+      'Total Replies': 'table.replies',
+      'Positive Replies': 'table.positiveReplies',
+      PositiveReplies: 'table.positiveReplies',
+      Events: 'table.events',
+      'Events Created': 'table.events',
+      'Conversion Rate (%)': 'charts.labels.conversionRatePercent'
+    };
+
+    function getMetricLabel(metric) {
+      const translationKey = metricTranslationMap[metric];
+      return translationKey ? t(translationKey) : metric;
+    }
+
     let chartRefs = {
       createdFound: null,
       sentConnected: null,
@@ -992,6 +1169,7 @@
     let rerenderAll = null; // will be assigned inside initDashboard
     let currentDayData = null; // для зберігання даних поточного дня для сортування
     let rows = []; // Store all rows for export functionality
+    let lastStatusPayload = null;
     const THEME_STORAGE_KEY = 'leadGenDashboardTheme';
     let currentTheme = 'light';
     let userHasExplicitTheme = false;
@@ -1054,7 +1232,8 @@
       const toggleBtn = document.getElementById('themeToggle');
       if (!toggleBtn) return;
       const isDark = theme === 'dark';
-      toggleBtn.textContent = isDark ? '☀️ Light Mode' : '🌙 Dark Mode';
+      const label = isDark ? t('common.themeLight') : t('common.themeDark');
+      toggleBtn.textContent = `${isDark ? '☀️ ' : '🌙 '}${label}`;
       toggleBtn.setAttribute('aria-pressed', isDark ? 'true' : 'false');
     }
 
@@ -1194,7 +1373,7 @@
     // Apply filter function (defined at module level for accessibility)
     function applyCurrentFilter() {
       if (!rows || rows.length === 0) {
-        alert('No data available. Please wait for data to load.');
+        alert(t('alerts.noDataLoaded'));
         return;
       }
       
@@ -1210,7 +1389,7 @@
       const to = new Date(toEl.value);
       
       if (isNaN(from.getTime()) || isNaN(to.getTime())) {
-        alert('Please select valid dates.');
+        alert(t('alerts.invalidDates'));
         return;
       }
       
@@ -1249,15 +1428,13 @@
 
     // Helper function to update UI with data source indicator
     function updateStatusUI(updateEl, json, fromCache = false) {
-      const statusText = `Last updated: ${json.last_updated || 'Unknown'}`;
-      const indicator = fromCache 
-        ? '<span class="cache-indicator">📦 З кешу</span>'
-        : '<span class="cache-indicator server">🔄 З сервера</span>';
-      const refreshBtn = '<button class="refresh-btn" id="refreshDataBtn" title="Оновити дані">🔄</button>';
-      
-      updateEl.innerHTML = `<span>${statusText}</span>${indicator}${refreshBtn}`;
-      
-      // Attach refresh button handler
+      if (!updateEl || !json) return;
+      lastStatusPayload = { json, fromCache };
+      const statusText = `${t('common.lastUpdated')}: ${json.last_updated || t('common.unknown')}`;
+      const indicatorClass = fromCache ? 'cache-indicator' : 'cache-indicator server';
+      const indicatorText = fromCache ? t('common.cacheFromCache') : t('common.cacheFromServer');
+      const refreshTitle = t('common.refreshTooltip');
+      updateEl.innerHTML = `<span>${statusText}</span><span class="${indicatorClass}">${indicatorText}</span><button class="refresh-btn" id="refreshDataBtn" title="${refreshTitle}">🔄</button>`;
       const refreshBtnEl = document.getElementById('refreshDataBtn');
       if (refreshBtnEl) {
         refreshBtnEl.addEventListener('click', handleManualRefresh);
@@ -1408,12 +1585,18 @@
       const agg = aggregationCache.funnel;
 
       scheduleChartUpdate(() => {
+        const createdLabel = getMetricLabel('Created');
+        const sentLabel = getMetricLabel('Sent Requests');
+        const connectedLabel = getMetricLabel('Connected');
+        const repliesLabel = getMetricLabel('Replies');
+        const positiveLabel = getMetricLabel('Positive Replies');
+        const eventsLabel = getMetricLabel('Events');
         chartRefs.createdFound = renderOrUpdateChart(
           chartRefs.createdFound,
           'chartCreatedToFound',
           renderPairedBarChart,
           updatePairedBarChart,
-          agg.dates, 'Created', agg.created, 'Sent Requests', agg.sent
+          agg.dates, createdLabel, agg.created, sentLabel, agg.sent
         );
         
         chartRefs.sentConnected = renderOrUpdateChart(
@@ -1421,7 +1604,7 @@
           'chartSentToConnected',
           renderPairedBarChart,
           updatePairedBarChart,
-          agg.dates, 'Sent Requests', agg.sent, 'Connected', agg.connected
+          agg.dates, sentLabel, agg.sent, connectedLabel, agg.connected
         );
         
         chartRefs.connectedReplies = renderOrUpdateChart(
@@ -1429,7 +1612,7 @@
           'chartConnectedToReplies',
           renderPairedBarChart,
           updatePairedBarChart,
-          agg.dates, 'Connected', agg.connected, 'Replies', agg.replies
+          agg.dates, connectedLabel, agg.connected, repliesLabel, agg.replies
         );
         
         chartRefs.repliesPositive = renderOrUpdateChart(
@@ -1437,7 +1620,7 @@
           'chartRepliesToPositive',
           renderPairedBarChart,
           updatePairedBarChart,
-          agg.dates, 'Replies', agg.replies, 'Positive Replies', agg.positive
+          agg.dates, repliesLabel, agg.replies, positiveLabel, agg.positive
         );
         
         chartRefs.positiveEvents = renderOrUpdateChart(
@@ -1445,7 +1628,7 @@
           'chartPositiveToEvents',
           renderPairedBarChart,
           updatePairedBarChart,
-          agg.dates, 'Positive Replies', agg.positive, 'Events', agg.events
+          agg.dates, positiveLabel, agg.positive, eventsLabel, agg.events
         );
       });
     }
@@ -1460,6 +1643,13 @@
       const countryAgg = aggregationCache.country;
 
       scheduleChartUpdate(() => {
+        const createdLabel = getMetricLabel('Created');
+        const sentLabel = getMetricLabel('Sent Requests');
+        const connectedLabel = getMetricLabel('Connected');
+        const repliesLabel = getMetricLabel('Replies');
+        const positiveLabel = getMetricLabel('Positive Replies');
+        const eventsLabel = getMetricLabel('Events');
+        const conversionRateLabel = getMetricLabel('Conversion Rate (%)');
         chartRefs.countryConversionRate = renderOrUpdateChart(
           chartRefs.countryConversionRate,
           'chartCountryConversionRate',
@@ -1468,17 +1658,17 @@
             if (chart) {
               chart.options.onClick = (evt, activeEls) => {
                 const points = chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
-                if (points && points.length) {
-                  const idx = points[0].index;
+          if (points && points.length) {
+            const idx = points[0].index;
                   const country = labels[idx];
-                  openCountryInsight(country, filteredRows);
-                }
-              };
+            openCountryInsight(country, filteredRows);
+          }
+        };
             }
             return chart;
           },
           null,
-          countryAgg.countries, 'Conversion Rate (%)', countryAgg.conversionRates, 'rgba(75,192,192,0.6)'
+          countryAgg.countries, conversionRateLabel, countryAgg.conversionRates, 'rgba(75,192,192,0.6)'
         );
 
         chartRefs.countryCreatedFound = renderOrUpdateChart(
@@ -1489,17 +1679,17 @@
             if (chart) {
               chart.options.onClick = (evt, activeEls) => {
                 const points = chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
-                if (points && points.length) {
-                  const idx = points[0].index;
+          if (points && points.length) {
+            const idx = points[0].index;
                   const country = labels[idx];
-                  openCountryInsight(country, filteredRows);
-                }
-              };
+            openCountryInsight(country, filteredRows);
+          }
+        };
             }
             return chart;
           },
           updatePairedBarChart,
-          countryAgg.countries, 'Created', countryAgg.created, 'Sent Requests', countryAgg.sent
+          countryAgg.countries, createdLabel, countryAgg.created, sentLabel, countryAgg.sent
         );
 
         chartRefs.countrySentConnected = renderOrUpdateChart(
@@ -1510,17 +1700,17 @@
             if (chart) {
               chart.options.onClick = (evt, activeEls) => {
                 const points = chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
-                if (points && points.length) {
-                  const idx = points[0].index;
+          if (points && points.length) {
+            const idx = points[0].index;
                   const country = labels[idx];
-                  openCountryInsight(country, filteredRows);
-                }
-              };
+            openCountryInsight(country, filteredRows);
+          }
+        };
             }
             return chart;
           },
           updatePairedBarChart,
-          countryAgg.countries, 'Sent Requests', countryAgg.sent, 'Connected', countryAgg.connected
+          countryAgg.countries, sentLabel, countryAgg.sent, connectedLabel, countryAgg.connected
         );
 
         chartRefs.countryConnectedReplies = renderOrUpdateChart(
@@ -1531,17 +1721,17 @@
             if (chart) {
               chart.options.onClick = (evt, activeEls) => {
                 const points = chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
-                if (points && points.length) {
-                  const idx = points[0].index;
+          if (points && points.length) {
+            const idx = points[0].index;
                   const country = labels[idx];
-                  openCountryInsight(country, filteredRows);
-                }
-              };
+            openCountryInsight(country, filteredRows);
+          }
+        };
             }
             return chart;
           },
           updatePairedBarChart,
-          countryAgg.countries, 'Connected', countryAgg.connected, 'Replies', countryAgg.replies
+          countryAgg.countries, connectedLabel, countryAgg.connected, repliesLabel, countryAgg.replies
         );
 
         chartRefs.countryRepliesPositive = renderOrUpdateChart(
@@ -1552,17 +1742,17 @@
             if (chart) {
               chart.options.onClick = (evt, activeEls) => {
                 const points = chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
-                if (points && points.length) {
-                  const idx = points[0].index;
+          if (points && points.length) {
+            const idx = points[0].index;
                   const country = labels[idx];
-                  openCountryInsight(country, filteredRows);
-                }
-              };
+            openCountryInsight(country, filteredRows);
+          }
+        };
             }
             return chart;
           },
           updatePairedBarChart,
-          countryAgg.countries, 'Replies', countryAgg.replies, 'Positive Replies', countryAgg.positive
+          countryAgg.countries, repliesLabel, countryAgg.replies, positiveLabel, countryAgg.positive
         );
 
         chartRefs.countryPositiveEvents = renderOrUpdateChart(
@@ -1573,17 +1763,17 @@
             if (chart) {
               chart.options.onClick = (evt, activeEls) => {
                 const points = chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
-                if (points && points.length) {
-                  const idx = points[0].index;
+          if (points && points.length) {
+            const idx = points[0].index;
                   const country = labels[idx];
-                  openCountryInsight(country, filteredRows);
-                }
-              };
+            openCountryInsight(country, filteredRows);
+          }
+        };
             }
             return chart;
           },
           updatePairedBarChart,
-          countryAgg.countries, 'Positive Replies', countryAgg.positive, 'Events', countryAgg.events
+          countryAgg.countries, positiveLabel, countryAgg.positive, eventsLabel, countryAgg.events
         );
       });
     }
@@ -1598,25 +1788,31 @@
       const weekAgg = aggregationCache.weekly;
 
       scheduleChartUpdate(() => {
+        const createdLabel = getMetricLabel('Created');
+        const sentLabel = getMetricLabel('Sent Requests');
+        const connectedLabel = getMetricLabel('Connected');
+        const repliesLabel = getMetricLabel('Replies');
+        const positiveLabel = getMetricLabel('Positive Replies');
+        const eventsLabel = getMetricLabel('Events');
         chartRefs.weekCreatedFound = renderOrUpdateChart(
           chartRefs.weekCreatedFound, 'chartWeekCreatedToFound', renderPairedBarChart, updatePairedBarChart,
-          weekAgg.weeks, 'Created', weekAgg.created, 'Sent Requests', weekAgg.sent
+          weekAgg.weeks, createdLabel, weekAgg.created, sentLabel, weekAgg.sent
         );
         chartRefs.weekSentConnected = renderOrUpdateChart(
           chartRefs.weekSentConnected, 'chartWeekSentToConnected', renderPairedBarChart, updatePairedBarChart,
-          weekAgg.weeks, 'Sent Requests', weekAgg.sent, 'Connected', weekAgg.connected
+          weekAgg.weeks, sentLabel, weekAgg.sent, connectedLabel, weekAgg.connected
         );
         chartRefs.weekConnectedReplies = renderOrUpdateChart(
           chartRefs.weekConnectedReplies, 'chartWeekConnectedToReplies', renderPairedBarChart, updatePairedBarChart,
-          weekAgg.weeks, 'Connected', weekAgg.connected, 'Replies', weekAgg.replies
+          weekAgg.weeks, connectedLabel, weekAgg.connected, repliesLabel, weekAgg.replies
         );
         chartRefs.weekRepliesPositive = renderOrUpdateChart(
           chartRefs.weekRepliesPositive, 'chartWeekRepliesToPositive', renderPairedBarChart, updatePairedBarChart,
-          weekAgg.weeks, 'Replies', weekAgg.replies, 'Positive Replies', weekAgg.positive
+          weekAgg.weeks, repliesLabel, weekAgg.replies, positiveLabel, weekAgg.positive
         );
         chartRefs.weekPositiveEvents = renderOrUpdateChart(
           chartRefs.weekPositiveEvents, 'chartWeekPositiveToEvents', renderPairedBarChart, updatePairedBarChart,
-          weekAgg.weeks, 'Positive Replies', weekAgg.positive, 'Events', weekAgg.events
+          weekAgg.weeks, positiveLabel, weekAgg.positive, eventsLabel, weekAgg.events
         );
       });
     }
@@ -1631,29 +1827,36 @@
       const monthAgg = aggregationCache.monthly;
 
       scheduleChartUpdate(() => {
+        const createdLabel = getMetricLabel('Created');
+        const sentLabel = getMetricLabel('Sent Requests');
+        const connectedLabel = getMetricLabel('Connected');
+        const repliesLabel = getMetricLabel('Replies');
+        const positiveLabel = getMetricLabel('Positive Replies');
+        const eventsLabel = getMetricLabel('Events');
+        const conversionRateLabel = getMetricLabel('Conversion Rate (%)');
         chartRefs.monthConversionRate = renderOrUpdateChart(
           chartRefs.monthConversionRate, 'chartMonthConversionRate', renderConversionRateChart, null,
-          monthAgg.months, 'Conversion Rate (%)', monthAgg.conversionRates, 'rgba(75,192,192,0.6)'
+          monthAgg.months, conversionRateLabel, monthAgg.conversionRates, 'rgba(75,192,192,0.6)'
         );
         chartRefs.monthCreatedFound = renderOrUpdateChart(
           chartRefs.monthCreatedFound, 'chartMonthCreatedToFound', renderPairedBarChart, updatePairedBarChart,
-          monthAgg.months, 'Created', monthAgg.created, 'Sent Requests', monthAgg.sent
+          monthAgg.months, createdLabel, monthAgg.created, sentLabel, monthAgg.sent
         );
         chartRefs.monthSentConnected = renderOrUpdateChart(
           chartRefs.monthSentConnected, 'chartMonthSentToConnected', renderPairedBarChart, updatePairedBarChart,
-          monthAgg.months, 'Sent Requests', monthAgg.sent, 'Connected', monthAgg.connected
+          monthAgg.months, sentLabel, monthAgg.sent, connectedLabel, monthAgg.connected
         );
         chartRefs.monthConnectedReplies = renderOrUpdateChart(
           chartRefs.monthConnectedReplies, 'chartMonthConnectedToReplies', renderPairedBarChart, updatePairedBarChart,
-          monthAgg.months, 'Connected', monthAgg.connected, 'Replies', monthAgg.replies
+          monthAgg.months, connectedLabel, monthAgg.connected, repliesLabel, monthAgg.replies
         );
         chartRefs.monthRepliesPositive = renderOrUpdateChart(
           chartRefs.monthRepliesPositive, 'chartMonthRepliesToPositive', renderPairedBarChart, updatePairedBarChart,
-          monthAgg.months, 'Replies', monthAgg.replies, 'Positive Replies', monthAgg.positive
+          monthAgg.months, repliesLabel, monthAgg.replies, positiveLabel, monthAgg.positive
         );
         chartRefs.monthPositiveEvents = renderOrUpdateChart(
           chartRefs.monthPositiveEvents, 'chartMonthPositiveToEvents', renderPairedBarChart, updatePairedBarChart,
-          monthAgg.months, 'Positive Replies', monthAgg.positive, 'Events', monthAgg.events
+          monthAgg.months, positiveLabel, monthAgg.positive, eventsLabel, monthAgg.events
         );
       });
     }
@@ -1668,6 +1871,11 @@
       const lbAgg = aggregationCache.leaderboard;
 
       scheduleChartUpdate(() => {
+        const createdLabel = getMetricLabel('Created');
+        const sentLabel = getMetricLabel('Sent Requests');
+        const positiveLabel = getMetricLabel('Positive Replies');
+        const eventsLabel = getMetricLabel('Events Created');
+        const conversionRateLabel = getMetricLabel('Conversion Rate (%)');
         chartRefs.lbConversionRate = renderOrUpdateChart(
           chartRefs.lbConversionRate,
           'chartLbConversionRate',
@@ -1676,17 +1884,17 @@
             if (chart) {
               chart.options.onClick = (evt, activeEls) => {
                 const points = chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
-                if (points && points.length) {
-                  const idx = points[0].index;
+          if (points && points.length) {
+            const idx = points[0].index;
                   const name = labels[idx];
-                  openLeadInsight(name, filteredRows);
-                }
-              };
+            openLeadInsight(name, filteredRows);
+          }
+        };
             }
             return chart;
           },
           null,
-          lbAgg.names, 'Conversion Rate (%)', lbAgg.conversionRates, 'rgba(75,192,192,0.6)'
+          lbAgg.names, conversionRateLabel, lbAgg.conversionRates, 'rgba(75,192,192,0.6)'
         );
 
         chartRefs.lbCreated = renderOrUpdateChart(
@@ -1697,17 +1905,17 @@
             if (chart) {
               chart.options.onClick = (evt, activeEls) => {
                 const points = chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
-                if (points && points.length) {
-                  const idx = points[0].index;
+          if (points && points.length) {
+            const idx = points[0].index;
                   const name = labels[idx];
-                  openLeadInsight(name, filteredRows);
-                }
-              };
+            openLeadInsight(name, filteredRows);
+          }
+        };
             }
             return chart;
           },
           updateSingleBarChart,
-          lbAgg.names, 'Created', lbAgg.created, 'rgba(54,162,235,0.6)'
+          lbAgg.names, createdLabel, lbAgg.created, 'rgba(54,162,235,0.6)'
         );
 
         chartRefs.lbSent = renderOrUpdateChart(
@@ -1718,17 +1926,17 @@
             if (chart) {
               chart.options.onClick = (evt, activeEls) => {
                 const points = chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
-                if (points && points.length) {
-                  const idx = points[0].index;
+          if (points && points.length) {
+            const idx = points[0].index;
                   const name = labels[idx];
-                  openLeadInsight(name, filteredRows);
-                }
-              };
+            openLeadInsight(name, filteredRows);
+          }
+        };
             }
             return chart;
           },
           updateSingleBarChart,
-          lbAgg.names, 'Sent Requests', lbAgg.sent, 'rgba(153,102,255,0.6)'
+          lbAgg.names, sentLabel, lbAgg.sent, 'rgba(153,102,255,0.6)'
         );
 
         chartRefs.lbPositive = renderOrUpdateChart(
@@ -1739,17 +1947,17 @@
             if (chart) {
               chart.options.onClick = (evt, activeEls) => {
                 const points = chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
-                if (points && points.length) {
-                  const idx = points[0].index;
+          if (points && points.length) {
+            const idx = points[0].index;
                   const name = labels[idx];
-                  openLeadInsight(name, filteredRows);
-                }
-              };
+            openLeadInsight(name, filteredRows);
+          }
+        };
             }
             return chart;
           },
           updateSingleBarChart,
-          lbAgg.names, 'Positive Replies', lbAgg.positive, 'rgba(75,192,192,0.6)'
+          lbAgg.names, positiveLabel, lbAgg.positive, 'rgba(75,192,192,0.6)'
         );
 
         chartRefs.lbEvents = renderOrUpdateChart(
@@ -1760,17 +1968,17 @@
             if (chart) {
               chart.options.onClick = (evt, activeEls) => {
                 const points = chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
-                if (points && points.length) {
-                  const idx = points[0].index;
+          if (points && points.length) {
+            const idx = points[0].index;
                   const name = labels[idx];
-                  openLeadInsight(name, filteredRows);
-                }
-              };
+            openLeadInsight(name, filteredRows);
+          }
+        };
             }
             return chart;
           },
           updateSingleBarChart,
-          lbAgg.names, 'Events Created', lbAgg.events, 'rgba(255,206,86,0.6)'
+          lbAgg.names, eventsLabel, lbAgg.events, 'rgba(255,206,86,0.6)'
         );
       });
     }
@@ -1785,29 +1993,36 @@
       const sourceAgg = aggregationCache.source;
 
       scheduleChartUpdate(() => {
+        const conversionRateLabel = getMetricLabel('Conversion Rate (%)');
+        const createdLabel = getMetricLabel('Created');
+        const sentLabel = getMetricLabel('Sent Requests');
+        const connectedLabel = getMetricLabel('Connected');
+        const repliesLabel = getMetricLabel('Total replies');
+        const positiveLabel = getMetricLabel('Positive Replies');
+        const eventsLabel = getMetricLabel('Events');
         chartRefs.sourceConversionRate = renderOrUpdateChart(
           chartRefs.sourceConversionRate, 'chartSourceConversionRate', renderConversionRateChart, null,
-          sourceAgg.sources, 'Conversion Rate (%)', sourceAgg.conversionRates, 'rgba(75,192,192,0.6)'
+          sourceAgg.sources, conversionRateLabel, sourceAgg.conversionRates, 'rgba(75,192,192,0.6)'
         );
         chartRefs.sourceCreatedToSent = renderOrUpdateChart(
           chartRefs.sourceCreatedToSent, 'chartSourceCreatedToSent', renderPairedBarChart, updatePairedBarChart,
-          sourceAgg.sources, 'Created', sourceAgg.created, 'Sent Requests', sourceAgg.sentRequests
+          sourceAgg.sources, createdLabel, sourceAgg.created, sentLabel, sourceAgg.sentRequests
         );
         chartRefs.sourceSentToConnected = renderOrUpdateChart(
           chartRefs.sourceSentToConnected, 'chartSourceSentToConnected', renderPairedBarChart, updatePairedBarChart,
-          sourceAgg.sources, 'Sent Requests', sourceAgg.sentRequests, 'Connected', sourceAgg.connected
+          sourceAgg.sources, sentLabel, sourceAgg.sentRequests, connectedLabel, sourceAgg.connected
         );
         chartRefs.sourceConnectedToReplies = renderOrUpdateChart(
           chartRefs.sourceConnectedToReplies, 'chartSourceConnectedToReplies', renderPairedBarChart, updatePairedBarChart,
-          sourceAgg.sources, 'Connected', sourceAgg.connected, 'Total Replies', sourceAgg.totalReplies
+          sourceAgg.sources, connectedLabel, sourceAgg.connected, repliesLabel, sourceAgg.totalReplies
         );
         chartRefs.sourceRepliesToPositive = renderOrUpdateChart(
           chartRefs.sourceRepliesToPositive, 'chartSourceRepliesToPositive', renderPairedBarChart, updatePairedBarChart,
-          sourceAgg.sources, 'Total Replies', sourceAgg.totalReplies, 'Positive Replies', sourceAgg.positiveReplies
+          sourceAgg.sources, repliesLabel, sourceAgg.totalReplies, positiveLabel, sourceAgg.positiveReplies
         );
         chartRefs.sourcePositiveToEvents = renderOrUpdateChart(
           chartRefs.sourcePositiveToEvents, 'chartSourcePositiveToEvents', renderPairedBarChart, updatePairedBarChart,
-          sourceAgg.sources, 'Positive Replies', sourceAgg.positiveReplies, 'Events', sourceAgg.events
+          sourceAgg.sources, positiveLabel, sourceAgg.positiveReplies, eventsLabel, sourceAgg.events
         );
       });
     }
@@ -1940,9 +2155,9 @@
             warningDiv.style.background = '#fff3cd';
             warningDiv.style.borderColor = '#ffc107';
             warningDiv.innerHTML = `
-              <strong>⚠️ Увага</strong><br>
-              Не вдалося завантажити дані з сервера. Використовуються закешовані дані.<br>
-              <small>Спробуйте оновити сторінку або натисніть кнопку оновлення.</small>
+              <strong>${t('errors.cacheFallbackTitle')}</strong><br>
+              ${t('errors.cacheFallbackMessage')}<br>
+              <small>${t('errors.cacheFallbackHint')}</small>
             `;
             document.body.insertBefore(warningDiv, document.querySelector('.controls'));
             return;
@@ -1954,9 +2169,9 @@
         const errorDiv = document.createElement('div');
         errorDiv.className = 'error-message';
         errorDiv.innerHTML = `
-          <strong>Помилка завантаження даних</strong><br>
+          <strong>${t('errors.dataLoadTitle')}</strong><br>
           ${error.message}<br>
-          <small>Перевірте консоль браузера для деталей. Спробуйте оновити сторінку.</small>
+          <small>${t('errors.dataLoadDescription')}</small>
         `;
         document.body.insertBefore(errorDiv, document.querySelector('.controls'));
         
@@ -1968,7 +2183,7 @@
         if (tabs) tabs.style.display = 'none';
         if (tabpanels) tabpanels.style.display = 'none';
         
-        updateEl.textContent = '❌ Помилка завантаження';
+        updateEl.textContent = t('errors.dataLoadShort');
         updateEl.style.color = '#d32f2f';
       }
     }
@@ -2066,7 +2281,7 @@
         exportDayExcelBtn.addEventListener('click', () => {
           try {
             if (!window.XLSX) {
-              alert('Excel library not loaded. Please refresh the page.');
+              alert(t('alerts.excelLibraryMissing'));
               return;
             }
 
@@ -2074,7 +2289,7 @@
             const dataForDay = getRowsForDay(d);
             
             if (!dataForDay || dataForDay.length === 0) {
-              alert('No data available for selected day.');
+              alert(t('alerts.noDataForDay'));
               return;
             }
 
@@ -2150,7 +2365,7 @@
             console.log('Day Summary Excel export completed:', filename);
           } catch (error) {
             console.error('Error exporting day summary to Excel:', error);
-            alert('Error exporting to Excel: ' + error.message);
+            alert(t('alerts.exportExcelError') + error.message);
           }
         });
       }
@@ -2161,7 +2376,7 @@
         exportDayPDFBtn.addEventListener('click', async () => {
           try {
             if (!window.jspdf) {
-              alert('PDF library not loaded. Please refresh the page.');
+              alert(t('alerts.pdfLibraryMissing'));
               return;
             }
 
@@ -2170,7 +2385,7 @@
             const dataForDay = getRowsForDay(d);
             
             if (!dataForDay || dataForDay.length === 0) {
-              alert('No data available for selected day.');
+              alert(t('alerts.noDataForDay'));
               return;
             }
 
@@ -2183,17 +2398,17 @@
             
             // Title
             doc.setFontSize(20);
-            doc.text('Day Summary', margin, yPos);
+            doc.text(t('pdf.daySummary'), margin, yPos);
             yPos += 10;
             
             // Date
             doc.setFontSize(12);
-            doc.text(`Date: ${toIsoDateInputValue(d)}`, margin, yPos);
+            doc.text(`${t('pdf.date')}: ${toIsoDateInputValue(d)}`, margin, yPos);
             yPos += 10;
             
             // Export date
             doc.setFontSize(10);
-            doc.text(`Exported: ${new Date().toLocaleString('uk-UA')}`, margin, yPos);
+            doc.text(`${t('pdf.exported')}: ${formatLocaleDateTime(new Date())}`, margin, yPos);
             yPos += 15;
             
             // Build table data
@@ -2230,12 +2445,19 @@
             // Table header
             doc.setFontSize(12);
             doc.setFont('helvetica', 'bold');
-            doc.text('Summary by Name', margin, yPos);
+            doc.text(t('pdf.summaryByName'), margin, yPos);
             yPos += 10;
             
             // Table columns
             const colWidths = [50, 30, 35, 30, 35, 25];
-            const headers = ['Name', 'Created', 'Sent Req', 'Connected', 'Pos Replies', 'Events'];
+            const headers = [
+              t('table.name'),
+              t('table.created'),
+              t('table.sentRequests'),
+              t('table.connected'),
+              t('table.positiveReplies'),
+              t('table.events')
+            ];
             let xPos = margin;
             
             doc.setFontSize(9);
@@ -2295,7 +2517,7 @@
             yPos += 3;
             doc.setFont('helvetica', 'bold');
             xPos = margin;
-            doc.text('TOTAL', xPos, yPos);
+            doc.text(t('table.total').toUpperCase(), xPos, yPos);
             xPos += colWidths[0];
             doc.text(totals.Created.toString(), xPos, yPos, { align: 'right' });
             xPos += colWidths[1];
@@ -2313,7 +2535,7 @@
             console.log('Day Summary PDF export completed:', filename);
           } catch (error) {
             console.error('Error exporting day summary to PDF:', error);
-            alert('Error exporting to PDF: ' + error.message);
+            alert(t('alerts.exportPdfError') + error.message);
           }
         });
       }
@@ -2339,8 +2561,8 @@
         const minDate = datesList[0] || new Date();
         const maxDate = datesList[datesList.length - 1] || new Date();
         if (fromEl && toEl) {
-          fromEl.value = toIsoDateInputValue(minDate);
-          toEl.value = toIsoDateInputValue(maxDate);
+        fromEl.value = toIsoDateInputValue(minDate);
+        toEl.value = toIsoDateInputValue(maxDate);
         }
         renderAll(rows);
       });
@@ -2369,7 +2591,8 @@
         const totals = { Created: 0, SentRequests: 0, Connected: 0, PositiveReplies: 0, Events: 0 };
         let html = '';
         html += '<table class="summary-table">';
-        html += '<thead><tr><th>Name</th><th>Created</th><th>Sent Requests</th><th>Connected</th><th>Positive Replies</th><th>Events</th></tr></thead>';
+        const headerCells = DAY_SUMMARY_METRICS.map(metric => `<th>${t(metric.labelKey)}</th>`).join('');
+        html += `<thead><tr><th>${t('table.name')}</th>${headerCells}</tr></thead>`;
         html += '<tbody>';
         
         for (const n of sortedNames) {
@@ -2379,11 +2602,13 @@
           totals.Connected += row.Connected;
           totals.PositiveReplies += row.PositiveReplies;
           totals.Events += row.Events;
-          html += `<tr><td>${n}</td><td>${row.Created}</td><td>${row.SentRequests}</td><td>${row.Connected}</td><td>${row.PositiveReplies}</td><td>${row.Events}</td></tr>`;
+          const metricCells = DAY_SUMMARY_METRICS.map(metric => `<td>${row[metric.key]}</td>`).join('');
+          html += `<tr><td>${n}</td>${metricCells}</tr>`;
         }
         
         html += '</tbody>';
-        html += `<tfoot><tr><td>Total</td><td>${totals.Created}</td><td>${totals.SentRequests}</td><td>${totals.Connected}</td><td>${totals.PositiveReplies}</td><td>${totals.Events}</td></tr></tfoot>`;
+        const totalCells = DAY_SUMMARY_METRICS.map(metric => `<td>${totals[metric.key]}</td>`).join('');
+        html += `<tfoot><tr><td>${t('table.total')}</td>${totalCells}</tr></tfoot>`;
         html += '</table>';
         
         document.getElementById('daySummaryContainer').innerHTML = html;
@@ -2416,7 +2641,7 @@
         const sortSelect = document.getElementById('sortColumn');
         const selected = sortSelect ? sortSelect.value : 'Created';
         sortDayData(selected);
-        document.getElementById('dayModalTitle').textContent = `Day Summary — ${toIsoDateInputValue(dateObj)}`;
+        document.getElementById('dayModalTitle').textContent = `${t('modals.daySummary')} — ${toIsoDateInputValue(dateObj)}`;
       }
 
       function buildCsvForDay(dayRows) {
@@ -2456,31 +2681,31 @@
       // Debounced resize function for better performance
       const debouncedResizeCharts = debounce((panelId) => {
         scheduleChartUpdate(() => {
-          if (panelId === 'tab-funnel') {
-            [chartRefs.createdFound, chartRefs.sentConnected, chartRefs.connectedReplies, chartRefs.repliesPositive, chartRefs.positiveEvents]
-              .forEach(c => c && typeof c.resize === 'function' && c.resize());
-          } else if (panelId === 'tab-country') {
-            [
-              chartRefs.countryConversionRate,
-              chartRefs.countryCreatedFound,
-              chartRefs.countrySentConnected,
-              chartRefs.countryConnectedReplies,
-              chartRefs.countryRepliesPositive,
-              chartRefs.countryPositiveEvents
-            ].forEach(c => c && typeof c.resize === 'function' && c.resize());
-          } else if (panelId === 'tab-weekly') {
-            [chartRefs.weekCreatedFound, chartRefs.weekSentConnected, chartRefs.weekConnectedReplies, chartRefs.weekRepliesPositive, chartRefs.weekPositiveEvents]
-              .forEach(c => c && typeof c.resize === 'function' && c.resize());
-          } else if (panelId === 'tab-monthly') {
-            [chartRefs.monthConversionRate, chartRefs.monthCreatedFound, chartRefs.monthSentConnected, chartRefs.monthConnectedReplies, chartRefs.monthRepliesPositive, chartRefs.monthPositiveEvents]
-              .forEach(c => c && typeof c.resize === 'function' && c.resize());
-          } else if (panelId === 'tab-leaderboard') {
-            [chartRefs.lbConversionRate, chartRefs.lbCreated, chartRefs.lbSent, chartRefs.lbPositive, chartRefs.lbEvents]
-              .forEach(c => c && typeof c.resize === 'function' && c.resize());
-          } else if (panelId === 'tab-source') {
-            [chartRefs.sourceConversionRate, chartRefs.sourceCreatedToSent, chartRefs.sourceSentToConnected, chartRefs.sourceConnectedToReplies, chartRefs.sourceRepliesToPositive, chartRefs.sourcePositiveToEvents]
-              .forEach(c => c && typeof c.resize === 'function' && c.resize());
-          }
+        if (panelId === 'tab-funnel') {
+          [chartRefs.createdFound, chartRefs.sentConnected, chartRefs.connectedReplies, chartRefs.repliesPositive, chartRefs.positiveEvents]
+            .forEach(c => c && typeof c.resize === 'function' && c.resize());
+        } else if (panelId === 'tab-country') {
+          [
+            chartRefs.countryConversionRate,
+            chartRefs.countryCreatedFound,
+            chartRefs.countrySentConnected,
+            chartRefs.countryConnectedReplies,
+            chartRefs.countryRepliesPositive,
+            chartRefs.countryPositiveEvents
+          ].forEach(c => c && typeof c.resize === 'function' && c.resize());
+        } else if (panelId === 'tab-weekly') {
+          [chartRefs.weekCreatedFound, chartRefs.weekSentConnected, chartRefs.weekConnectedReplies, chartRefs.weekRepliesPositive, chartRefs.weekPositiveEvents]
+            .forEach(c => c && typeof c.resize === 'function' && c.resize());
+        } else if (panelId === 'tab-monthly') {
+          [chartRefs.monthConversionRate, chartRefs.monthCreatedFound, chartRefs.monthSentConnected, chartRefs.monthConnectedReplies, chartRefs.monthRepliesPositive, chartRefs.monthPositiveEvents]
+            .forEach(c => c && typeof c.resize === 'function' && c.resize());
+        } else if (panelId === 'tab-leaderboard') {
+          [chartRefs.lbConversionRate, chartRefs.lbCreated, chartRefs.lbSent, chartRefs.lbPositive, chartRefs.lbEvents]
+            .forEach(c => c && typeof c.resize === 'function' && c.resize());
+        } else if (panelId === 'tab-source') {
+          [chartRefs.sourceConversionRate, chartRefs.sourceCreatedToSent, chartRefs.sourceSentToConnected, chartRefs.sourceConnectedToReplies, chartRefs.sourceRepliesToPositive, chartRefs.sourcePositiveToEvents]
+            .forEach(c => c && typeof c.resize === 'function' && c.resize());
+        }
         });
       }, 200);
 
@@ -2531,7 +2756,7 @@
           currentActivePanel.style.transform = 'translateY(20px)';
           
           // Після завершення fade out приховуємо панель
-          setTimeout(() => {
+        setTimeout(() => {
             currentActivePanel.classList.remove('active');
             
             // Показуємо нову панель
@@ -2585,7 +2810,7 @@
                   newPanel.style.display = '';
                   
                   // Resize charts після завершення анімації
-                  resizeChartsFor(panelId);
+          resizeChartsFor(panelId);
                 }, 300);
               });
             });
@@ -2606,7 +2831,7 @@
     function exportToExcel() {
       try {
         if (!window.XLSX) {
-          alert('Excel library not loaded. Please refresh the page.');
+          alert(t('alerts.excelLibraryMissing'));
           return;
         }
 
@@ -2616,14 +2841,14 @@
         // Get filtered rows - ensure rows is defined
         if (typeof rows === 'undefined') {
           console.error('rows is not defined in exportToExcel');
-          alert('Data not loaded yet. Please wait for data to load.');
+          alert(t('alerts.dataNotLoaded'));
           return;
         }
         
         const filteredRows = lastFilteredRows.length > 0 ? lastFilteredRows : (rows || []);
         
         if (!filteredRows || filteredRows.length === 0) {
-          alert('No data available to export. Please wait for data to load.');
+          alert(t('alerts.noDataToExport'));
           return;
         }
 
@@ -2755,14 +2980,14 @@
         console.log('Excel export completed:', filename);
       } catch (error) {
         console.error('Error exporting to Excel:', error);
-        alert('Error exporting to Excel: ' + error.message);
+        alert(t('alerts.exportExcelError') + error.message);
       }
     }
 
     async function exportToPDF() {
       try {
         if (!window.jspdf) {
-          alert('PDF library not loaded. Please refresh the page.');
+          alert(t('alerts.pdfLibraryMissing'));
           return;
         }
 
@@ -2776,33 +3001,33 @@
         
         // Title
         doc.setFontSize(20);
-        doc.text('Lead Generation Dashboard', margin, yPos);
+        doc.text(t('common.title'), margin, yPos);
         yPos += 10;
         
         // Date range
         const fromDate = document.getElementById('fromDate')?.value || 'N/A';
         const toDate = document.getElementById('toDate')?.value || 'N/A';
         doc.setFontSize(12);
-        doc.text(`Date Range: ${fromDate} to ${toDate}`, margin, yPos);
+        doc.text(`${t('pdf.dateRange')}: ${fromDate} → ${toDate}`, margin, yPos);
         yPos += 10;
         
         // Export date
         doc.setFontSize(10);
-        doc.text(`Exported: ${new Date().toLocaleString('uk-UA')}`, margin, yPos);
+        doc.text(`${t('pdf.exported')}: ${formatLocaleDateTime(new Date())}`, margin, yPos);
         yPos += 15;
         
         // Get active tab data
         const activeTab = document.querySelector('.tabpanel.active')?.id;
-        const tabName = activeTab ? activeTab.replace('tab-', '').replace('-', ' ') : 'dashboard';
+        const tabLabel = getActiveTabLabel(activeTab);
         
         doc.setFontSize(14);
-        doc.text(`Active Tab: ${tabName.charAt(0).toUpperCase() + tabName.slice(1)}`, margin, yPos);
+        doc.text(`${t('pdf.activeTab')}: ${tabLabel}`, margin, yPos);
         yPos += 10;
         
         // Add summary table - ensure rows is defined
         if (typeof rows === 'undefined') {
           console.error('rows is not defined in exportToPDF');
-          alert('Data not loaded yet. Please wait for data to load.');
+          alert(t('alerts.dataNotLoaded'));
           return;
         }
         
@@ -2829,17 +3054,17 @@
           
           // Create summary table
           const tableData = [
-            ['Metric', 'Total'],
-            ['Created', totals.Created.toString()],
-            ['Sent Requests', totals['Sent Requests'].toString()],
-            ['Connected', totals.Connected.toString()],
-            ['Total Replies', totals['Total replies'].toString()],
-            ['Positive Replies', totals['Positive Replies'].toString()],
-            ['Events Created', totals['Events Created'].toString()]
+            [t('table.metric'), t('table.total')],
+            [t('table.created'), totals.Created.toString()],
+            [t('table.sentRequests'), totals['Sent Requests'].toString()],
+            [t('table.connected'), totals.Connected.toString()],
+            [t('table.replies'), totals['Total replies'].toString()],
+            [t('table.positiveReplies'), totals['Positive Replies'].toString()],
+            [t('table.events'), totals['Events Created'].toString()]
           ];
           
           doc.setFontSize(12);
-          doc.text('Summary Totals', margin, yPos);
+          doc.text(t('pdf.summaryTotals'), margin, yPos);
           yPos += 8;
           
           // Simple table
@@ -2871,7 +3096,7 @@
           
           doc.setFontSize(12);
           doc.setFont('helvetica', 'bold');
-          doc.text('Top Countries', margin, yPos);
+          doc.text(t('pdf.topCountries'), margin, yPos);
           yPos += 8;
           
           const agg = aggregationCache.country;
@@ -2886,7 +3111,7 @@
               yPos = 20;
             }
             
-            const text = `${i + 1}. ${agg.countries[i]}: ${agg.events[i]} Events (${agg.conversionRates[i].toFixed(2)}% CR)`;
+            const text = `${i + 1}. ${agg.countries[i]}: ${agg.events[i]} ${t('table.events')} (${agg.conversionRates[i].toFixed(2)}% ${t('table.crShort')})`;
             doc.text(text, margin, yPos);
             yPos += lineHeight;
           }
@@ -2900,7 +3125,7 @@
           
           doc.setFontSize(12);
           doc.setFont('helvetica', 'bold');
-          doc.text('Top Lead Generators', margin, yPos);
+          doc.text(t('pdf.topGenerators'), margin, yPos);
           yPos += 8;
           
           const agg = aggregationCache.leaderboard;
@@ -2915,7 +3140,7 @@
               yPos = 20;
             }
             
-            const text = `${i + 1}. ${agg.names[i]}: ${agg.events[i]} Events (${agg.conversionRates[i].toFixed(2)}% CR)`;
+            const text = `${i + 1}. ${agg.names[i]}: ${agg.events[i]} ${t('table.events')} (${agg.conversionRates[i].toFixed(2)}% ${t('table.crShort')})`;
             doc.text(text, margin, yPos);
             yPos += lineHeight;
           }
@@ -2931,10 +3156,11 @@
         console.log('PDF export completed:', filename);
       } catch (error) {
         console.error('Error exporting to PDF:', error);
-        alert('Error exporting to PDF: ' + error.message);
+        alert(t('alerts.exportPdfError') + error.message);
       }
     }
 
+    initializeLanguage();
     initializeTheme();
     initTabs();
     initDashboard();
@@ -3015,22 +3241,22 @@
       const summaryHtml = `
         <div class="summary-table-wrapper">
           <table class="summary-table">
-            <thead><tr><th>Metric</th><th>Value</th></tr></thead>
+            <thead><tr><th>${t('table.metric')}</th><th>${t('table.value')}</th></tr></thead>
             <tbody>
-              <tr><td>Created</td><td>${sum.Created}</td></tr>
-              <tr><td>Sent Requests</td><td>${sum.SentRequests}</td></tr>
-              <tr><td>Connected</td><td>${sum.Connected}</td></tr>
-              <tr><td>Replies</td><td>${sum.Replies}</td></tr>
-              <tr><td>Positive Replies</td><td>${sum.PositiveReplies}</td></tr>
-              <tr><td>Events</td><td>${sum.Events}</td></tr>
-              <tr><td>CR (Events/Created)</td><td>${cr.toFixed(2)}%</td></tr>
-              <tr><td>C→S (Connected/Sent)</td><td>${sentToConn.toFixed(2)}%</td></tr>
-              <tr><td>P→R (Positive/Replies)</td><td>${posToRep.toFixed(2)}%</td></tr>
+              <tr><td>${t('table.created')}</td><td>${sum.Created}</td></tr>
+              <tr><td>${t('table.sentRequests')}</td><td>${sum.SentRequests}</td></tr>
+              <tr><td>${t('table.connected')}</td><td>${sum.Connected}</td></tr>
+              <tr><td>${t('table.replies')}</td><td>${sum.Replies}</td></tr>
+              <tr><td>${t('table.positiveReplies')}</td><td>${sum.PositiveReplies}</td></tr>
+              <tr><td>${t('table.events')}</td><td>${sum.Events}</td></tr>
+              <tr><td>${t('table.crEvents')}</td><td>${cr.toFixed(2)}%</td></tr>
+              <tr><td>${t('table.csRate')}</td><td>${sentToConn.toFixed(2)}%</td></tr>
+              <tr><td>${t('table.prRate')}</td><td>${posToRep.toFixed(2)}%</td></tr>
             </tbody>
           </table>
         </div>`;
       document.getElementById('countrySummary').innerHTML = summaryHtml;
-      document.getElementById('countryModalTitle').textContent = `Country Insight — ${countryName}`;
+      document.getElementById('countryModalTitle').textContent = `${t('modals.countryInsight')} — ${countryName}`;
 
       // monthly chart
       const monthly = aggregateCountryMonthly(countryName, rows, from, to);
@@ -3038,17 +3264,17 @@
       chartRefs.countryMonthlyPaired = renderPairedBarChart(
         document.getElementById('countryMonthlyPaired'),
         monthly.months,
-        'Created',
+        getMetricLabel('Created'),
         monthly.created,
-        'Events',
+        getMetricLabel('Events'),
         monthly.events
       );
 
       // top generators
       const top = aggregateCountryTopGenerators(countryName, rows, from, to, 5);
-      let topHtml = '<div class="section-break"><div class="label">Top 5 Generators</div></div>';
+      let topHtml = `<div class="section-break"><div class="label">${t('modals.topGenerators')}</div></div>`;
       topHtml += '<table class="summary-table">';
-      topHtml += '<thead><tr><th>Name</th><th>Created</th><th>Events</th><th>CR%</th></tr></thead><tbody>';
+      topHtml += `<thead><tr><th>${t('table.name')}</th><th>${t('table.created')}</th><th>${t('table.events')}</th><th>${t('table.crShort')}%</th></tr></thead><tbody>`;
       for (const t of top) {
         topHtml += `<tr><td>${t.name}</td><td>${t.Created}</td><td>${t.Events}</td><td>${t.cr.toFixed(2)}%</td></tr>`;
       }
@@ -3131,38 +3357,38 @@
       const summaryHtml = `
         <div class="summary-table-wrapper">
           <table class="summary-table">
-            <thead><tr><th>Metric</th><th>Value</th></tr></thead>
+            <thead><tr><th>${t('table.metric')}</th><th>${t('table.value')}</th></tr></thead>
             <tbody>
-              <tr><td>Created</td><td>${sum.Created}</td></tr>
-              <tr><td>Sent Requests</td><td>${sum.SentRequests}</td></tr>
-              <tr><td>Connected</td><td>${sum.Connected}</td></tr>
-              <tr><td>Replies</td><td>${sum.Replies}</td></tr>
-              <tr><td>Positive Replies</td><td>${sum.PositiveReplies}</td></tr>
-              <tr><td>Events</td><td>${sum.Events}</td></tr>
-              <tr><td>CR (Events/Created)</td><td>${cr.toFixed(2)}%</td></tr>
-              <tr><td>C→S (Connected/Sent)</td><td>${sentToConn.toFixed(2)}%</td></tr>
-              <tr><td>P→R (Positive/Replies)</td><td>${posToRep.toFixed(2)}%</td></tr>
+              <tr><td>${t('table.created')}</td><td>${sum.Created}</td></tr>
+              <tr><td>${t('table.sentRequests')}</td><td>${sum.SentRequests}</td></tr>
+              <tr><td>${t('table.connected')}</td><td>${sum.Connected}</td></tr>
+              <tr><td>${t('table.replies')}</td><td>${sum.Replies}</td></tr>
+              <tr><td>${t('table.positiveReplies')}</td><td>${sum.PositiveReplies}</td></tr>
+              <tr><td>${t('table.events')}</td><td>${sum.Events}</td></tr>
+              <tr><td>${t('table.crEvents')}</td><td>${cr.toFixed(2)}%</td></tr>
+              <tr><td>${t('table.csRate')}</td><td>${sentToConn.toFixed(2)}%</td></tr>
+              <tr><td>${t('table.prRate')}</td><td>${posToRep.toFixed(2)}%</td></tr>
             </tbody>
           </table>
         </div>`;
       document.getElementById('leadSummary').innerHTML = summaryHtml;
-      document.getElementById('leadModalTitle').textContent = `Lead Insight — ${leadName}`;
+      document.getElementById('leadModalTitle').textContent = `${t('modals.leadInsight')} — ${leadName}`;
 
       const monthly = aggregateLeadMonthly(leadName, rows, from, to);
       if (chartRefs.leadMonthlyPaired) chartRefs.leadMonthlyPaired.destroy();
       chartRefs.leadMonthlyPaired = renderPairedBarChart(
         document.getElementById('leadMonthlyPaired'),
         monthly.months,
-        'Created',
+        getMetricLabel('Created'),
         monthly.created,
-        'Events',
+        getMetricLabel('Events'),
         monthly.events
       );
 
       const top = aggregateLeadTopCountries(leadName, rows, from, to, 5);
-      let topHtml = '<div class="section-break"><div class="label">Top 5 Countries</div></div>';
+      let topHtml = `<div class="section-break"><div class="label">${t('modals.topCountries')}</div></div>`;
       topHtml += '<table class="summary-table">';
-      topHtml += '<thead><tr><th>Country</th><th>Created</th><th>Events</th><th>CR%</th></tr></thead><tbody>';
+      topHtml += `<thead><tr><th>${t('table.country')}</th><th>${t('table.created')}</th><th>${t('table.events')}</th><th>${t('table.crShort')}%</th></tr></thead><tbody>`;
       for (const t of top) {
         topHtml += `<tr><td>${t.country}</td><td>${t.Created}</td><td>${t.Events}</td><td>${t.cr.toFixed(2)}%</td></tr>`;
       }
