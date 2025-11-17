@@ -23,6 +23,12 @@
       margin: 0;
       padding: 20px;
       transition: background 0.3s ease, color 0.3s ease;
+      -ms-overflow-style: none; /* IE/Edge */
+      scrollbar-width: none; /* Firefox */
+    }
+    body::-webkit-scrollbar {
+      width: 0;
+      height: 0;
     }
     body.dark-theme {
       background: #0f172a;
