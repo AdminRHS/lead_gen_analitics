@@ -169,7 +169,13 @@ const uk = {
     leadsInProgress: 'Ліди в процесі',
     leadsOverdue: 'Просрочені ліди',
     avgLeadsPerDay: 'Середня кількість лідів на день',
-    eventsThisWeek: 'Події згенеровані цього тижня'
+    eventsThisWeek: 'Події згенеровані цього тижня',
+    countrySegmentationTitle: 'Сегментація лідів по країнах',
+    countrySegmentationSubtitle: 'Побачте, який сегмент найкраще працює в якій країні',
+    country: 'Країна',
+    smallBiz: 'Малий бізнес',
+    medium: 'Середній',
+    enterprise: 'Підприємство'
   },
   alerts: {
     noDataLoaded: 'Немає даних. Дочекайтеся завантаження.',

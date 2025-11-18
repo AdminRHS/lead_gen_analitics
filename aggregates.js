@@ -694,3 +694,86 @@ export function buildTeamLoadCapacity(filteredRows = []) {
   return { rows };
 }
 
+export function buildCountrySegmentation(filteredRows = []) {
+  const datedRows = filteredRows
+    .map((row) => ({ row, date: parseDdMmYyyyToDate(row.Date) }))
+    .filter(({ date }) => date instanceof Date && !isNaN(date.valueOf()))
+    .sort((a, b) => a.date - b.date);
+
+  if (datedRows.length === 0) {
+    return { rows: [], segments: ['Small Biz', 'Medium', 'Enterprise'] };
+  }
+
+  const byCountry = {};
+  const segments = ['Small Biz', 'Medium', 'Enterprise'];
+
+  datedRows.forEach(({ row, date }) => {
+    const country = row.Country || 'Unknown';
+    if (!byCountry[country]) {
+      byCountry[country] = {
+        created: 0,
+        positive: 0,
+        events: 0,
+        days: new Set()
+      };
+    }
+
+    const stats = byCountry[country];
+    if (date instanceof Date && !isNaN(date.valueOf())) {
+      stats.days.add(date.toISOString().split('T')[0]);
+    }
+
+    stats.created += Number(row['Created'] || 0);
+    stats.positive += Number(row['Positive Replies'] || 0);
+    stats.events += Number(row['Events Created'] || 0);
+  });
+
+  const rows = Object.keys(byCountry).map((country) => {
+    const stats = byCountry[country];
+    const activeDays = stats.days.size;
+    const avgLeadsPerDay = activeDays > 0 ? stats.created / activeDays : 0;
+
+    let segment = 'Small Biz';
+    if (avgLeadsPerDay >= 20) {
+      segment = 'Enterprise';
+    } else if (avgLeadsPerDay >= 5) {
+      segment = 'Medium';
+    }
+
+    return {
+      country,
+      segment,
+      created: stats.created,
+      positive: stats.positive,
+      events: stats.events
+    };
+  });
+
+  const crossTab = {};
+  segments.forEach((seg) => {
+    crossTab[seg] = {};
+    Object.keys(byCountry).forEach((country) => {
+      crossTab[seg][country] = {
+        created: 0,
+        positive: 0,
+        events: 0
+      };
+    });
+  });
+
+  rows.forEach((row) => {
+    crossTab[row.segment][row.country] = {
+      created: row.created,
+      positive: row.positive,
+      events: row.events
+    };
+  });
+
+  return {
+    rows,
+    segments,
+    countries: Object.keys(byCountry).sort(),
+    crossTab
+  };
+}
+

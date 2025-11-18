@@ -11,7 +11,8 @@ import {
   buildDailySnapshots,
   buildLeadAgingBuckets,
   buildTimingStats,
-  buildTeamLoadCapacity
+  buildTeamLoadCapacity,
+  buildCountrySegmentation
 } from '../aggregates.js';
 import {
   shouldRecalculateAggregations,
@@ -558,13 +559,72 @@ function renderFunnelCharts(filteredRows) {
   });
 }
 
+function renderCountrySegmentationTable() {
+  const container = document.getElementById('countrySegmentationContainer');
+  if (!container) return;
+  const dataset = state.tableData.countrySegmentation;
+
+  if (!dataset || !dataset.crossTab || !dataset.countries || !dataset.segments) {
+    container.innerHTML = `<div class="table-responsive"><table class="summary-table"><tbody><tr><td colspan="4">${t('table.noData')}</td></tr></tbody></table></div>`;
+    return;
+  }
+
+  const { crossTab, countries, segments } = dataset;
+  const metrics = ['created', 'positive', 'events'];
+  const metricLabels = {
+    created: getMetricLabel('Created'),
+    positive: getMetricLabel('Positive Replies'),
+    events: getMetricLabel('Events Created')
+  };
+
+  const segmentLabels = {
+    'Small Biz': t('table.smallBiz'),
+    'Medium': t('table.medium'),
+    'Enterprise': t('table.enterprise')
+  };
+
+  let html = '<div class="table-responsive"><table class="summary-table"><thead><tr><th data-i18n="table.country">Country</th>';
+
+  segments.forEach((seg) => {
+    html += `<th colspan="3">${segmentLabels[seg] || seg}</th>`;
+  });
+  html += '</tr><tr><th></th>';
+
+  segments.forEach(() => {
+    metrics.forEach((metric) => {
+      html += `<th>${metricLabels[metric]}</th>`;
+    });
+  });
+  html += '</tr></thead><tbody>';
+
+  countries.forEach((country) => {
+    html += `<tr><td><strong>${country}</strong></td>`;
+    segments.forEach((seg) => {
+      const data = crossTab[seg][country] || { created: 0, positive: 0, events: 0 };
+      metrics.forEach((metric) => {
+        html += `<td>${formatNumber(data[metric])}</td>`;
+      });
+    });
+    html += '</tr>';
+  });
+
+  html += '</tbody></table></div>';
+  container.innerHTML = html;
+}
+
 function renderCountryCharts(filteredRows) {
   if (shouldRecalculateAggregations(filteredRows, state.aggregationCache) || !state.aggregationCache.country) {
     const countryAgg = buildCountryAggregates(filteredRows);
+    const countrySegmentation = buildCountrySegmentation(filteredRows);
     state.aggregationCache.country = countryAgg;
-    updateAggregationCache(state.aggregationCache, filteredRows, { country: countryAgg });
+    updateAggregationCache(state.aggregationCache, filteredRows, { 
+      country: countryAgg,
+      countrySegmentation
+    });
   }
   const countryAgg = state.aggregationCache.country;
+  state.tableData.countrySegmentation = state.aggregationCache.countrySegmentation;
+  renderCountrySegmentationTable();
 
   scheduleChartUpdate(() => {
     const createdLabel = getMetricLabel('Created');

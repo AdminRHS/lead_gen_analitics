@@ -169,7 +169,13 @@ const de = {
     leadsInProgress: 'Leads in Bearbeitung',
     leadsOverdue: 'Überfällige Leads',
     avgLeadsPerDay: 'Durchschnittliche Leads pro Tag',
-    eventsThisWeek: 'Diese Woche generierte Events'
+    eventsThisWeek: 'Diese Woche generierte Events',
+    countrySegmentationTitle: 'Lead-Segmentierung nach Ländern',
+    countrySegmentationSubtitle: 'Sehen Sie, welches Segment in welchem Land am besten funktioniert',
+    country: 'Land',
+    smallBiz: 'Kleines Unternehmen',
+    medium: 'Mittel',
+    enterprise: 'Unternehmen'
   },
   alerts: {
     noDataLoaded: 'Keine Daten verfügbar. Bitte warten.',

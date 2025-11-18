@@ -61,7 +61,8 @@ export const state = {
     source: null,
     aging: null,
     timing: null,
-    teamLoad: null
+    teamLoad: null,
+    countrySegmentation: null
   },
   renderedTabs: {
     funnel: false,
@@ -81,7 +82,8 @@ export const state = {
     stepPerformance: null,
     sourceQuality: null,
     timing: null,
-    teamLoad: null
+    teamLoad: null,
+    countrySegmentation: null
   },
   currentTheme: 'light',
   userHasExplicitTheme: false,

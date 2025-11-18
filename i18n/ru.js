@@ -169,7 +169,13 @@ const ru = {
     leadsInProgress: 'Лиды в процессе',
     leadsOverdue: 'Просроченные лиды',
     avgLeadsPerDay: 'Среднее количество лидов в день',
-    eventsThisWeek: 'События сгенерированные на этой неделе'
+    eventsThisWeek: 'События сгенерированные на этой неделе',
+    countrySegmentationTitle: 'Сегментация лидов по странам',
+    countrySegmentationSubtitle: 'Посмотрите, какой сегмент лучше всего работает в какой стране',
+    country: 'Страна',
+    smallBiz: 'Малый бизнес',
+    medium: 'Средний',
+    enterprise: 'Предприятие'
   },
   alerts: {
     noDataLoaded: 'Нет данных. Подождите загрузки.',
