@@ -140,7 +140,15 @@ const uk = {
     stepPerformanceSubtitle: 'Показує сильних генераторів на кожному переході',
     stageSentToConnected: 'Відправлено → Підключено',
     stageConnectedToReplies: 'Підключено → Відповіді',
-    stagePositiveToEvents: 'Позитивні → Події'
+    stagePositiveToEvents: 'Позитивні → Події',
+    sourceQualityTitle: 'Якість джерел лідів',
+    sourceQualitySubtitle: 'Порівняння каналів на кожному етапі воронки',
+    metricConnectedRate: '% Підключень',
+    metricRepliesRate: '% Відповідей',
+    metricPositiveRate: '% Позитивних',
+    metricAvgTimeToEvent: 'Сер. час до події',
+    metricEventsPer100: 'Подій на 100 лідів',
+    daysSuffix: 'д'
   },
   alerts: {
     noDataLoaded: 'Немає даних. Дочекайтеся завантаження.',

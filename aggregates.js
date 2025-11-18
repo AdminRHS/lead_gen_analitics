@@ -207,20 +207,44 @@ export function buildSourceAggregates(filteredRows) {
         connected: 0,
         totalReplies: 0,
         positiveReplies: 0,
-        events: 0
+        events: 0,
+        minDate: null,
+        eventWeightedDays: 0,
+        eventsForAvg: 0
       };
     }
-    bySource[source].created += Number(row['Created'] || 0);
-    bySource[source].sentRequests += Number(row['Sent Requests'] || 0);
-    bySource[source].connected += Number(row['Connected'] || 0);
-    bySource[source].totalReplies += Number(row['Total replies'] || 0);
-    bySource[source].positiveReplies += Number(row['Positive Replies'] || 0);
-    bySource[source].events += Number(row['Events Created'] || 0);
+    const entry = bySource[source];
+    const dateObj = parseDdMmYyyyToDate(row.Date);
+    if (dateObj instanceof Date && !isNaN(dateObj.valueOf())) {
+      if (!entry.minDate || dateObj < entry.minDate) {
+        entry.minDate = dateObj;
+      }
+    }
+
+    const createdVal = Number(row['Created'] || 0);
+    const sentVal = Number(row['Sent Requests'] || 0);
+    const connectedVal = Number(row['Connected'] || 0);
+    const repliesVal = Number(row['Total replies'] || 0);
+    const positiveVal = Number(row['Positive Replies'] || 0);
+    const eventsVal = Number(row['Events Created'] || 0);
+
+    entry.created += createdVal;
+    entry.sentRequests += sentVal;
+    entry.connected += connectedVal;
+    entry.totalReplies += repliesVal;
+    entry.positiveReplies += positiveVal;
+    entry.events += eventsVal;
+
+    if (eventsVal > 0 && entry.minDate && dateObj instanceof Date && !isNaN(dateObj.valueOf())) {
+      const diffDays = Math.max(0, (dateObj - entry.minDate) / MS_PER_DAY);
+      entry.eventWeightedDays += diffDays * eventsVal;
+      entry.eventsForAvg += eventsVal;
+    }
   }
   
   const sources = Object.keys(bySource);
   return {
-    sources: sources,
+    sources,
     created: sources.map(s => bySource[s].created),
     sentRequests: sources.map(s => bySource[s].sentRequests),
     connected: sources.map(s => bySource[s].connected),
@@ -231,6 +255,10 @@ export function buildSourceAggregates(filteredRows) {
       const created = bySource[s].created;
       const events = bySource[s].events;
       return created > 0 ? (events / created) * 100 : 0;
+    }),
+    avgDaysToEvent: sources.map(s => {
+      const entry = bySource[s];
+      return entry.eventsForAvg > 0 ? entry.eventWeightedDays / entry.eventsForAvg : null;
     })
   };
 }

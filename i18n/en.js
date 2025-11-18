@@ -140,7 +140,15 @@ const en = {
     stepPerformanceSubtitle: 'See who excels at each pipeline transition',
     stageSentToConnected: 'Sent → Connected',
     stageConnectedToReplies: 'Connected → Replies',
-    stagePositiveToEvents: 'Positive → Events'
+    stagePositiveToEvents: 'Positive → Events',
+    sourceQualityTitle: 'Lead Source Quality Breakdown',
+    sourceQualitySubtitle: 'Channel-level health across every funnel step',
+    metricConnectedRate: '% Connected',
+    metricRepliesRate: '% Replies',
+    metricPositiveRate: '% Positive',
+    metricAvgTimeToEvent: 'Avg time to event',
+    metricEventsPer100: 'Events per 100 leads',
+    daysSuffix: 'd'
   },
   alerts: {
     noDataLoaded: 'No data available. Please wait for data to load.',

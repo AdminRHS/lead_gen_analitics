@@ -75,7 +75,8 @@ export const state = {
     leadQuality: [],
     aging: null,
     dailySnapshot: null,
-    stepPerformance: null
+    stepPerformance: null,
+    sourceQuality: null
   },
   currentTheme: 'light',
   userHasExplicitTheme: false,

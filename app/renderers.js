@@ -51,6 +51,13 @@ function formatPercent(value, digits = 1) {
   return `${formatNumber(value, digits)}%`;
 }
 
+function formatDays(value) {
+  if (value === null || value === undefined || !Number.isFinite(value)) {
+    return '—';
+  }
+  return `${formatNumber(value, 1)}${t('table.daysSuffix')}`;
+}
+
 function formatDateShort(date) {
   if (!(date instanceof Date) || isNaN(date.valueOf())) return '';
   const locale = getLocale();
@@ -324,6 +331,142 @@ function renderStepPerformanceTable() {
       <thead>
         <tr>
           <th>${t('table.stage')}</th>
+          ${headerCells}
+        </tr>
+      </thead>
+      <tbody>
+        ${rowsHtml}
+      </tbody>
+    </table>
+  `;
+}
+
+function buildSourceQualityDataset(sourceAgg) {
+  if (!sourceAgg || !sourceAgg.sources || sourceAgg.sources.length === 0) {
+    return { sources: [], rows: [] };
+  }
+
+  const metricDefs = [
+    {
+      key: 'table.metricConnectedRate',
+      type: 'percent',
+      higherBetter: true,
+      calc: (idx) => {
+        const sent = sourceAgg.sentRequests[idx] || 0;
+        const connected = sourceAgg.connected[idx] || 0;
+        return sent > 0 ? (connected / sent) * 100 : null;
+      }
+    },
+    {
+      key: 'table.metricRepliesRate',
+      type: 'percent',
+      higherBetter: true,
+      calc: (idx) => {
+        const connected = sourceAgg.connected[idx] || 0;
+        const replies = sourceAgg.totalReplies[idx] || 0;
+        return connected > 0 ? (replies / connected) * 100 : null;
+      }
+    },
+    {
+      key: 'table.metricPositiveRate',
+      type: 'percent',
+      higherBetter: true,
+      calc: (idx) => {
+        const replies = sourceAgg.totalReplies[idx] || 0;
+        const positive = sourceAgg.positiveReplies[idx] || 0;
+        return replies > 0 ? (positive / replies) * 100 : null;
+      }
+    },
+    {
+      key: 'table.metricAvgTimeToEvent',
+      type: 'days',
+      higherBetter: false,
+      calc: (idx) => {
+        return sourceAgg.avgDaysToEvent ? sourceAgg.avgDaysToEvent[idx] : null;
+      }
+    },
+    {
+      key: 'table.metricEventsPer100',
+      type: 'number',
+      higherBetter: true,
+      calc: (idx) => {
+        const created = sourceAgg.created[idx] || 0;
+        const events = sourceAgg.events[idx] || 0;
+        return created > 0 ? (events / created) * 100 : null;
+      }
+    }
+  ];
+
+  const sources = sourceAgg.sources;
+  const rows = metricDefs.map((def) => {
+    const values = sources.map((_, idx) => def.calc(idx));
+    const validValues = values.filter((val) => val !== null && val !== undefined && Number.isFinite(val));
+    const extreme =
+      validValues.length === 0
+        ? null
+        : def.higherBetter
+          ? Math.max(...validValues)
+          : Math.min(...validValues);
+    return {
+      labelKey: def.key,
+      values,
+      extreme,
+      type: def.type,
+      higherBetter: def.higherBetter
+    };
+  });
+
+  return { sources, rows };
+}
+
+function renderSourceQualityTable() {
+  const container = document.getElementById('sourceQualityContainer');
+  if (!container) return;
+  const dataset = state.tableData.sourceQuality;
+  if (!dataset || !dataset.sources || dataset.sources.length === 0) {
+    container.innerHTML = `<div class="empty-state">${t('table.noData')}</div>`;
+    return;
+  }
+
+  const headerCells = dataset.sources.map((name) => `<th>${name}</th>`).join('');
+
+  const formatValue = (value, type) => {
+    if (value === null || value === undefined || !Number.isFinite(value)) {
+      return '—';
+    }
+    if (type === 'percent') return formatPercent(value, 1);
+    if (type === 'days') return formatDays(value);
+    return formatNumber(value, 1);
+  };
+
+  const rowsHtml = dataset.rows
+    .map((row) => {
+      const cells = row.values
+        .map((value) => {
+          const isBest =
+            row.extreme !== null &&
+            value !== null &&
+            value !== undefined &&
+            Number.isFinite(value) &&
+            value === row.extreme;
+          const className = isBest ? 'rate-chip best' : 'rate-chip';
+          return `<td><span class="${className}">${formatValue(value, row.type)}</span></td>`;
+        })
+        .join('');
+      return `
+        <tr>
+          <td>${t(row.labelKey)}</td>
+          ${cells}
+        </tr>
+      `;
+    })
+    .join('');
+
+  container.innerHTML = `
+    <table class="summary-table matrix-table">
+      <thead>
+        <tr>
+          <th>${t('table.metric')}</th>
           ${headerCells}
         </tr>
       </thead>
@@ -756,6 +899,8 @@ function renderSourceCharts(filteredRows) {
     updateAggregationCache(state.aggregationCache, filteredRows, { source: sourceAgg });
   }
   const sourceAgg = state.aggregationCache.source;
+  state.tableData.sourceQuality = buildSourceQualityDataset(sourceAgg);
+  renderSourceQualityTable();
 
   scheduleChartUpdate(() => {
     const conversionRateLabel = getMetricLabel('Conversion Rate (%)');

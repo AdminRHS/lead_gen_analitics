@@ -140,7 +140,15 @@ const ru = {
     stepPerformanceSubtitle: 'Показывает, кто силён на каждом переходе воронки',
     stageSentToConnected: 'Отправлено → Подключено',
     stageConnectedToReplies: 'Подключено → Ответы',
-    stagePositiveToEvents: 'Положительные → События'
+    stagePositiveToEvents: 'Положительные → События',
+    sourceQualityTitle: 'Качество источников лидов',
+    sourceQualitySubtitle: 'Здоровье каналов на каждом шаге воронки',
+    metricConnectedRate: '% Подключений',
+    metricRepliesRate: '% Ответов',
+    metricPositiveRate: '% Положительных',
+    metricAvgTimeToEvent: 'Ср. время до события',
+    metricEventsPer100: 'Событий на 100 лидов',
+    daysSuffix: 'д'
   },
   alerts: {
     noDataLoaded: 'Нет данных. Подождите загрузки.',

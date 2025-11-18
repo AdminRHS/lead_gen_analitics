@@ -140,7 +140,15 @@ const de = {
     stepPerformanceSubtitle: 'Zeigt, wer bei welchem Übergang dominiert',
     stageSentToConnected: 'Gesendet → Vernetzt',
     stageConnectedToReplies: 'Vernetzt → Antworten',
-    stagePositiveToEvents: 'Positive → Events'
+    stagePositiveToEvents: 'Positive → Events',
+    sourceQualityTitle: 'Lead-Quellen Qualitätsübersicht',
+    sourceQualitySubtitle: 'Kanalperformance über alle Funnel-Schritte',
+    metricConnectedRate: '% Vernetzt',
+    metricRepliesRate: '% Antworten',
+    metricPositiveRate: '% Positive',
+    metricAvgTimeToEvent: 'Ø Zeit bis Event',
+    metricEventsPer100: 'Events pro 100 Leads',
+    daysSuffix: 'd'
   },
   alerts: {
     noDataLoaded: 'Keine Daten verfügbar. Bitte warten.',
