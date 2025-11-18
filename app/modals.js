@@ -353,7 +353,7 @@ function buildLeadTimelineDetails(leadName, rows, fromDate, toDate) {
         generator: leadName
       });
     }
-  }
+  });
 
   return leadDetails;
 }
