@@ -27,7 +27,8 @@ const uk = {
     weekly: 'Тижні',
     monthly: 'Місяці',
     leaderboard: 'Лідери',
-    source: 'Порівняння джерел'
+    source: 'Порівняння джерел',
+    operations: 'Операційна'
   },
   charts: {
     labels: {
@@ -106,7 +107,31 @@ const uk = {
     crEvents: 'CR (Події/Створено)',
     csRate: 'C→S (Підключено/Відправлено)',
     prRate: 'P→R (Позитивні/Відповіді)',
-    crShort: 'CR'
+    crShort: 'CR',
+    stage: 'Етап',
+    dropoff: 'Втрати',
+    cumulative: 'Накопичена конверсія',
+    positiveRate: 'Позитивність',
+    createdToPositive: 'Створено → Позитивні',
+    positiveToEvents: 'Позитивні → Події',
+    eventsPerWeek: 'Подій / тиждень',
+    avgResponseTime: 'Середній час відповіді (дні)',
+    funnelMatrixTitle: 'Матриця випадання етапів',
+    funnelMatrixSubtitle: 'Показує утримання та втрати на кожному кроці воронки',
+    leadQualityTitle: 'Таблиця якості генераторів',
+    leadQualitySubtitle: 'Сортуйте ключові KPI по команді',
+    sortBy: 'Сортувати за:',
+    sortPositiveRate: 'Позитивністю',
+    sortEventsPerWeek: 'Подіями / тиждень',
+    sortCreatedToPositive: 'Створено → Позитивні',
+    sortPositiveToEvents: 'Позитивні → Події',
+    sortAvgResponseTime: 'Сер. час відповіді',
+    noData: 'Немає даних для обраного діапазону',
+    agingTitle: 'Таблиця старіння лідів',
+    agingSubtitle: 'Беклог за етапами та давністю',
+    bucket0to3: '0–3 дні',
+    bucket4to7: '4–7 днів',
+    bucket8plus: '8+ днів'
   },
   alerts: {
     noDataLoaded: 'Немає даних. Дочекайтеся завантаження.',

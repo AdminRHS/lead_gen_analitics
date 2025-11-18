@@ -27,7 +27,8 @@ const en = {
     weekly: 'Weekly',
     monthly: 'Monthly',
     leaderboard: 'Leaderboard',
-    source: 'Source Comparison'
+    source: 'Source Comparison',
+    operations: 'Operations'
   },
   charts: {
     labels: {
@@ -106,7 +107,31 @@ const en = {
     crEvents: 'CR (Events/Created)',
     csRate: 'C→S (Connected/Sent)',
     prRate: 'P→R (Positive/Replies)',
-    crShort: 'CR'
+    crShort: 'CR',
+    stage: 'Stage',
+    dropoff: 'Drop-off',
+    cumulative: 'Cumulative conversion',
+    positiveRate: 'Positive rate',
+    createdToPositive: 'Created → Positive',
+    positiveToEvents: 'Positive → Events',
+    eventsPerWeek: 'Events / week',
+    avgResponseTime: 'Avg response time (days)',
+    funnelMatrixTitle: 'Funnel Drop-off Matrix',
+    funnelMatrixSubtitle: 'Track retention and drop-off for each funnel stage',
+    leadQualityTitle: 'Lead Generator Performance',
+    leadQualitySubtitle: 'Sortable KPIs across your team',
+    sortBy: 'Sort by:',
+    sortPositiveRate: 'Positive rate',
+    sortEventsPerWeek: 'Events / week',
+    sortCreatedToPositive: 'Created → Positive',
+    sortPositiveToEvents: 'Positive → Events',
+    sortAvgResponseTime: 'Avg response time',
+    noData: 'No data for current filters',
+    agingTitle: 'Lead Aging Table',
+    agingSubtitle: 'Backlog by stage and aging bucket',
+    bucket0to3: '0–3 days',
+    bucket4to7: '4–7 days',
+    bucket8plus: '8+ days'
   },
   alerts: {
     noDataLoaded: 'No data available. Please wait for data to load.',

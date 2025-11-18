@@ -5,7 +5,10 @@ import {
   buildWeeklyAggregates,
   buildMonthlyAggregates,
   buildLeaderboardAggregates,
-  buildSourceAggregates
+  buildSourceAggregates,
+  buildFunnelSummary,
+  buildLeadGeneratorQuality,
+  buildLeadAgingBuckets
 } from '../aggregates.js';
 import {
   shouldRecalculateAggregations,
@@ -17,6 +20,182 @@ import {
 import { state } from './state.js';
 import { t, getMetricLabel } from './i18nSupport.js';
 import { openCountryInsight, openLeadInsight } from './modals.js';
+import { localeMap } from '../i18n/index.js';
+
+const numberFormattersCache = new Map();
+
+function getLocale() {
+  return localeMap[state.currentLanguage] || undefined;
+}
+
+function formatNumber(value, maximumFractionDigits = 0) {
+  const locale = getLocale();
+  const cacheKey = `${locale || 'default'}-${maximumFractionDigits}`;
+  if (!numberFormattersCache.has(cacheKey)) {
+    numberFormattersCache.set(
+      cacheKey,
+      new Intl.NumberFormat(locale, {
+        minimumFractionDigits: 0,
+        maximumFractionDigits
+      })
+    );
+  }
+  const formatter = numberFormattersCache.get(cacheKey);
+  const safeValue = Number.isFinite(value) ? value : 0;
+  return formatter.format(safeValue);
+}
+
+function formatPercent(value, digits = 1) {
+  return `${formatNumber(value, digits)}%`;
+}
+
+function renderFunnelDropoffMatrix(summary) {
+  const container = document.getElementById('funnelDropoffContainer');
+  if (!container) return;
+
+  const hasData = summary && Object.values(summary).some((val) => Number(val) > 0);
+  if (!hasData) {
+    container.innerHTML = `<div class="empty-state">${t('table.noData')}</div>`;
+    return;
+  }
+
+  const stageOrder = [
+    { key: 'Created', labelKey: 'Created' },
+    { key: 'SentRequests', labelKey: 'Sent Requests' },
+    { key: 'Connected', labelKey: 'Connected' },
+    { key: 'Replies', labelKey: 'Replies' },
+    { key: 'PositiveReplies', labelKey: 'Positive Replies' },
+    { key: 'Events', labelKey: 'Events' }
+  ];
+
+  const createdCount = summary.Created || 0;
+  const rowsHtml = stageOrder
+    .map((stage, idx) => {
+      const current = summary[stage.key] || 0;
+      const prev = idx === 0 ? null : summary[stageOrder[idx - 1].key] || 0;
+      const dropoffCount = prev !== null ? Math.max(0, prev - current) : 0;
+      const dropoffPercent = prev && prev > 0 ? (dropoffCount / prev) * 100 : 0;
+      const cumulative = createdCount > 0 ? (current / createdCount) * 100 : 0;
+      const dropoffDisplay =
+        prev === null
+          ? '—'
+          : `${dropoffCount > 0 ? `-${formatNumber(dropoffCount)}` : formatNumber(0)} (${formatPercent(dropoffPercent)})`;
+
+      return `
+        <tr>
+          <td>${getMetricLabel(stage.labelKey)}</td>
+          <td>${formatNumber(current)}</td>
+          <td>${dropoffDisplay}</td>
+          <td>${formatPercent(cumulative)}</td>
+        </tr>
+      `;
+    })
+    .join('');
+
+  container.innerHTML = `
+    <table class="summary-table">
+      <thead>
+        <tr>
+          <th>${t('table.stage')}</th>
+          <th>${t('table.value')}</th>
+          <th>${t('table.dropoff')}</th>
+          <th>${t('table.cumulative')}</th>
+        </tr>
+      </thead>
+      <tbody>${rowsHtml}</tbody>
+    </table>
+  `;
+}
+
+function bindLeadQualitySortControl() {
+  const select = document.getElementById('leadQualitySort');
+  if (select && !select.dataset.bound) {
+    select.addEventListener('change', updateLeadQualityTableRows);
+    select.dataset.bound = 'true';
+  }
+}
+
+function getLeadQualitySortKey() {
+  const select = document.getElementById('leadQualitySort');
+  return select?.value || 'positiveRate';
+}
+
+function updateLeadQualityTableRows() {
+  const tbody = document.getElementById('leadQualityTableBody');
+  if (!tbody) return;
+
+  const rows = state.tableData.leadQuality || [];
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="9">${t('table.noData')}</td></tr>`;
+    return;
+  }
+  const sortKey = getLeadQualitySortKey();
+  const sorted = [...rows].sort((a, b) => {
+    const aValue = a[sortKey];
+    const bValue = b[sortKey];
+    if (sortKey === 'avgResponseTimeDays') {
+      if (aValue === null && bValue === null) return a.name.localeCompare(b.name);
+      if (aValue === null) return 1;
+      if (bValue === null) return -1;
+      return aValue - bValue;
+    }
+    return (bValue ?? 0) - (aValue ?? 0);
+  });
+
+  tbody.innerHTML = sorted
+    .map((row) => {
+      const avgResponse = row.avgResponseTimeDays !== null ? formatNumber(row.avgResponseTimeDays, 1) : '—';
+      return `
+        <tr>
+          <td>${row.name}</td>
+          <td>${formatNumber(row.sent)}</td>
+          <td>${formatNumber(row.connected)}</td>
+          <td>${formatNumber(row.positive)}</td>
+          <td>${formatPercent(row.positiveRate * 100)}</td>
+          <td>${formatPercent(row.createdToPositive * 100)}</td>
+          <td>${formatPercent(row.positiveToEvents * 100)}</td>
+          <td>${formatNumber(row.eventsPerWeek, 1)}</td>
+          <td>${avgResponse}</td>
+        </tr>
+      `;
+    })
+    .join('');
+}
+
+function renderLeadGeneratorQualityTable() {
+  bindLeadQualitySortControl();
+  updateLeadQualityTableRows();
+}
+
+function renderLeadAgingTable() {
+  const tbody = document.getElementById('leadAgingTableBody');
+  if (!tbody) return;
+  const dataset = state.tableData.aging;
+
+  if (!dataset || !dataset.rows || !dataset.rows.length) {
+    tbody.innerHTML = `<tr><td colspan="5">${t('table.noData')}</td></tr>`;
+    return;
+  }
+
+  const bucketKeys = dataset.buckets.map((bucket) => bucket.key);
+  const rowsHtml = dataset.rows
+    .map((row) => {
+      const stageLabel = getMetricLabel(row.stageKey);
+      const bucketCells = bucketKeys
+        .map((bucketKey) => `<td>${formatNumber(row.counts[bucketKey] || 0)}</td>`)
+        .join('');
+      return `
+        <tr>
+          <td>${stageLabel}</td>
+          ${bucketCells}
+          <td>${formatNumber(row.total || 0)}</td>
+        </tr>
+      `;
+    })
+    .join('');
+
+  tbody.innerHTML = rowsHtml;
+}
 
 function renderOrUpdateChart(chartRef, elementId, renderFn, updateFn, ...args) {
   const element = document.getElementById(elementId);
@@ -36,12 +215,17 @@ function renderOrUpdateChart(chartRef, elementId, renderFn, updateFn, ...args) {
 }
 
 function renderFunnelCharts(filteredRows) {
-  if (shouldRecalculateAggregations(filteredRows, state.aggregationCache) || !state.aggregationCache.funnel) {
+  if (
+    shouldRecalculateAggregations(filteredRows, state.aggregationCache) ||
+    !state.aggregationCache.funnel
+  ) {
     const agg = buildAggregates(filteredRows);
-    state.aggregationCache.funnel = agg;
-    updateAggregationCache(state.aggregationCache, filteredRows, { funnel: agg });
+    const funnelSummary = buildFunnelSummary(filteredRows);
+    updateAggregationCache(state.aggregationCache, filteredRows, { funnel: agg, funnelSummary });
   }
   const agg = state.aggregationCache.funnel;
+  state.tableData.funnelDropoff = state.aggregationCache.funnelSummary;
+  renderFunnelDropoffMatrix(state.tableData.funnelDropoff);
 
   scheduleChartUpdate(() => {
     const createdLabel = getMetricLabel('Created');
@@ -327,12 +511,20 @@ function renderMonthlyCharts(filteredRows) {
 }
 
 function renderLeaderboardCharts(filteredRows) {
-  if (shouldRecalculateAggregations(filteredRows, state.aggregationCache) || !state.aggregationCache.leaderboard) {
+  if (
+    shouldRecalculateAggregations(filteredRows, state.aggregationCache) ||
+    !state.aggregationCache.leaderboard
+  ) {
     const lbAgg = buildLeaderboardAggregates(filteredRows);
-    state.aggregationCache.leaderboard = lbAgg;
-    updateAggregationCache(state.aggregationCache, filteredRows, { leaderboard: lbAgg });
+    const leadQuality = buildLeadGeneratorQuality(filteredRows);
+    updateAggregationCache(state.aggregationCache, filteredRows, {
+      leaderboard: lbAgg,
+      leadQuality
+    });
   }
   const lbAgg = state.aggregationCache.leaderboard;
+  state.tableData.leadQuality = state.aggregationCache.leadQuality?.rows || [];
+  renderLeadGeneratorQualityTable();
 
   scheduleChartUpdate(() => {
     const createdLabel = getMetricLabel('Created');
@@ -479,6 +671,18 @@ function renderSourceCharts(filteredRows) {
   });
 }
 
+function renderOperationsTables(filteredRows) {
+  if (
+    shouldRecalculateAggregations(filteredRows, state.aggregationCache) ||
+    !state.aggregationCache.aging
+  ) {
+    const aging = buildLeadAgingBuckets(filteredRows);
+    updateAggregationCache(state.aggregationCache, filteredRows, { aging });
+  }
+  state.tableData.aging = state.aggregationCache.aging;
+  renderLeadAgingTable();
+}
+
 export function renderAll(filteredRows) {
   state.lastFilteredRows = filteredRows;
   const activeTab = document.querySelector('.tabpanel.active')?.id;
@@ -507,6 +711,10 @@ export function renderAll(filteredRows) {
     renderSourceCharts(filteredRows);
     state.renderedTabs.source = true;
   }
+  if (activeTab === 'tab-operations') {
+    renderOperationsTables(filteredRows);
+    state.renderedTabs.operations = true;
+  }
 }
 export {
   renderFunnelCharts,
@@ -514,5 +722,6 @@ export {
   renderWeeklyCharts,
   renderMonthlyCharts,
   renderLeaderboardCharts,
-  renderSourceCharts
+  renderSourceCharts,
+  renderOperationsTables
 };

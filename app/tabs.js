@@ -6,7 +6,8 @@ import {
   renderWeeklyCharts,
   renderMonthlyCharts,
   renderLeaderboardCharts,
-  renderSourceCharts
+  renderSourceCharts,
+  renderOperationsTables
 } from './renderers.js';
 
 export function initTabs() {
@@ -16,6 +17,7 @@ export function initTabs() {
     { btn: document.getElementById('tab-weekly-btn'), panel: document.getElementById('tab-weekly') },
     { btn: document.getElementById('tab-monthly-btn'), panel: document.getElementById('tab-monthly') },
     { btn: document.getElementById('tab-leaderboard-btn'), panel: document.getElementById('tab-leaderboard') },
+    { btn: document.getElementById('tab-operations-btn'), panel: document.getElementById('tab-operations') },
     { btn: document.getElementById('tab-source-btn'), panel: document.getElementById('tab-source') }
   ];
 
@@ -79,6 +81,8 @@ export function initTabs() {
         state.chartRefs.sourceRepliesToPositive,
         state.chartRefs.sourcePositiveToEvents
       ]);
+    } else if (panelId === 'tab-operations') {
+      // Tables only, nothing to resize
     }
   }, 200);
 
@@ -110,6 +114,8 @@ export function initTabs() {
           renderLeaderboardCharts(state.lastFilteredRows);
         } else if (panelId === 'tab-source') {
           renderSourceCharts(state.lastFilteredRows);
+        } else if (panelId === 'tab-operations') {
+          renderOperationsTables(state.lastFilteredRows);
         }
         state.renderedTabs[tabKey] = true;
       }

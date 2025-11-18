@@ -27,7 +27,8 @@ const ru = {
     weekly: 'Недели',
     monthly: 'Месяцы',
     leaderboard: 'Лидеры',
-    source: 'Сравнение источников'
+    source: 'Сравнение источников',
+    operations: 'Операционная'
   },
   charts: {
     labels: {
@@ -106,7 +107,31 @@ const ru = {
     crEvents: 'CR (События/Создано)',
     csRate: 'C→S (Подключено/Отправлено)',
     prRate: 'P→R (Положительные/Ответы)',
-    crShort: 'CR'
+    crShort: 'CR',
+    stage: 'Этап',
+    dropoff: 'Потери',
+    cumulative: 'Накопленная конверсия',
+    positiveRate: 'Позитивность',
+    createdToPositive: 'Создано → Положительные',
+    positiveToEvents: 'Положительные → События',
+    eventsPerWeek: 'Событий / нед.',
+    avgResponseTime: 'Среднее время ответа (дни)',
+    funnelMatrixTitle: 'Матрица выпадения этапов',
+    funnelMatrixSubtitle: 'Показывает удержание и потери на каждом шаге воронки',
+    leadQualityTitle: 'Таблица эффективности генераторов',
+    leadQualitySubtitle: 'Сортируемые KPI по команде',
+    sortBy: 'Сортировать по:',
+    sortPositiveRate: 'Позитивности',
+    sortEventsPerWeek: 'Событиям / нед.',
+    sortCreatedToPositive: 'Создано → Положительные',
+    sortPositiveToEvents: 'Положительные → События',
+    sortAvgResponseTime: 'Ср. времени ответа',
+    noData: 'Нет данных для выбранных фильтров',
+    agingTitle: 'Таблица старения лидов',
+    agingSubtitle: 'Бэклог по этапам и давности',
+    bucket0to3: '0–3 дня',
+    bucket4to7: '4–7 дней',
+    bucket8plus: '8+ дней'
   },
   alerts: {
     noDataLoaded: 'Нет данных. Подождите загрузки.',

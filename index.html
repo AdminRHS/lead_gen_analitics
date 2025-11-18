@@ -344,6 +344,44 @@
       max-width: 1200px;
       margin: 0 auto;
     }
+    .chart-card.full-span {
+      grid-column: 1 / -1;
+    }
+    .table-card .summary-table {
+      font-size: 13px;
+    }
+    .table-responsive {
+      overflow-x: auto;
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+    }
+    .card-subtitle {
+      margin: 4px 0 0 0;
+      color: #64748b;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+    .table-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .table-toolbar label {
+      font-weight: 600;
+      color: #475569;
+    }
+    .empty-state {
+      padding: 12px 0;
+      text-align: center;
+      color: #94a3b8;
+      font-size: 14px;
+    }
     /* Responsive Design */
     @media (max-width: 1200px) {
       .dashboard-grid { 
@@ -662,6 +700,13 @@
     body.dark-theme .summary-table tfoot td {
       color: #f8fafc;
     }
+    body.dark-theme .card-subtitle,
+    body.dark-theme .table-toolbar label {
+      color: #cbd5f5;
+    }
+    body.dark-theme .empty-state {
+      color: #94a3b8;
+    }
     body.dark-theme .link-btn {
       color: #7aa7ff;
     }
@@ -707,6 +752,7 @@
     <button class="tab" role="tab" aria-selected="false" aria-controls="tab-weekly" id="tab-weekly-btn" data-i18n="tabs.weekly">Weekly</button>
     <button class="tab" role="tab" aria-selected="false" aria-controls="tab-monthly" id="tab-monthly-btn" data-i18n="tabs.monthly">Monthly</button>
     <button class="tab" role="tab" aria-selected="false" aria-controls="tab-leaderboard" id="tab-leaderboard-btn" data-i18n="tabs.leaderboard">Leaderboard</button>
+    <button class="tab" role="tab" aria-selected="false" aria-controls="tab-operations" id="tab-operations-btn" data-i18n="tabs.operations">Operations</button>
     <button class="tab" role="tab" aria-selected="false" aria-controls="tab-source" id="tab-source-btn" data-i18n="tabs.source">Source Comparison</button>
     
   </div>
@@ -733,6 +779,15 @@
     <div class="chart-card soft-pink">
       <h3 data-i18n="charts.funnel.positiveToEvents">Positive Replies → Events</h3>
       <canvas id="chartPositiveToEvents"></canvas>
+    </div>
+    <div class="chart-card soft-blue full-span table-card">
+      <div class="card-header">
+        <div>
+          <h3 data-i18n="table.funnelMatrixTitle">Funnel Drop-off Matrix</h3>
+          <p class="card-subtitle" data-i18n="table.funnelMatrixSubtitle">Drop-off and conversion by stage</p>
+        </div>
+      </div>
+      <div class="table-responsive" id="funnelDropoffContainer"></div>
     </div>
   </div>
   </div>
@@ -840,8 +895,71 @@
       <h3 data-i18n="charts.leaderboard.events">Events Created by Lead Generator</h3>
       <canvas id="chartLbEvents"></canvas>
     </div>
+    <div class="chart-card soft-blue full-span table-card">
+      <div class="card-header">
+        <div>
+          <h3 data-i18n="table.leadQualityTitle">Lead Generator Performance</h3>
+          <p class="card-subtitle" data-i18n="table.leadQualitySubtitle">Sortable KPIs by generator</p>
+        </div>
+      </div>
+      <div class="table-toolbar">
+        <label for="leadQualitySort" data-i18n="table.sortBy">Sort by:</label>
+        <select id="leadQualitySort" class="input">
+          <option value="positiveRate" data-i18n="table.sortPositiveRate">Positive rate</option>
+          <option value="eventsPerWeek" data-i18n="table.sortEventsPerWeek">Events / week</option>
+          <option value="createdToPositive" data-i18n="table.sortCreatedToPositive">Created → Positive</option>
+          <option value="positiveToEvents" data-i18n="table.sortPositiveToEvents">Positive → Events</option>
+          <option value="avgResponseTimeDays" data-i18n="table.sortAvgResponseTime">Avg response time</option>
+        </select>
+      </div>
+      <div class="table-responsive">
+        <table class="summary-table">
+          <thead>
+            <tr>
+              <th data-i18n="table.name">Name</th>
+              <th data-i18n="table.sentRequests">Sent Requests</th>
+              <th data-i18n="table.connected">Connected</th>
+              <th data-i18n="table.positiveReplies">Positive Replies</th>
+              <th data-i18n="table.positiveRate">Positive rate</th>
+              <th data-i18n="table.createdToPositive">Created → Positive</th>
+              <th data-i18n="table.positiveToEvents">Positive → Events</th>
+              <th data-i18n="table.eventsPerWeek">Events / week</th>
+              <th data-i18n="table.avgResponseTime">Avg response time (days)</th>
+            </tr>
+          </thead>
+          <tbody id="leadQualityTableBody"></tbody>
+        </table>
+      </div>
+    </div>
   </div>
   </div>
+  </div>
+  </div>
+
+  <div id="tab-operations" class="tabpanel" role="tabpanel" aria-labelledby="tab-operations-btn">
+  <div class="dashboard-grid" style="grid-template-columns: 1fr;">
+    <div class="chart-card soft-blue table-card full-span">
+      <div class="card-header">
+        <div>
+          <h3 data-i18n="table.agingTitle">Lead Aging Table</h3>
+          <p class="card-subtitle" data-i18n="table.agingSubtitle">Monitor backlog by stage and aging bucket</p>
+        </div>
+      </div>
+      <div class="table-responsive">
+        <table class="summary-table">
+          <thead>
+            <tr>
+              <th data-i18n="table.stage">Stage</th>
+              <th data-i18n="table.bucket0to3">0–3 days</th>
+              <th data-i18n="table.bucket4to7">4–7 days</th>
+              <th data-i18n="table.bucket8plus">8+ days</th>
+              <th data-i18n="table.total">Total</th>
+            </tr>
+          </thead>
+          <tbody id="leadAgingTableBody"></tbody>
+        </table>
+      </div>
+    </div>
   </div>
   </div>
 

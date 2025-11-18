@@ -51,11 +51,14 @@ export const state = {
     dataHash: null,
     lastFilteredRows: null,
     funnel: null,
+    funnelSummary: null,
     country: null,
     weekly: null,
     monthly: null,
     leaderboard: null,
-    source: null
+    leadQuality: null,
+    source: null,
+    aging: null
   },
   renderedTabs: {
     funnel: false,
@@ -63,7 +66,13 @@ export const state = {
     weekly: false,
     monthly: false,
     leaderboard: false,
-    source: false
+    source: false,
+    operations: false
+  },
+  tableData: {
+    funnelDropoff: null,
+    leadQuality: [],
+    aging: null
   },
   currentTheme: 'light',
   userHasExplicitTheme: false,

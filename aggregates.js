@@ -2,6 +2,8 @@
 
 import { parseDdMmYyyyToDate, getIsoWeekInfo } from './utils.js';
 
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
 export function buildAggregates(filteredRows) {
   const byDate = {};
   for (const row of filteredRows) {
@@ -220,5 +222,166 @@ export function buildSourceAggregates(filteredRows) {
       return created > 0 ? (events / created) * 100 : 0;
     })
   };
+}
+
+export function buildFunnelSummary(filteredRows = []) {
+  const totals = {
+    Created: 0,
+    SentRequests: 0,
+    Connected: 0,
+    Replies: 0,
+    PositiveReplies: 0,
+    Events: 0
+  };
+
+  for (const row of filteredRows) {
+    totals.Created += Number(row['Created'] || 0);
+    totals.SentRequests += Number(row['Sent Requests'] || 0);
+    totals.Connected += Number(row['Connected'] || 0);
+    totals.Replies += Number(row['Total replies'] || 0);
+    totals.PositiveReplies += Number(row['Positive Replies'] || 0);
+    totals.Events += Number(row['Events Created'] || 0);
+  }
+
+  return totals;
+}
+
+export function buildLeadGeneratorQuality(filteredRows = []) {
+  if (!filteredRows || filteredRows.length === 0) {
+    return { rows: [], weeksInRange: 0 };
+  }
+
+  const datedRows = filteredRows
+    .map((row) => ({ row, date: parseDdMmYyyyToDate(row.Date) }))
+    .filter(({ date }) => date instanceof Date && !isNaN(date.valueOf()))
+    .sort((a, b) => a.date - b.date);
+
+  if (datedRows.length === 0) {
+    return { rows: [], weeksInRange: 0 };
+  }
+
+  const minDate = datedRows[0].date;
+  const maxDate = datedRows[datedRows.length - 1].date;
+  const totalDays = Math.max(1, Math.round((maxDate - minDate) / MS_PER_DAY) + 1);
+  const weeksInRange = totalDays / 7;
+
+  const byName = {};
+
+  datedRows.forEach(({ row, date }) => {
+    const name = row.Name || 'Unknown';
+    if (!byName[name]) {
+      byName[name] = {
+        Created: 0,
+        SentRequests: 0,
+        Connected: 0,
+        Replies: 0,
+        PositiveReplies: 0,
+        Events: 0,
+        firstActivity: date,
+        replyLagWeighted: 0,
+        totalRepliesForLag: 0
+      };
+    }
+    const stats = byName[name];
+    if (!stats.firstActivity || date < stats.firstActivity) {
+      stats.firstActivity = date;
+    }
+
+    stats.Created += Number(row['Created'] || 0);
+    stats.SentRequests += Number(row['Sent Requests'] || 0);
+    stats.Connected += Number(row['Connected'] || 0);
+    const replies = Number(row['Total replies'] || 0);
+    stats.Replies += replies;
+    stats.PositiveReplies += Number(row['Positive Replies'] || 0);
+    stats.Events += Number(row['Events Created'] || 0);
+
+    if (replies > 0 && stats.firstActivity) {
+      const lagDays = Math.max(0, (date - stats.firstActivity) / MS_PER_DAY);
+      stats.replyLagWeighted += lagDays * replies;
+      stats.totalRepliesForLag += replies;
+    }
+  });
+
+  const rows = Object.keys(byName).map((name) => {
+    const stats = byName[name];
+    const avgResponseTimeDays =
+      stats.totalRepliesForLag > 0 ? stats.replyLagWeighted / stats.totalRepliesForLag : null;
+    const positiveRate = stats.SentRequests > 0 ? stats.PositiveReplies / stats.SentRequests : 0;
+    const createdToPositive = stats.Created > 0 ? stats.PositiveReplies / stats.Created : 0;
+    const positiveToEvents = stats.PositiveReplies > 0 ? stats.Events / stats.PositiveReplies : 0;
+    const eventsPerWeek = weeksInRange > 0 ? stats.Events / weeksInRange : stats.Events;
+
+    return {
+      name,
+      created: stats.Created,
+      sent: stats.SentRequests,
+      connected: stats.Connected,
+      replies: stats.Replies,
+      positive: stats.PositiveReplies,
+      events: stats.Events,
+      avgResponseTimeDays,
+      positiveRate,
+      createdToPositive,
+      positiveToEvents,
+      eventsPerWeek
+    };
+  });
+
+  return { rows, weeksInRange };
+}
+
+export function buildLeadAgingBuckets(filteredRows = []) {
+  const stageConfig = [
+    { key: 'SentRequests', source: 'Sent Requests' },
+    { key: 'Connected', source: 'Connected' },
+    { key: 'Replies', source: 'Total replies' },
+    { key: 'PositiveReplies', source: 'Positive Replies' },
+    { key: 'Events', source: 'Events Created' }
+  ];
+
+  const buckets = [
+    { key: 'bucket0to3', min: 0, max: 3 },
+    { key: 'bucket4to7', min: 4, max: 7 },
+    { key: 'bucket8plus', min: 8, max: Infinity }
+  ];
+
+  const datedRows = filteredRows
+    .map((row) => ({ row, date: parseDdMmYyyyToDate(row.Date) }))
+    .filter(({ date }) => date instanceof Date && !isNaN(date.valueOf()))
+    .sort((a, b) => a.date - b.date);
+
+  const maxDate = datedRows.length ? datedRows[datedRows.length - 1].date : new Date();
+
+  const totals = {};
+  stageConfig.forEach(({ key }) => {
+    totals[key] = buckets.reduce((acc, bucket) => {
+      acc[bucket.key] = 0;
+      return acc;
+    }, {});
+  });
+
+  datedRows.forEach(({ row, date }) => {
+    const ageDays = Math.max(0, Math.round((maxDate - date) / MS_PER_DAY));
+    const bucket = buckets.find((b) => ageDays >= b.min && ageDays <= b.max) || buckets[buckets.length - 1];
+
+    stageConfig.forEach(({ key, source }) => {
+      const value = Number(row[source] || row[key] || 0);
+      if (value > 0) {
+        totals[key][bucket.key] += value;
+      }
+    });
+  });
+
+  const rows = stageConfig.map(({ key }) => {
+    const counts = totals[key];
+    const total = Object.values(counts).reduce((sum, val) => sum + val, 0);
+    return {
+      stageKey: key,
+      counts,
+      total
+    };
+  });
+
+  return { buckets, rows };
 }
 

@@ -27,7 +27,8 @@ const de = {
     weekly: 'Wöchentlich',
     monthly: 'Monatlich',
     leaderboard: 'Leaderboard',
-    source: 'Quellenvergleich'
+    source: 'Quellenvergleich',
+    operations: 'Operationen'
   },
   charts: {
     labels: {
@@ -106,7 +107,31 @@ const de = {
     crEvents: 'CR (Events/Erstellt)',
     csRate: 'C→S (Vernetzt/Gesendet)',
     prRate: 'P→R (Positive/Antworten)',
-    crShort: 'CR'
+    crShort: 'CR',
+    stage: 'Stufe',
+    dropoff: 'Abfall',
+    cumulative: 'Kumulative Conversion',
+    positiveRate: 'Positive Rate',
+    createdToPositive: 'Erstellt → Positive',
+    positiveToEvents: 'Positive → Events',
+    eventsPerWeek: 'Events / Woche',
+    avgResponseTime: 'Ø Antwortzeit (Tage)',
+    funnelMatrixTitle: 'Funnel-Drop-off-Matrix',
+    funnelMatrixSubtitle: 'Zeigt Retention und Verluste je Funnel-Stufe',
+    leadQualityTitle: 'Performance der Lead-Generatoren',
+    leadQualitySubtitle: 'Sortierbare KPIs für dein Team',
+    sortBy: 'Sortieren nach:',
+    sortPositiveRate: 'Positive Rate',
+    sortEventsPerWeek: 'Events / Woche',
+    sortCreatedToPositive: 'Erstellt → Positive',
+    sortPositiveToEvents: 'Positive → Events',
+    sortAvgResponseTime: 'Ø Antwortzeit',
+    noData: 'Keine Daten für den aktuellen Filter',
+    agingTitle: 'Lead-Aging-Tabelle',
+    agingSubtitle: 'Backlog nach Stufe und Alters-Bucket',
+    bucket0to3: '0–3 Tage',
+    bucket4to7: '4–7 Tage',
+    bucket8plus: '8+ Tage'
   },
   alerts: {
     noDataLoaded: 'Keine Daten verfügbar. Bitte warten.',
