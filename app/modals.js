@@ -308,23 +308,28 @@ function buildLeadTimelineDetails(leadName, rows, fromDate, toDate) {
       let positiveDate = null;
       let eventDate = null;
 
+      let runningSent = prevSent;
+      let runningConnected = prevConnected;
+      let runningPositive = prevPositive;
+      let runningEvents = prevEvents;
+
       for (let j = index; j < filteredRows.length; j++) {
         const nextRow = filteredRows[j];
-        const nextCumulativeSent = filteredRows.slice(0, j + 1).reduce((sum, r) => sum + Number(r['Sent Requests'] || 0), 0);
-        const nextCumulativeConnected = filteredRows.slice(0, j + 1).reduce((sum, r) => sum + Number(r['Connected'] || 0), 0);
-        const nextCumulativePositive = filteredRows.slice(0, j + 1).reduce((sum, r) => sum + Number(r['Positive Replies'] || 0), 0);
-        const nextCumulativeEvents = filteredRows.slice(0, j + 1).reduce((sum, r) => sum + Number(r['Events Created'] || 0), 0);
+        runningSent += Number(nextRow['Sent Requests'] || 0);
+        runningConnected += Number(nextRow['Connected'] || 0);
+        runningPositive += Number(nextRow['Positive Replies'] || 0);
+        runningEvents += Number(nextRow['Events Created'] || 0);
 
-        if (!sentDate && nextCumulativeSent > prevSent + i) {
+        if (!sentDate && runningSent > prevSent + i) {
           sentDate = nextRow.date;
         }
-        if (!connectedDate && nextCumulativeConnected > prevConnected + i) {
+        if (!connectedDate && runningConnected > prevConnected + i) {
           connectedDate = nextRow.date;
         }
-        if (!positiveDate && nextCumulativePositive > prevPositive + i) {
+        if (!positiveDate && runningPositive > prevPositive + i) {
           positiveDate = nextRow.date;
         }
-        if (!eventDate && nextCumulativeEvents > prevEvents + i) {
+        if (!eventDate && runningEvents > prevEvents + i) {
           eventDate = nextRow.date;
         }
         if (sentDate && connectedDate && positiveDate && eventDate) break;
