@@ -520,31 +520,64 @@ export function buildTimingStats(filteredRows = []) {
 
   const steps = stepConfigs.map((config) => {
     const intervals = [];
+    let cumulativeFrom = 0;
+    let cumulativeTo = 0;
+    const fromEvents = [];
+    const toEvents = [];
 
     for (let i = 0; i < datedRows.length; i++) {
       const current = datedRows[i];
       const fromValue = Number(current.row[config.fromField] || 0);
       const toValue = Number(current.row[config.toField] || 0);
+      const prevCumulativeFrom = cumulativeFrom;
+      const prevCumulativeTo = cumulativeTo;
 
-      if (fromValue > 0 && toValue > 0) {
-        const fromDate = current.date;
-        let toDate = fromDate;
+      cumulativeFrom += fromValue;
+      cumulativeTo += toValue;
 
-        for (let j = i; j < datedRows.length; j++) {
-          const next = datedRows[j];
-          const nextToValue = Number(next.row[config.toField] || 0);
-          if (nextToValue > 0 && next.date >= fromDate) {
-            toDate = next.date;
-            break;
-          }
+      const newFrom = cumulativeFrom - prevCumulativeFrom;
+      const newTo = cumulativeTo - prevCumulativeTo;
+
+      if (newFrom > 0) {
+        for (let k = 0; k < newFrom; k++) {
+          fromEvents.push({ date: current.date, index: prevCumulativeFrom + k });
         }
+      }
 
-        const daysDiff = Math.max(0, Math.round((toDate - fromDate) / MS_PER_DAY));
-        if (daysDiff >= 0 && daysDiff <= 365) {
-          for (let k = 0; k < Math.min(fromValue, toValue); k++) {
-            intervals.push(daysDiff);
-          }
+      if (newTo > 0) {
+        for (let k = 0; k < newTo; k++) {
+          toEvents.push({ date: current.date, index: prevCumulativeTo + k });
         }
+      }
+    }
+
+    if (fromEvents.length === 0 || toEvents.length === 0) {
+      return {
+        key: config.key,
+        labelKey: config.labelKey,
+        median: null,
+        average: null,
+        fastest: null,
+        slowest: null,
+        percentile90: null
+      };
+    }
+
+    for (let i = 0; i < Math.min(fromEvents.length, toEvents.length); i++) {
+      const fromEvent = fromEvents[i];
+      let toEvent = toEvents[i];
+      
+      let j = i;
+      while (j < toEvents.length && toEvents[j].date <= fromEvent.date) {
+        j++;
+      }
+      if (j < toEvents.length) {
+        toEvent = toEvents[j];
+      }
+
+      const daysDiff = Math.max(0, Math.round((toEvent.date - fromEvent.date) / MS_PER_DAY));
+      if (daysDiff >= 0 && daysDiff <= 365) {
+        intervals.push(daysDiff);
       }
     }
 
