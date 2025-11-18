@@ -56,7 +56,7 @@ function formatDays(value) {
   if (value === null || value === undefined || !Number.isFinite(value)) {
     return '—';
   }
-  return `${formatNumber(value, 1)}${t('table.daysSuffix')}`;
+  return `${formatNumber(value, 1)} ${t('table.days')}`;
 }
 
 function formatDateShort(date) {
@@ -972,11 +972,6 @@ function renderOperationsTables(filteredRows) {
   }
   state.tableData.aging = state.aggregationCache.aging;
   renderLeadAgingTable();
-}
-
-function formatDays(value) {
-  if (value === null || value === undefined) return '—';
-  return `${formatNumber(value, 1)} ${t('table.days')}`;
 }
 
 function renderTimingTable() {
