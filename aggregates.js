@@ -330,6 +330,63 @@ export function buildLeadGeneratorQuality(filteredRows = []) {
   return { rows, weeksInRange };
 }
 
+export function buildDailySnapshots(filteredRows = []) {
+  const byDate = {};
+
+  for (const row of filteredRows) {
+    const dateObj = parseDdMmYyyyToDate(row.Date);
+    if (!(dateObj instanceof Date) || isNaN(dateObj.valueOf())) continue;
+    const isoDate = dateObj.toISOString().slice(0, 10);
+    if (!byDate[isoDate]) {
+      byDate[isoDate] = {
+        date: dateObj,
+        Created: 0,
+        SentRequests: 0,
+        Connected: 0,
+        Replies: 0,
+        PositiveReplies: 0,
+        Events: 0
+      };
+    }
+    const stats = byDate[isoDate];
+    stats.Created += Number(row['Created'] || 0);
+    stats.SentRequests += Number(row['Sent Requests'] || 0);
+    stats.Connected += Number(row['Connected'] || 0);
+    stats.Replies += Number(row['Total replies'] || 0);
+    stats.PositiveReplies += Number(row['Positive Replies'] || 0);
+    stats.Events += Number(row['Events Created'] || 0);
+  }
+
+  const keys = Object.keys(byDate).sort();
+  const rows = keys.map((iso) => {
+    const stats = byDate[iso];
+    const conversionRate = stats.Created > 0 ? (stats.Events / stats.Created) * 100 : 0;
+    return {
+      isoDate: iso,
+      date: stats.date,
+      created: stats.Created,
+      sent: stats.SentRequests,
+      connected: stats.Connected,
+      replies: stats.Replies,
+      positive: stats.PositiveReplies,
+      events: stats.Events,
+      conversionRate,
+      deltaFromPrev: null
+    };
+  });
+
+  rows.forEach((row, idx) => {
+    if (idx === 0) {
+      row.deltaFromPrev = null;
+      return;
+    }
+    const prev = rows[idx - 1].conversionRate;
+    row.deltaFromPrev = prev !== undefined && prev !== null ? row.conversionRate - prev : null;
+  });
+
+  return { rows };
+}
+
 export function buildLeadAgingBuckets(filteredRows = []) {
   const stageConfig = [
     { key: 'SentRequests', source: 'Sent Requests' },

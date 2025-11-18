@@ -382,6 +382,27 @@
       color: #94a3b8;
       font-size: 14px;
     }
+    .delta-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-weight: 600;
+      font-size: 12px;
+      border-radius: 999px;
+      padding: 2px 8px;
+    }
+    .delta-pill.up {
+      background: rgba(16, 185, 129, 0.15);
+      color: #0f766e;
+    }
+    .delta-pill.down {
+      background: rgba(248, 113, 113, 0.15);
+      color: #b91c1c;
+    }
+    .delta-pill.neutral {
+      background: rgba(148, 163, 184, 0.2);
+      color: #475569;
+    }
     /* Responsive Design */
     @media (max-width: 1200px) {
       .dashboard-grid { 
@@ -707,6 +728,18 @@
     body.dark-theme .empty-state {
       color: #94a3b8;
     }
+    body.dark-theme .delta-pill.up {
+      background: rgba(16, 185, 129, 0.3);
+      color: #34d399;
+    }
+    body.dark-theme .delta-pill.down {
+      background: rgba(248, 113, 113, 0.3);
+      color: #fca5a5;
+    }
+    body.dark-theme .delta-pill.neutral {
+      background: rgba(148, 163, 184, 0.35);
+      color: #e2e8f0;
+    }
     body.dark-theme .link-btn {
       color: #7aa7ff;
     }
@@ -841,6 +874,32 @@
     <div class="chart-card soft-pink">
       <h3 data-i18n="charts.weekly.positiveToEvents">Weekly: Positive Replies → Events</h3>
       <canvas id="chartWeekPositiveToEvents"></canvas>
+    </div>
+    <div class="chart-card soft-blue full-span table-card">
+      <div class="card-header">
+        <div>
+          <h3 data-i18n="table.dailySnapshotTitle">Daily KPI Snapshot</h3>
+          <p class="card-subtitle" data-i18n="table.dailySnapshotSubtitle">Pulse of funnel metrics per day</p>
+        </div>
+      </div>
+      <div class="table-responsive">
+        <table class="summary-table">
+          <thead>
+            <tr>
+              <th data-i18n="common.date">Date</th>
+              <th data-i18n="table.created">Created</th>
+              <th data-i18n="table.sentRequests">Sent</th>
+              <th data-i18n="table.connected">Connected</th>
+              <th data-i18n="table.replies">Replies</th>
+              <th data-i18n="table.positiveReplies">Positive</th>
+              <th data-i18n="table.events">Events</th>
+              <th data-i18n="table.conversionPercent">Conversion %</th>
+              <th data-i18n="table.deltaPrev">Δ vs prev. day</th>
+            </tr>
+          </thead>
+          <tbody id="dailySnapshotTableBody"></tbody>
+        </table>
+      </div>
     </div>
   </div>
   </div>

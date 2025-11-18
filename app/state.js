@@ -56,6 +56,7 @@ export const state = {
     weekly: null,
     monthly: null,
     leaderboard: null,
+    dailySnapshot: null,
     leadQuality: null,
     source: null,
     aging: null
@@ -72,7 +73,8 @@ export const state = {
   tableData: {
     funnelDropoff: null,
     leadQuality: [],
-    aging: null
+    aging: null,
+    dailySnapshot: null
   },
   currentTheme: 'light',
   userHasExplicitTheme: false,

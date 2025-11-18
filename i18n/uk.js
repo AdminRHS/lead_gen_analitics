@@ -131,7 +131,11 @@ const uk = {
     agingSubtitle: 'Беклог за етапами та давністю',
     bucket0to3: '0–3 дні',
     bucket4to7: '4–7 днів',
-    bucket8plus: '8+ днів'
+    bucket8plus: '8+ днів',
+    dailySnapshotTitle: 'Щоденний KPI Snapshot',
+    dailySnapshotSubtitle: 'Щоденний пульс воронки за вибраний період',
+    conversionPercent: 'Конверсія %',
+    deltaPrev: 'Δ до попер. дня'
   },
   alerts: {
     noDataLoaded: 'Немає даних. Дочекайтеся завантаження.',

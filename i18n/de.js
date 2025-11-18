@@ -131,7 +131,11 @@ const de = {
     agingSubtitle: 'Backlog nach Stufe und Alters-Bucket',
     bucket0to3: '0–3 Tage',
     bucket4to7: '4–7 Tage',
-    bucket8plus: '8+ Tage'
+    bucket8plus: '8+ Tage',
+    dailySnapshotTitle: 'Daily KPI Snapshot',
+    dailySnapshotSubtitle: 'Täglicher Puls der Funnel-KPIs für den Zeitraum',
+    conversionPercent: 'Conversion %',
+    deltaPrev: 'Δ vs. Vortag'
   },
   alerts: {
     noDataLoaded: 'Keine Daten verfügbar. Bitte warten.',

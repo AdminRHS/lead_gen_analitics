@@ -131,7 +131,11 @@ const ru = {
     agingSubtitle: 'Бэклог по этапам и давности',
     bucket0to3: '0–3 дня',
     bucket4to7: '4–7 дней',
-    bucket8plus: '8+ дней'
+    bucket8plus: '8+ дней',
+    dailySnapshotTitle: 'Ежедневный KPI Snapshot',
+    dailySnapshotSubtitle: 'Пульс воронки по дням выбранного периода',
+    conversionPercent: 'Конверсия %',
+    deltaPrev: 'Δ к пред. дню'
   },
   alerts: {
     noDataLoaded: 'Нет данных. Подождите загрузки.',

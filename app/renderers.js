@@ -8,6 +8,7 @@ import {
   buildSourceAggregates,
   buildFunnelSummary,
   buildLeadGeneratorQuality,
+  buildDailySnapshots,
   buildLeadAgingBuckets
 } from '../aggregates.js';
 import {
@@ -47,6 +48,16 @@ function formatNumber(value, maximumFractionDigits = 0) {
 
 function formatPercent(value, digits = 1) {
   return `${formatNumber(value, digits)}%`;
+}
+
+function formatDateShort(date) {
+  if (!(date instanceof Date) || isNaN(date.valueOf())) return '';
+  const locale = getLocale();
+  return date.toLocaleDateString(locale || undefined, {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric'
+  });
 }
 
 function renderFunnelDropoffMatrix(summary) {
@@ -195,6 +206,44 @@ function renderLeadAgingTable() {
     .join('');
 
   tbody.innerHTML = rowsHtml;
+}
+
+function renderDailySnapshotTable() {
+  const tbody = document.getElementById('dailySnapshotTableBody');
+  if (!tbody) return;
+  const dataset = state.tableData.dailySnapshot?.rows || [];
+
+  if (!dataset.length) {
+    tbody.innerHTML = `<tr><td colspan="9">${t('table.noData')}</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = dataset
+    .map((row) => {
+      const conversion = formatPercent(row.conversionRate, 1);
+      let deltaPill = `<span class="delta-pill neutral">—</span>`;
+      if (row.deltaFromPrev !== null && row.deltaFromPrev !== undefined) {
+        const direction = row.deltaFromPrev > 0 ? 'up' : row.deltaFromPrev < 0 ? 'down' : 'neutral';
+        const arrow = row.deltaFromPrev > 0 ? '▲' : row.deltaFromPrev < 0 ? '▼' : '→';
+        const deltaValue = Math.abs(row.deltaFromPrev);
+        const label = `${formatNumber(deltaValue, 1)}pp`;
+        deltaPill = `<span class="delta-pill ${direction}">${arrow} ${label}</span>`;
+      }
+      return `
+        <tr>
+          <td>${formatDateShort(row.date)}</td>
+          <td>${formatNumber(row.created)}</td>
+          <td>${formatNumber(row.sent)}</td>
+          <td>${formatNumber(row.connected)}</td>
+          <td>${formatNumber(row.replies)}</td>
+          <td>${formatNumber(row.positive)}</td>
+          <td>${formatNumber(row.events)}</td>
+          <td>${conversion}</td>
+          <td>${deltaPill}</td>
+        </tr>
+      `;
+    })
+    .join('');
 }
 
 function renderOrUpdateChart(chartRef, elementId, renderFn, updateFn, ...args) {
@@ -388,10 +437,16 @@ function renderCountryCharts(filteredRows) {
 function renderWeeklyCharts(filteredRows) {
   if (shouldRecalculateAggregations(filteredRows, state.aggregationCache) || !state.aggregationCache.weekly) {
     const weekAgg = buildWeeklyAggregates(filteredRows);
+    const dailySnapshot = buildDailySnapshots(filteredRows);
     state.aggregationCache.weekly = weekAgg;
-    updateAggregationCache(state.aggregationCache, filteredRows, { weekly: weekAgg });
+    updateAggregationCache(state.aggregationCache, filteredRows, {
+      weekly: weekAgg,
+      dailySnapshot
+    });
   }
   const weekAgg = state.aggregationCache.weekly;
+  state.tableData.dailySnapshot = state.aggregationCache.dailySnapshot;
+  renderDailySnapshotTable();
 
   scheduleChartUpdate(() => {
     const createdLabel = getMetricLabel('Created');
