@@ -491,23 +491,25 @@ export function openLeadInsight(leadName, rows) {
     <th>${t('table.generator')}</th>
   </tr></thead><tbody>`;
   
+  const formatDate = (date) => {
+    if (!date) return '—';
+    const locale = localeMap[state.currentLanguage] || 'en-US';
+    return date.toLocaleDateString(locale, { year: 'numeric', month: '2-digit', day: '2-digit' });
+  };
+
   timelineDetails.slice(0, 100).forEach((lead, index) => {
-    const formatDate = (date) => {
-      if (!date) return '—';
-      return date.toLocaleDateString(localeMap[state.currentLanguage] || 'en-US', { year: 'numeric', month: '2-digit', day: '2-digit' });
-    };
-    timelineHtml += `<tr>
-      <td>${index + 1}</td>
-      <td>${formatDate(lead.createdDate)}</td>
-      <td>${formatDate(lead.sentDate)}</td>
-      <td>${formatDate(lead.connectedDate)}</td>
-      <td>${formatDate(lead.positiveDate)}</td>
-      <td>${formatDate(lead.eventDate)}</td>
-      <td>${lead.leadAge} ${t('table.days')}</td>
-      <td>${lead.timeStuck} ${t('table.days')}</td>
-      <td>${lead.source}</td>
-      <td>${lead.generator}</td>
-    </tr>`;
+    timelineHtml += '<tr>';
+    timelineHtml += '<td>' + (index + 1) + '</td>';
+    timelineHtml += '<td>' + formatDate(lead.createdDate) + '</td>';
+    timelineHtml += '<td>' + formatDate(lead.sentDate) + '</td>';
+    timelineHtml += '<td>' + formatDate(lead.connectedDate) + '</td>';
+    timelineHtml += '<td>' + formatDate(lead.positiveDate) + '</td>';
+    timelineHtml += '<td>' + formatDate(lead.eventDate) + '</td>';
+    timelineHtml += '<td>' + lead.leadAge + ' ' + t('table.days') + '</td>';
+    timelineHtml += '<td>' + lead.timeStuck + ' ' + t('table.days') + '</td>';
+    timelineHtml += '<td>' + lead.source + '</td>';
+    timelineHtml += '<td>' + lead.generator + '</td>';
+    timelineHtml += '</tr>';
   });
   timelineHtml += '</tbody></table></div>';
   if (timelineDetails.length > 100) {
