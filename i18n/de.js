@@ -175,7 +175,18 @@ const de = {
     country: 'Land',
     smallBiz: 'Kleines Unternehmen',
     medium: 'Mittel',
-    enterprise: 'Unternehmen'
+    enterprise: 'Unternehmen',
+    timelineDetailsTitle: 'Lead-Timeline-Details',
+    createdDate: 'Erstellt',
+    sentDate: 'Gesendet',
+    connectedDate: 'Vernetzt',
+    positiveDate: 'Positiv',
+    eventDate: 'Event',
+    leadAge: 'Lead-Alter',
+    timeStuck: 'Zeit festgefahren',
+    source: 'Quelle',
+    generator: 'Generator',
+    showingFirst100: 'Zeige erste 100 von'
   },
   alerts: {
     noDataLoaded: 'Keine Daten verfügbar. Bitte warten.',

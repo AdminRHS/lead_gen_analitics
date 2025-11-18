@@ -175,7 +175,18 @@ const en = {
     country: 'Country',
     smallBiz: 'Small Biz',
     medium: 'Medium',
-    enterprise: 'Enterprise'
+    enterprise: 'Enterprise',
+    timelineDetailsTitle: 'Lead Timeline Details',
+    createdDate: 'Created',
+    sentDate: 'Sent',
+    connectedDate: 'Connected',
+    positiveDate: 'Positive',
+    eventDate: 'Event',
+    leadAge: 'Lead age',
+    timeStuck: 'Time stuck',
+    source: 'Source',
+    generator: 'Generator',
+    showingFirst100: 'Showing first 100 of'
   },
   alerts: {
     noDataLoaded: 'No data available. Please wait for data to load.',

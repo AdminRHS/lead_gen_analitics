@@ -175,7 +175,18 @@ const uk = {
     country: 'Країна',
     smallBiz: 'Малий бізнес',
     medium: 'Середній',
-    enterprise: 'Підприємство'
+    enterprise: 'Підприємство',
+    timelineDetailsTitle: 'Деталі таймлайну ліда',
+    createdDate: 'Створено',
+    sentDate: 'Відправлено',
+    connectedDate: 'Підключено',
+    positiveDate: 'Позитивне',
+    eventDate: 'Подія',
+    leadAge: 'Вік ліда',
+    timeStuck: 'Час застрягання',
+    source: 'Джерело',
+    generator: 'Генератор',
+    showingFirst100: 'Показано перші 100 з'
   },
   alerts: {
     noDataLoaded: 'Немає даних. Дочекайтеся завантаження.',

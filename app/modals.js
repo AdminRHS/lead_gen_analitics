@@ -2,6 +2,7 @@ import { renderPairedBarChart } from '../charts.js';
 import { parseDdMmYyyyToDate, toIsoDateInputValue } from '../utils.js';
 import { state } from './state.js';
 import { t, getMetricLabel, DAY_SUMMARY_METRICS } from './i18nSupport.js';
+import { localeMap } from '../i18n/index.js';
 
 let modalsInitialized = false;
 
@@ -247,6 +248,111 @@ function aggregateLeadTopCountries(leadName, rows, fromDate, toDate, limit = 5) 
   return entries.slice(0, limit);
 }
 
+function buildLeadTimelineDetails(leadName, rows, fromDate, toDate) {
+  const MS_PER_DAY = 24 * 60 * 60 * 1000;
+  const now = new Date();
+  const leadDetails = [];
+
+  const filteredRows = rows
+    .filter((r) => {
+      const name = r.Name || 'Unknown';
+      if (name !== leadName) return false;
+      const d = parseDdMmYyyyToDate(r.Date);
+      if (!d) return false;
+      if (fromDate && d < fromDate) return false;
+      if (toDate && d > toDate) return false;
+      return true;
+    })
+    .map((r) => ({
+      ...r,
+      date: parseDdMmYyyyToDate(r.Date)
+    }))
+    .filter((r) => r.date instanceof Date && !isNaN(r.date.valueOf()))
+    .sort((a, b) => a.date - b.date);
+
+  let cumulativeCreated = 0;
+  let cumulativeSent = 0;
+  let cumulativeConnected = 0;
+  let cumulativePositive = 0;
+  let cumulativeEvents = 0;
+
+  filteredRows.forEach((row, index) => {
+    const created = Number(row['Created'] || 0);
+    const sent = Number(row['Sent Requests'] || 0);
+    const connected = Number(row['Connected'] || 0);
+    const positive = Number(row['Positive Replies'] || 0);
+    const events = Number(row['Events Created'] || 0);
+
+    const prevCreated = cumulativeCreated;
+    const prevSent = cumulativeSent;
+    const prevConnected = cumulativeConnected;
+    const prevPositive = cumulativePositive;
+    const prevEvents = cumulativeEvents;
+
+    cumulativeCreated += created;
+    cumulativeSent += sent;
+    cumulativeConnected += connected;
+    cumulativePositive += positive;
+    cumulativeEvents += events;
+
+    const newCreated = cumulativeCreated - prevCreated;
+    const newSent = cumulativeSent - prevSent;
+    const newConnected = cumulativeConnected - prevConnected;
+    const newPositive = cumulativePositive - prevPositive;
+    const newEvents = cumulativeEvents - prevEvents;
+
+    for (let i = 0; i < newCreated; i++) {
+      const createdDate = row.date;
+      let sentDate = null;
+      let connectedDate = null;
+      let positiveDate = null;
+      let eventDate = null;
+
+      for (let j = index; j < filteredRows.length; j++) {
+        const nextRow = filteredRows[j];
+        const nextCumulativeSent = filteredRows.slice(0, j + 1).reduce((sum, r) => sum + Number(r['Sent Requests'] || 0), 0);
+        const nextCumulativeConnected = filteredRows.slice(0, j + 1).reduce((sum, r) => sum + Number(r['Connected'] || 0), 0);
+        const nextCumulativePositive = filteredRows.slice(0, j + 1).reduce((sum, r) => sum + Number(r['Positive Replies'] || 0), 0);
+        const nextCumulativeEvents = filteredRows.slice(0, j + 1).reduce((sum, r) => sum + Number(r['Events Created'] || 0), 0);
+
+        if (!sentDate && nextCumulativeSent > prevSent + i) {
+          sentDate = nextRow.date;
+        }
+        if (!connectedDate && nextCumulativeConnected > prevConnected + i) {
+          connectedDate = nextRow.date;
+        }
+        if (!positiveDate && nextCumulativePositive > prevPositive + i) {
+          positiveDate = nextRow.date;
+        }
+        if (!eventDate && nextCumulativeEvents > prevEvents + i) {
+          eventDate = nextRow.date;
+        }
+        if (sentDate && connectedDate && positiveDate && eventDate) break;
+      }
+
+      const currentStage = eventDate ? 'Event' : positiveDate ? 'Positive' : connectedDate ? 'Connected' : sentDate ? 'Sent' : 'Created';
+      const lastStageDate = eventDate || positiveDate || connectedDate || sentDate || createdDate;
+      const leadAge = Math.round((now - createdDate) / MS_PER_DAY);
+      const timeStuck = Math.round((now - lastStageDate) / MS_PER_DAY);
+
+      leadDetails.push({
+        createdDate,
+        sentDate,
+        connectedDate,
+        positiveDate,
+        eventDate,
+        currentStage,
+        leadAge,
+        timeStuck,
+        source: row.Source || 'Unknown',
+        generator: leadName
+      });
+    }
+  }
+
+  return leadDetails;
+}
+
 export function openCountryInsight(countryName, rows) {
   const fromInput = document.getElementById('fromDate');
   const toInput = document.getElementById('toDate');
@@ -362,6 +468,48 @@ export function openLeadInsight(leadName, rows) {
   topHtml += '</tbody></table>';
   const topEl = document.getElementById('leadTopCountries');
   if (topEl) topEl.innerHTML = topHtml;
+
+  const timelineDetails = buildLeadTimelineDetails(leadName, rows, from, to);
+  let timelineHtml = `<div class="section-break"><div class="label">${t('table.timelineDetailsTitle')}</div></div>`;
+  timelineHtml += '<div class="table-responsive">';
+  timelineHtml += '<table class="summary-table">';
+  timelineHtml += `<thead><tr>
+    <th>#</th>
+    <th>${t('table.createdDate')}</th>
+    <th>${t('table.sentDate')}</th>
+    <th>${t('table.connectedDate')}</th>
+    <th>${t('table.positiveDate')}</th>
+    <th>${t('table.eventDate')}</th>
+    <th>${t('table.leadAge')}</th>
+    <th>${t('table.timeStuck')}</th>
+    <th>${t('table.source')}</th>
+    <th>${t('table.generator')}</th>
+  </tr></thead><tbody>`;
+  
+  timelineDetails.slice(0, 100).forEach((lead, index) => {
+    const formatDate = (date) => {
+      if (!date) return '—';
+      return date.toLocaleDateString(localeMap[state.currentLanguage] || 'en-US', { year: 'numeric', month: '2-digit', day: '2-digit' });
+    };
+    timelineHtml += `<tr>
+      <td>${index + 1}</td>
+      <td>${formatDate(lead.createdDate)}</td>
+      <td>${formatDate(lead.sentDate)}</td>
+      <td>${formatDate(lead.connectedDate)}</td>
+      <td>${formatDate(lead.positiveDate)}</td>
+      <td>${formatDate(lead.eventDate)}</td>
+      <td>${lead.leadAge} ${t('table.days')}</td>
+      <td>${lead.timeStuck} ${t('table.days')}</td>
+      <td>${lead.source}</td>
+      <td>${lead.generator}</td>
+    </tr>`;
+  });
+  timelineHtml += '</tbody></table></div>';
+  if (timelineDetails.length > 100) {
+    timelineHtml += `<div style="margin-top: 8px; color: #666; font-size: 12px;">${t('table.showingFirst100')} ${timelineDetails.length}</div>`;
+  }
+  const timelineEl = document.getElementById('leadTimelineDetails');
+  if (timelineEl) timelineEl.innerHTML = timelineHtml;
 
   const overlay = document.getElementById('leadModalOverlay');
   showModalOverlay(overlay);

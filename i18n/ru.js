@@ -175,7 +175,18 @@ const ru = {
     country: 'Страна',
     smallBiz: 'Малый бизнес',
     medium: 'Средний',
-    enterprise: 'Предприятие'
+    enterprise: 'Предприятие',
+    timelineDetailsTitle: 'Детали таймлайна лида',
+    createdDate: 'Создано',
+    sentDate: 'Отправлено',
+    connectedDate: 'Подключено',
+    positiveDate: 'Положительное',
+    eventDate: 'Событие',
+    leadAge: 'Возраст лида',
+    timeStuck: 'Время застревания',
+    source: 'Источник',
+    generator: 'Генератор',
+    showingFirst100: 'Показано первые 100 из'
   },
   alerts: {
     noDataLoaded: 'Нет данных. Подождите загрузки.',
