@@ -583,26 +583,33 @@ function renderCountrySegmentationTable() {
     'Enterprise': t('table.enterprise')
   };
 
-  let html = '<div class="table-responsive"><table class="summary-table"><thead><tr><th data-i18n="table.country">Country</th>';
+  let html = '<div class="table-responsive"><table class="summary-table segmentation-table"><thead><tr><th data-i18n="table.country" class="country-col">Country</th>';
 
-  segments.forEach((seg) => {
-    html += `<th colspan="3">${segmentLabels[seg] || seg}</th>`;
+  segments.forEach((seg, segIndex) => {
+    const isLast = segIndex === segments.length - 1;
+    html += `<th colspan="3" class="${isLast ? '' : 'segment-border'}">${segmentLabels[seg] || seg}</th>`;
   });
-  html += '</tr><tr><th></th>';
+  html += '</tr><tr><th class="country-col"></th>';
 
-  segments.forEach(() => {
-    metrics.forEach((metric) => {
-      html += `<th>${metricLabels[metric]}</th>`;
+  segments.forEach((seg, segIndex) => {
+    const isLast = segIndex === segments.length - 1;
+    metrics.forEach((metric, metricIndex) => {
+      const isLastMetric = metricIndex === metrics.length - 1;
+      const borderClass = (!isLast && isLastMetric) ? 'segment-border' : '';
+      html += `<th class="${borderClass}">${metricLabels[metric]}</th>`;
     });
   });
   html += '</tr></thead><tbody>';
 
   countries.forEach((country) => {
-    html += `<tr><td><strong>${country}</strong></td>`;
-    segments.forEach((seg) => {
+    html += `<tr><td class="country-col"><strong>${country}</strong></td>`;
+    segments.forEach((seg, segIndex) => {
+      const isLast = segIndex === segments.length - 1;
       const data = crossTab[seg][country] || { created: 0, positive: 0, events: 0 };
-      metrics.forEach((metric) => {
-        html += `<td>${formatNumber(data[metric])}</td>`;
+      metrics.forEach((metric, metricIndex) => {
+        const isLastMetric = metricIndex === metrics.length - 1;
+        const borderClass = (!isLast && isLastMetric) ? 'segment-border' : '';
+        html += `<td class="${borderClass}">${formatNumber(data[metric])}</td>`;
       });
     });
     html += '</tr>';
