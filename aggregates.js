@@ -615,3 +615,82 @@ export function buildTimingStats(filteredRows = []) {
   return { steps };
 }
 
+export function buildTeamLoadCapacity(filteredRows = []) {
+  const datedRows = filteredRows
+    .map((row) => ({ row, date: parseDdMmYyyyToDate(row.Date) }))
+    .filter(({ date }) => date instanceof Date && !isNaN(date.valueOf()))
+    .sort((a, b) => a.date - b.date);
+
+  if (datedRows.length === 0) {
+    return { rows: [] };
+  }
+
+  const minDate = datedRows[0].date;
+  const maxDate = datedRows[datedRows.length - 1].date;
+  const totalDays = Math.max(1, Math.round((maxDate - minDate) / MS_PER_DAY) + 1);
+
+  const lastDate = maxDate;
+  const lastWeekStart = new Date(lastDate);
+  lastWeekStart.setDate(lastDate.getDate() - lastDate.getDay());
+  lastWeekStart.setHours(0, 0, 0, 0);
+
+  const byName = {};
+  const overdueThreshold = 7;
+
+  datedRows.forEach(({ row, date }) => {
+    const name = row.Name || 'Unknown';
+    if (!byName[name]) {
+      byName[name] = {
+        created: 0,
+        connected: 0,
+        positive: 0,
+        events: 0,
+        eventsThisWeek: 0,
+        oldestActiveDate: null,
+        daysSinceFirstActivity: 0
+      };
+    }
+
+    const stats = byName[name];
+    const created = Number(row['Created'] || 0);
+    const connected = Number(row['Connected'] || 0);
+    const positive = Number(row['Positive Replies'] || 0);
+    const events = Number(row['Events Created'] || 0);
+
+    stats.created += created;
+    stats.connected += connected;
+    stats.positive += positive;
+    stats.events += events;
+
+    if (date >= lastWeekStart) {
+      stats.eventsThisWeek += events;
+    }
+
+    if (created > 0 && (!stats.oldestActiveDate || date < stats.oldestActiveDate)) {
+      stats.oldestActiveDate = date;
+    }
+  });
+
+  const rows = Object.keys(byName).map((name) => {
+    const stats = byName[name];
+    const activeLeadsAssigned = stats.created;
+    const leadsInProgress = stats.connected + stats.positive - stats.events;
+    const daysSinceFirst = stats.oldestActiveDate
+      ? Math.max(0, Math.round((maxDate - stats.oldestActiveDate) / MS_PER_DAY))
+      : 0;
+    const leadsOverdue = daysSinceFirst > overdueThreshold ? Math.max(0, leadsInProgress) : 0;
+    const avgLeadsPerDay = totalDays > 0 ? stats.created / totalDays : 0;
+
+    return {
+      name,
+      activeLeadsAssigned,
+      leadsInProgress: Math.max(0, leadsInProgress),
+      leadsOverdue,
+      avgLeadsPerDay,
+      eventsThisWeek: stats.eventsThisWeek
+    };
+  });
+
+  return { rows };
+}
+

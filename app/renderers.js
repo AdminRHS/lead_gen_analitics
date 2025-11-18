@@ -10,7 +10,8 @@ import {
   buildLeadGeneratorQuality,
   buildDailySnapshots,
   buildLeadAgingBuckets,
-  buildTimingStats
+  buildTimingStats,
+  buildTeamLoadCapacity
 } from '../aggregates.js';
 import {
   shouldRecalculateAggregations,
@@ -797,6 +798,34 @@ function renderMonthlyCharts(filteredRows) {
   });
 }
 
+function renderTeamLoadTable() {
+  const tbody = document.getElementById('teamLoadTableBody');
+  if (!tbody) return;
+  const dataset = state.tableData.teamLoad?.rows || [];
+
+  if (!dataset.length) {
+    tbody.innerHTML = `<tr><td colspan="6">${t('table.noData')}</td></tr>`;
+    return;
+  }
+
+  const rowsHtml = dataset
+    .map((row) => {
+      return `
+        <tr>
+          <td>${row.name}</td>
+          <td>${formatNumber(row.activeLeadsAssigned)}</td>
+          <td>${formatNumber(row.leadsInProgress)}</td>
+          <td>${row.leadsOverdue > 0 ? `<span style="color: #ef4444;">${formatNumber(row.leadsOverdue)}</span>` : formatNumber(row.leadsOverdue)}</td>
+          <td>${formatNumber(row.avgLeadsPerDay, 1)}</td>
+          <td>${formatNumber(row.eventsThisWeek)}</td>
+        </tr>
+      `;
+    })
+    .join('');
+
+  tbody.innerHTML = rowsHtml;
+}
+
 function renderLeaderboardCharts(filteredRows) {
   if (
     shouldRecalculateAggregations(filteredRows, state.aggregationCache) ||
@@ -804,16 +833,20 @@ function renderLeaderboardCharts(filteredRows) {
   ) {
     const lbAgg = buildLeaderboardAggregates(filteredRows);
     const leadQuality = buildLeadGeneratorQuality(filteredRows);
+    const teamLoad = buildTeamLoadCapacity(filteredRows);
     updateAggregationCache(state.aggregationCache, filteredRows, {
       leaderboard: lbAgg,
-      leadQuality
+      leadQuality,
+      teamLoad
     });
   }
   const lbAgg = state.aggregationCache.leaderboard;
   state.tableData.leadQuality = state.aggregationCache.leadQuality?.rows || [];
   state.tableData.stepPerformance = computeStepPerformanceDataset(lbAgg);
+  state.tableData.teamLoad = state.aggregationCache.teamLoad;
   renderLeadGeneratorQualityTable();
   renderStepPerformanceTable();
+  renderTeamLoadTable();
 
   scheduleChartUpdate(() => {
     const createdLabel = getMetricLabel('Created');

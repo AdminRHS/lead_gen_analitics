@@ -162,7 +162,14 @@ const ru = {
     createdToSent: 'Создано → Отправлено',
     sentToConnected: 'Отправлено → Подключено',
     connectedToPositive: 'Подключено → Положительное',
-    positiveToEvent: 'Положительное → Событие'
+    positiveToEvent: 'Положительное → Событие',
+    teamLoadTitle: 'Нагрузка команды / Мощность',
+    teamLoadSubtitle: 'Определите перегруженных членов команды и доступную мощность',
+    activeLeadsAssigned: 'Активные лиды назначены',
+    leadsInProgress: 'Лиды в процессе',
+    leadsOverdue: 'Просроченные лиды',
+    avgLeadsPerDay: 'Среднее количество лидов в день',
+    eventsThisWeek: 'События сгенерированные на этой неделе'
   },
   alerts: {
     noDataLoaded: 'Нет данных. Подождите загрузки.',

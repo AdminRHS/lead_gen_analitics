@@ -162,7 +162,14 @@ const uk = {
     createdToSent: 'Створено → Відправлено',
     sentToConnected: 'Відправлено → Підключено',
     connectedToPositive: 'Підключено → Позитивне',
-    positiveToEvent: 'Позитивне → Подія'
+    positiveToEvent: 'Позитивне → Подія',
+    teamLoadTitle: 'Навантаження команди / Потужність',
+    teamLoadSubtitle: 'Визначте перевантажених членів команди та доступну потужність',
+    activeLeadsAssigned: 'Активні ліди призначені',
+    leadsInProgress: 'Ліди в процесі',
+    leadsOverdue: 'Просрочені ліди',
+    avgLeadsPerDay: 'Середня кількість лідів на день',
+    eventsThisWeek: 'Події згенеровані цього тижня'
   },
   alerts: {
     noDataLoaded: 'Немає даних. Дочекайтеся завантаження.',

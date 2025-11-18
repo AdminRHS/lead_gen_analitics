@@ -162,7 +162,14 @@ const de = {
     createdToSent: 'Erstellt → Gesendet',
     sentToConnected: 'Gesendet → Vernetzt',
     connectedToPositive: 'Vernetzt → Positiv',
-    positiveToEvent: 'Positiv → Event'
+    positiveToEvent: 'Positiv → Event',
+    teamLoadTitle: 'Team-Auslastung / Kapazität',
+    teamLoadSubtitle: 'Identifizieren Sie überlastete Teammitglieder und verfügbare Kapazität',
+    activeLeadsAssigned: 'Aktive Leads zugewiesen',
+    leadsInProgress: 'Leads in Bearbeitung',
+    leadsOverdue: 'Überfällige Leads',
+    avgLeadsPerDay: 'Durchschnittliche Leads pro Tag',
+    eventsThisWeek: 'Diese Woche generierte Events'
   },
   alerts: {
     noDataLoaded: 'Keine Daten verfügbar. Bitte warten.',

@@ -162,7 +162,14 @@ const en = {
     createdToSent: 'Created → Sent',
     sentToConnected: 'Sent → Connected',
     connectedToPositive: 'Connected → Positive',
-    positiveToEvent: 'Positive → Event'
+    positiveToEvent: 'Positive → Event',
+    teamLoadTitle: 'Team Load / Capacity',
+    teamLoadSubtitle: 'Identify overloaded team members and available capacity',
+    activeLeadsAssigned: 'Active leads assigned',
+    leadsInProgress: 'Leads in progress',
+    leadsOverdue: 'Leads overdue',
+    avgLeadsPerDay: 'Avg leads per day',
+    eventsThisWeek: 'Events generated this week'
   },
   alerts: {
     noDataLoaded: 'No data available. Please wait for data to load.',
