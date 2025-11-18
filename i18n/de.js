@@ -28,7 +28,8 @@ const de = {
     monthly: 'Monatlich',
     leaderboard: 'Leaderboard',
     source: 'Quellenvergleich',
-    operations: 'Operationen'
+    operations: 'Operationen',
+    timing: 'Timing'
   },
   charts: {
     labels: {
@@ -148,7 +149,20 @@ const de = {
     metricPositiveRate: '% Positive',
     metricAvgTimeToEvent: 'Ø Zeit bis Event',
     metricEventsPer100: 'Events pro 100 Leads',
-    daysSuffix: 'd'
+    daysSuffix: 'd',
+    timingTitle: 'Zeit bis Konversion',
+    timingSubtitle: 'Engpässe im Konversionsprozess identifizieren',
+    step: 'Schritt',
+    medianTime: 'Medianzeit',
+    average: 'Durchschnitt',
+    fastest: 'Schnellste',
+    slowest: 'Langsamste',
+    percentile90: '90. Perzentil',
+    days: 'Tage',
+    createdToSent: 'Erstellt → Gesendet',
+    sentToConnected: 'Gesendet → Vernetzt',
+    connectedToPositive: 'Vernetzt → Positiv',
+    positiveToEvent: 'Positiv → Event'
   },
   alerts: {
     noDataLoaded: 'Keine Daten verfügbar. Bitte warten.',

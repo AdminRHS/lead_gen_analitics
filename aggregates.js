@@ -481,3 +481,104 @@ export function buildLeadAgingBuckets(filteredRows = []) {
   return { buckets, rows };
 }
 
+export function buildTimingStats(filteredRows = []) {
+  const datedRows = filteredRows
+    .map((row) => ({ row, date: parseDdMmYyyyToDate(row.Date) }))
+    .filter(({ date }) => date instanceof Date && !isNaN(date.valueOf()))
+    .sort((a, b) => a.date - b.date);
+
+  if (datedRows.length === 0) {
+    return { steps: [] };
+  }
+
+  const stepConfigs = [
+    {
+      key: 'createdToSent',
+      labelKey: 'Created → Sent',
+      fromField: 'Created',
+      toField: 'Sent Requests'
+    },
+    {
+      key: 'sentToConnected',
+      labelKey: 'Sent → Connected',
+      fromField: 'Sent Requests',
+      toField: 'Connected'
+    },
+    {
+      key: 'connectedToPositive',
+      labelKey: 'Connected → Positive',
+      fromField: 'Connected',
+      toField: 'Positive Replies'
+    },
+    {
+      key: 'positiveToEvent',
+      labelKey: 'Positive → Event',
+      fromField: 'Positive Replies',
+      toField: 'Events Created'
+    }
+  ];
+
+  const steps = stepConfigs.map((config) => {
+    const intervals = [];
+
+    for (let i = 0; i < datedRows.length; i++) {
+      const current = datedRows[i];
+      const fromValue = Number(current.row[config.fromField] || 0);
+      const toValue = Number(current.row[config.toField] || 0);
+
+      if (fromValue > 0 && toValue > 0) {
+        const fromDate = current.date;
+        let toDate = fromDate;
+
+        for (let j = i; j < datedRows.length; j++) {
+          const next = datedRows[j];
+          const nextToValue = Number(next.row[config.toField] || 0);
+          if (nextToValue > 0 && next.date >= fromDate) {
+            toDate = next.date;
+            break;
+          }
+        }
+
+        const daysDiff = Math.max(0, Math.round((toDate - fromDate) / MS_PER_DAY));
+        if (daysDiff >= 0 && daysDiff <= 365) {
+          for (let k = 0; k < Math.min(fromValue, toValue); k++) {
+            intervals.push(daysDiff);
+          }
+        }
+      }
+    }
+
+    if (intervals.length === 0) {
+      return {
+        key: config.key,
+        labelKey: config.labelKey,
+        median: null,
+        average: null,
+        fastest: null,
+        slowest: null,
+        percentile90: null
+      };
+    }
+
+    const sorted = [...intervals].sort((a, b) => a - b);
+    const median = sorted[Math.floor(sorted.length / 2)];
+    const average = sorted.reduce((sum, val) => sum + val, 0) / sorted.length;
+    const fastest = sorted[0];
+    const slowest = sorted[sorted.length - 1];
+    const percentile90Index = Math.floor(sorted.length * 0.9);
+    const percentile90 = sorted[percentile90Index];
+
+    return {
+      key: config.key,
+      labelKey: config.labelKey,
+      median,
+      average,
+      fastest,
+      slowest,
+      percentile90
+    };
+  });
+
+  return { steps };
+}
+

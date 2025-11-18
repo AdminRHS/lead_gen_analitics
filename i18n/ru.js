@@ -28,7 +28,8 @@ const ru = {
     monthly: 'Месяцы',
     leaderboard: 'Лидеры',
     source: 'Сравнение источников',
-    operations: 'Операционная'
+    operations: 'Операционная',
+    timing: 'Тайминг'
   },
   charts: {
     labels: {
@@ -148,7 +149,20 @@ const ru = {
     metricPositiveRate: '% Положительных',
     metricAvgTimeToEvent: 'Ср. время до события',
     metricEventsPer100: 'Событий на 100 лидов',
-    daysSuffix: 'д'
+    daysSuffix: 'д',
+    timingTitle: 'Время до конверсии',
+    timingSubtitle: 'Определите узкие места в конвейере конверсии',
+    step: 'Шаг',
+    medianTime: 'Медианное время',
+    average: 'Среднее',
+    fastest: 'Самое быстрое',
+    slowest: 'Самое медленное',
+    percentile90: '90-й перцентиль',
+    days: 'дней',
+    createdToSent: 'Создано → Отправлено',
+    sentToConnected: 'Отправлено → Подключено',
+    connectedToPositive: 'Подключено → Положительное',
+    positiveToEvent: 'Положительное → Событие'
   },
   alerts: {
     noDataLoaded: 'Нет данных. Подождите загрузки.',

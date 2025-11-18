@@ -7,7 +7,8 @@ import {
   renderMonthlyCharts,
   renderLeaderboardCharts,
   renderSourceCharts,
-  renderOperationsTables
+  renderOperationsTables,
+  renderTimingTables
 } from './renderers.js';
 
 export function initTabs() {
@@ -18,7 +19,8 @@ export function initTabs() {
     { btn: document.getElementById('tab-monthly-btn'), panel: document.getElementById('tab-monthly') },
     { btn: document.getElementById('tab-leaderboard-btn'), panel: document.getElementById('tab-leaderboard') },
     { btn: document.getElementById('tab-operations-btn'), panel: document.getElementById('tab-operations') },
-    { btn: document.getElementById('tab-source-btn'), panel: document.getElementById('tab-source') }
+    { btn: document.getElementById('tab-source-btn'), panel: document.getElementById('tab-source') },
+    { btn: document.getElementById('tab-timing-btn'), panel: document.getElementById('tab-timing') }
   ];
 
   const resizeCharts = (charts = []) => {
@@ -83,6 +85,8 @@ export function initTabs() {
       ]);
     } else if (panelId === 'tab-operations') {
       // Tables only, nothing to resize
+    } else if (panelId === 'tab-timing') {
+      // Tables only, nothing to resize
     }
   }, 200);
 
@@ -116,6 +120,8 @@ export function initTabs() {
           renderSourceCharts(state.lastFilteredRows);
         } else if (panelId === 'tab-operations') {
           renderOperationsTables(state.lastFilteredRows);
+        } else if (panelId === 'tab-timing') {
+          renderTimingTables(state.lastFilteredRows);
         }
         state.renderedTabs[tabKey] = true;
       }

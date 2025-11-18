@@ -123,7 +123,8 @@ export function getActiveTabLabel(activeTabId) {
     monthly: 'tabs.monthly',
     leaderboard: 'tabs.leaderboard',
     source: 'tabs.source',
-    operations: 'tabs.operations'
+    operations: 'tabs.operations',
+    timing: 'tabs.timing'
   };
   const key = translationMap[tabKey];
   return key ? t(key) : t('common.title');

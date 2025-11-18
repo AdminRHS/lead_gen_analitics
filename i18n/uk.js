@@ -28,7 +28,8 @@ const uk = {
     monthly: 'Місяці',
     leaderboard: 'Лідери',
     source: 'Порівняння джерел',
-    operations: 'Операційна'
+    operations: 'Операційна',
+    timing: 'Таймінг'
   },
   charts: {
     labels: {
@@ -148,7 +149,20 @@ const uk = {
     metricPositiveRate: '% Позитивних',
     metricAvgTimeToEvent: 'Сер. час до події',
     metricEventsPer100: 'Подій на 100 лідів',
-    daysSuffix: 'д'
+    daysSuffix: 'д',
+    timingTitle: 'Час до конверсії',
+    timingSubtitle: 'Визначте вузькі місця в конвеєрі конверсії',
+    step: 'Крок',
+    medianTime: 'Медіанний час',
+    average: 'Середній',
+    fastest: 'Найшвидший',
+    slowest: 'Найповільніший',
+    percentile90: '90-й перцентиль',
+    days: 'днів',
+    createdToSent: 'Створено → Відправлено',
+    sentToConnected: 'Відправлено → Підключено',
+    connectedToPositive: 'Підключено → Позитивне',
+    positiveToEvent: 'Позитивне → Подія'
   },
   alerts: {
     noDataLoaded: 'Немає даних. Дочекайтеся завантаження.',

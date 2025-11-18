@@ -810,6 +810,7 @@
     <button class="tab" role="tab" aria-selected="false" aria-controls="tab-leaderboard" id="tab-leaderboard-btn" data-i18n="tabs.leaderboard">Leaderboard</button>
     <button class="tab" role="tab" aria-selected="false" aria-controls="tab-operations" id="tab-operations-btn" data-i18n="tabs.operations">Operations</button>
     <button class="tab" role="tab" aria-selected="false" aria-controls="tab-source" id="tab-source-btn" data-i18n="tabs.source">Source Comparison</button>
+    <button class="tab" role="tab" aria-selected="false" aria-controls="tab-timing" id="tab-timing-btn" data-i18n="tabs.timing">Timing</button>
     
   </div>
 
@@ -1088,6 +1089,34 @@
         </div>
       </div>
       <div class="table-responsive" id="sourceQualityContainer"></div>
+    </div>
+  </div>
+  </div>
+
+  <div id="tab-timing" class="tabpanel" role="tabpanel" aria-labelledby="tab-timing-btn">
+  <div class="dashboard-grid" style="grid-template-columns: 1fr;">
+    <div class="chart-card soft-blue table-card full-span">
+      <div class="card-header">
+        <div>
+          <h3 data-i18n="table.timingTitle">Time to Conversion</h3>
+          <p class="card-subtitle" data-i18n="table.timingSubtitle">Identify bottlenecks in the conversion pipeline</p>
+        </div>
+      </div>
+      <div class="table-responsive">
+        <table class="summary-table">
+          <thead>
+            <tr>
+              <th data-i18n="table.step">Step</th>
+              <th data-i18n="table.medianTime">Median time</th>
+              <th data-i18n="table.average">Average</th>
+              <th data-i18n="table.fastest">Fastest</th>
+              <th data-i18n="table.slowest">Slowest</th>
+              <th data-i18n="table.percentile90">90th percentile</th>
+            </tr>
+          </thead>
+          <tbody id="timingTableBody"></tbody>
+        </table>
+      </div>
     </div>
   </div>
   </div>

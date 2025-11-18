@@ -59,7 +59,8 @@ export const state = {
     dailySnapshot: null,
     leadQuality: null,
     source: null,
-    aging: null
+    aging: null,
+    timing: null
   },
   renderedTabs: {
     funnel: false,
@@ -68,7 +69,8 @@ export const state = {
     monthly: false,
     leaderboard: false,
     source: false,
-    operations: false
+    operations: false,
+    timing: false
   },
   tableData: {
     funnelDropoff: null,
@@ -76,7 +78,8 @@ export const state = {
     aging: null,
     dailySnapshot: null,
     stepPerformance: null,
-    sourceQuality: null
+    sourceQuality: null,
+    timing: null
   },
   currentTheme: 'light',
   userHasExplicitTheme: false,

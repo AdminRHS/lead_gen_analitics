@@ -9,7 +9,8 @@ import {
   buildFunnelSummary,
   buildLeadGeneratorQuality,
   buildDailySnapshots,
-  buildLeadAgingBuckets
+  buildLeadAgingBuckets,
+  buildTimingStats
 } from '../aggregates.js';
 import {
   shouldRecalculateAggregations,
@@ -973,6 +974,52 @@ function renderOperationsTables(filteredRows) {
   renderLeadAgingTable();
 }
 
+function formatDays(value) {
+  if (value === null || value === undefined) return '—';
+  return `${formatNumber(value, 1)} ${t('table.days')}`;
+}
+
+function renderTimingTable() {
+  const tbody = document.getElementById('timingTableBody');
+  if (!tbody) return;
+  const dataset = state.tableData.timing;
+
+  if (!dataset || !dataset.steps || !dataset.steps.length) {
+    tbody.innerHTML = `<tr><td colspan="6">${t('table.noData')}</td></tr>`;
+    return;
+  }
+
+  const rowsHtml = dataset.steps
+    .map((step) => {
+      const stepLabel = getMetricLabel(step.labelKey);
+      return `
+        <tr>
+          <td>${stepLabel}</td>
+          <td>${formatDays(step.median)}</td>
+          <td>${formatDays(step.average)}</td>
+          <td>${formatDays(step.fastest)}</td>
+          <td>${formatDays(step.slowest)}</td>
+          <td>${formatDays(step.percentile90)}</td>
+        </tr>
+      `;
+    })
+    .join('');
+
+  tbody.innerHTML = rowsHtml;
+}
+
+function renderTimingTables(filteredRows) {
+  if (
+    shouldRecalculateAggregations(filteredRows, state.aggregationCache) ||
+    !state.aggregationCache.timing
+  ) {
+    const timing = buildTimingStats(filteredRows);
+    updateAggregationCache(state.aggregationCache, filteredRows, { timing });
+  }
+  state.tableData.timing = state.aggregationCache.timing;
+  renderTimingTable();
+}
+
 export function renderAll(filteredRows) {
   state.lastFilteredRows = filteredRows;
   const activeTab = document.querySelector('.tabpanel.active')?.id;
@@ -1005,6 +1052,10 @@ export function renderAll(filteredRows) {
     renderOperationsTables(filteredRows);
     state.renderedTabs.operations = true;
   }
+  if (activeTab === 'tab-timing') {
+    renderTimingTables(filteredRows);
+    state.renderedTabs.timing = true;
+  }
 }
 export {
   renderFunnelCharts,
@@ -1013,5 +1064,6 @@ export {
   renderMonthlyCharts,
   renderLeaderboardCharts,
   renderSourceCharts,
-  renderOperationsTables
+  renderOperationsTables,
+  renderTimingTables
 };

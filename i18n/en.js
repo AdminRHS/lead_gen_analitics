@@ -28,7 +28,8 @@ const en = {
     monthly: 'Monthly',
     leaderboard: 'Leaderboard',
     source: 'Source Comparison',
-    operations: 'Operations'
+    operations: 'Operations',
+    timing: 'Timing'
   },
   charts: {
     labels: {
@@ -148,7 +149,20 @@ const en = {
     metricPositiveRate: '% Positive',
     metricAvgTimeToEvent: 'Avg time to event',
     metricEventsPer100: 'Events per 100 leads',
-    daysSuffix: 'd'
+    daysSuffix: 'd',
+    timingTitle: 'Time to Conversion',
+    timingSubtitle: 'Identify bottlenecks in the conversion pipeline',
+    step: 'Step',
+    medianTime: 'Median time',
+    average: 'Average',
+    fastest: 'Fastest',
+    slowest: 'Slowest',
+    percentile90: '90th percentile',
+    days: 'days',
+    createdToSent: 'Created → Sent',
+    sentToConnected: 'Sent → Connected',
+    connectedToPositive: 'Connected → Positive',
+    positiveToEvent: 'Positive → Event'
   },
   alerts: {
     noDataLoaded: 'No data available. Please wait for data to load.',

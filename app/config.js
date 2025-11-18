@@ -29,5 +29,9 @@ export const metricTranslationMap = {
   PositiveReplies: 'table.positiveReplies',
   Events: 'table.events',
   'Events Created': 'table.events',
-  'Conversion Rate (%)': 'charts.labels.conversionRatePercent'
+  'Conversion Rate (%)': 'charts.labels.conversionRatePercent',
+  'Created → Sent': 'table.createdToSent',
+  'Sent → Connected': 'table.sentToConnected',
+  'Connected → Positive': 'table.connectedToPositive',
+  'Positive → Event': 'table.positiveToEvent'
 };
