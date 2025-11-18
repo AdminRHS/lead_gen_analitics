@@ -403,6 +403,21 @@
       background: rgba(148, 163, 184, 0.2);
       color: #475569;
     }
+    .rate-chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2px 10px;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 12px;
+      background: #f1f5f9;
+      color: #0f172a;
+    }
+    .rate-chip.best {
+      background: rgba(59, 130, 246, 0.18);
+      color: #1d4ed8;
+    }
     /* Responsive Design */
     @media (max-width: 1200px) {
       .dashboard-grid { 
@@ -740,6 +755,14 @@
       background: rgba(148, 163, 184, 0.35);
       color: #e2e8f0;
     }
+    body.dark-theme .rate-chip {
+      background: rgba(148, 163, 184, 0.25);
+      color: #e2e8f0;
+    }
+    body.dark-theme .rate-chip.best {
+      background: rgba(59, 130, 246, 0.35);
+      color: #bfdbfe;
+    }
     body.dark-theme .link-btn {
       color: #7aa7ff;
     }
@@ -989,6 +1012,15 @@
           <tbody id="leadQualityTableBody"></tbody>
         </table>
       </div>
+    </div>
+    <div class="chart-card soft-purple full-span table-card">
+      <div class="card-header">
+        <div>
+          <h3 data-i18n="table.stepPerformanceTitle">Top Performers by Conversion Step</h3>
+          <p class="card-subtitle" data-i18n="table.stepPerformanceSubtitle">See strengths for every transition</p>
+        </div>
+      </div>
+      <div class="table-responsive" id="stepPerformanceContainer"></div>
     </div>
   </div>
   </div>

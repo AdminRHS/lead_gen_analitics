@@ -24,6 +24,7 @@ import { openCountryInsight, openLeadInsight } from './modals.js';
 import { localeMap } from '../i18n/index.js';
 
 const numberFormattersCache = new Map();
+const MAX_STEP_COLUMNS = 5;
 
 function getLocale() {
   return localeMap[state.currentLanguage] || undefined;
@@ -244,6 +245,93 @@ function renderDailySnapshotTable() {
       `;
     })
     .join('');
+}
+
+function computeStepPerformanceDataset(lbAgg) {
+  if (!lbAgg || !lbAgg.names || lbAgg.names.length === 0) {
+    return { names: [], rows: [] };
+  }
+  const entries = lbAgg.names.map((name, idx) => ({
+    name,
+    sent: lbAgg.sent[idx] || 0,
+    connected: lbAgg.connected ? lbAgg.connected[idx] || 0 : 0,
+    replies: lbAgg.replies ? lbAgg.replies[idx] || 0 : 0,
+    positive: lbAgg.positive[idx] || 0,
+    events: lbAgg.events[idx] || 0
+  }));
+
+  entries.sort((a, b) => b.events - a.events);
+  const limited = entries.slice(0, Math.min(entries.length, MAX_STEP_COLUMNS));
+
+  const stages = [
+    { key: 'table.stageSentToConnected', numerator: 'connected', denominator: 'sent' },
+    { key: 'table.stageConnectedToReplies', numerator: 'replies', denominator: 'connected' },
+    { key: 'table.stagePositiveToEvents', numerator: 'events', denominator: 'positive' }
+  ];
+
+  const rows = stages.map((stage) => {
+    const values = limited.map((entry) => {
+      const numerator = entry[stage.numerator] || 0;
+      const denominator = entry[stage.denominator] || 0;
+      if (denominator <= 0) return 0;
+      const rate = (numerator / denominator) * 100;
+      return Number.isFinite(rate) ? rate : 0;
+    });
+    const maxValue = Math.max(...values);
+    return {
+      stageKey: stage.key,
+      values,
+      maxValue
+    };
+  });
+
+  return {
+    names: limited.map((entry) => entry.name),
+    rows
+  };
+}
+
+function renderStepPerformanceTable() {
+  const container = document.getElementById('stepPerformanceContainer');
+  if (!container) return;
+  const dataset = state.tableData.stepPerformance;
+  if (!dataset || !dataset.names || dataset.names.length === 0) {
+    container.innerHTML = `<div class="empty-state">${t('table.noData')}</div>`;
+    return;
+  }
+
+  const headerCells = dataset.names.map((name) => `<th>${name}</th>`).join('');
+  const rowsHtml = dataset.rows
+    .map((row) => {
+      const cells = row.values
+        .map((value) => {
+          const isBest = value === row.maxValue && value > 0;
+          const className = isBest ? 'rate-chip best' : 'rate-chip';
+          return `<td><span class="${className}">${formatPercent(value, 1)}</span></td>`;
+        })
+        .join('');
+      return `
+        <tr>
+          <td>${t(row.stageKey)}</td>
+          ${cells}
+        </tr>
+      `;
+    })
+    .join('');
+
+  container.innerHTML = `
+    <table class="summary-table matrix-table">
+      <thead>
+        <tr>
+          <th>${t('table.stage')}</th>
+          ${headerCells}
+        </tr>
+      </thead>
+      <tbody>
+        ${rowsHtml}
+      </tbody>
+    </table>
+  `;
 }
 
 function renderOrUpdateChart(chartRef, elementId, renderFn, updateFn, ...args) {
@@ -579,7 +667,9 @@ function renderLeaderboardCharts(filteredRows) {
   }
   const lbAgg = state.aggregationCache.leaderboard;
   state.tableData.leadQuality = state.aggregationCache.leadQuality?.rows || [];
+  state.tableData.stepPerformance = computeStepPerformanceDataset(lbAgg);
   renderLeadGeneratorQualityTable();
+  renderStepPerformanceTable();
 
   scheduleChartUpdate(() => {
     const createdLabel = getMetricLabel('Created');

@@ -135,7 +135,12 @@ const uk = {
     dailySnapshotTitle: 'Щоденний KPI Snapshot',
     dailySnapshotSubtitle: 'Щоденний пульс воронки за вибраний період',
     conversionPercent: 'Конверсія %',
-    deltaPrev: 'Δ до попер. дня'
+    deltaPrev: 'Δ до попер. дня',
+    stepPerformanceTitle: 'Лідери за етапами конверсії',
+    stepPerformanceSubtitle: 'Показує сильних генераторів на кожному переході',
+    stageSentToConnected: 'Відправлено → Підключено',
+    stageConnectedToReplies: 'Підключено → Відповіді',
+    stagePositiveToEvents: 'Позитивні → Події'
   },
   alerts: {
     noDataLoaded: 'Немає даних. Дочекайтеся завантаження.',

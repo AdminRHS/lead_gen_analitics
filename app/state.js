@@ -74,7 +74,8 @@ export const state = {
     funnelDropoff: null,
     leadQuality: [],
     aging: null,
-    dailySnapshot: null
+    dailySnapshot: null,
+    stepPerformance: null
   },
   currentTheme: 'light',
   userHasExplicitTheme: false,

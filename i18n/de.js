@@ -135,7 +135,12 @@ const de = {
     dailySnapshotTitle: 'Daily KPI Snapshot',
     dailySnapshotSubtitle: 'Täglicher Puls der Funnel-KPIs für den Zeitraum',
     conversionPercent: 'Conversion %',
-    deltaPrev: 'Δ vs. Vortag'
+    deltaPrev: 'Δ vs. Vortag',
+    stepPerformanceTitle: 'Top-Performer je Conversion-Schritt',
+    stepPerformanceSubtitle: 'Zeigt, wer bei welchem Übergang dominiert',
+    stageSentToConnected: 'Gesendet → Vernetzt',
+    stageConnectedToReplies: 'Vernetzt → Antworten',
+    stagePositiveToEvents: 'Positive → Events'
   },
   alerts: {
     noDataLoaded: 'Keine Daten verfügbar. Bitte warten.',

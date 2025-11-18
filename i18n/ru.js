@@ -135,7 +135,12 @@ const ru = {
     dailySnapshotTitle: 'Ежедневный KPI Snapshot',
     dailySnapshotSubtitle: 'Пульс воронки по дням выбранного периода',
     conversionPercent: 'Конверсия %',
-    deltaPrev: 'Δ к пред. дню'
+    deltaPrev: 'Δ к пред. дню',
+    stepPerformanceTitle: 'Топ исполнителей по шагам конверсии',
+    stepPerformanceSubtitle: 'Показывает, кто силён на каждом переходе воронки',
+    stageSentToConnected: 'Отправлено → Подключено',
+    stageConnectedToReplies: 'Подключено → Ответы',
+    stagePositiveToEvents: 'Положительные → События'
   },
   alerts: {
     noDataLoaded: 'Нет данных. Подождите загрузки.',

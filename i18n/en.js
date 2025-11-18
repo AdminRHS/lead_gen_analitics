@@ -135,7 +135,12 @@ const en = {
     dailySnapshotTitle: 'Daily KPI Snapshot',
     dailySnapshotSubtitle: 'Daily pulse of funnel metrics across the range',
     conversionPercent: 'Conversion %',
-    deltaPrev: 'Δ vs prev. day'
+    deltaPrev: 'Δ vs prev. day',
+    stepPerformanceTitle: 'Top Performers by Conversion Step',
+    stepPerformanceSubtitle: 'See who excels at each pipeline transition',
+    stageSentToConnected: 'Sent → Connected',
+    stageConnectedToReplies: 'Connected → Replies',
+    stagePositiveToEvents: 'Positive → Events'
   },
   alerts: {
     noDataLoaded: 'No data available. Please wait for data to load.',

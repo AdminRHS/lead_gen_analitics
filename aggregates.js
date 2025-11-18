@@ -163,10 +163,19 @@ export function buildLeaderboardAggregates(filteredRows) {
   for (const row of filteredRows) {
     const name = row.Name || 'Unknown';
     if (!byName[name]) {
-      byName[name] = { Created: 0, SentRequests: 0, PositiveReplies: 0, Events: 0 };
+      byName[name] = {
+        Created: 0,
+        SentRequests: 0,
+        Connected: 0,
+        Replies: 0,
+        PositiveReplies: 0,
+        Events: 0
+      };
     }
     byName[name].Created += Number(row["Created"] || 0);
     byName[name].SentRequests += Number(row["Sent Requests"] || 0);
+    byName[name].Connected += Number(row["Connected"] || 0);
+    byName[name].Replies += Number(row["Total replies"] || 0);
     byName[name].PositiveReplies += Number(row["Positive Replies"] || 0);
     byName[name].Events += Number(row["Events Created"] || 0);
   }
@@ -175,6 +184,8 @@ export function buildLeaderboardAggregates(filteredRows) {
     names,
     created: names.map(n => byName[n].Created),
     sent: names.map(n => byName[n].SentRequests),
+    connected: names.map(n => byName[n].Connected),
+    replies: names.map(n => byName[n].Replies),
     positive: names.map(n => byName[n].PositiveReplies),
     events: names.map(n => byName[n].Events),
     conversionRates: names.map(n => {
