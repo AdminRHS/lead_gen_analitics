@@ -475,21 +475,21 @@ export function openLeadInsight(leadName, rows) {
   if (topEl) topEl.innerHTML = topHtml;
 
   const timelineDetails = buildLeadTimelineDetails(leadName, rows, from, to);
-  let timelineHtml = `<div class="section-break"><div class="label">${t('table.timelineDetailsTitle')}</div></div>`;
+  let timelineHtml = '<div class="section-break"><div class="label">' + t('table.timelineDetailsTitle') + '</div></div>';
   timelineHtml += '<div class="table-responsive">';
   timelineHtml += '<table class="summary-table">';
-  timelineHtml += `<thead><tr>
-    <th>#</th>
-    <th>${t('table.createdDate')}</th>
-    <th>${t('table.sentDate')}</th>
-    <th>${t('table.connectedDate')}</th>
-    <th>${t('table.positiveDate')}</th>
-    <th>${t('table.eventDate')}</th>
-    <th>${t('table.leadAge')}</th>
-    <th>${t('table.timeStuck')}</th>
-    <th>${t('table.source')}</th>
-    <th>${t('table.generator')}</th>
-  </tr></thead><tbody>`;
+  timelineHtml += '<thead><tr>';
+  timelineHtml += '<th>#</th>';
+  timelineHtml += '<th>' + t('table.createdDate') + '</th>';
+  timelineHtml += '<th>' + t('table.sentDate') + '</th>';
+  timelineHtml += '<th>' + t('table.connectedDate') + '</th>';
+  timelineHtml += '<th>' + t('table.positiveDate') + '</th>';
+  timelineHtml += '<th>' + t('table.eventDate') + '</th>';
+  timelineHtml += '<th>' + t('table.leadAge') + '</th>';
+  timelineHtml += '<th>' + t('table.timeStuck') + '</th>';
+  timelineHtml += '<th>' + t('table.source') + '</th>';
+  timelineHtml += '<th>' + t('table.generator') + '</th>';
+  timelineHtml += '</tr></thead><tbody>';
   
   const formatDate = (date) => {
     if (!date) return '—';
@@ -513,7 +513,7 @@ export function openLeadInsight(leadName, rows) {
   });
   timelineHtml += '</tbody></table></div>';
   if (timelineDetails.length > 100) {
-    timelineHtml += `<div style="margin-top: 8px; color: #666; font-size: 12px;">${t('table.showingFirst100')} ${timelineDetails.length}</div>`;
+    timelineHtml += '<div style="margin-top: 8px; color: #666; font-size: 12px;">' + t('table.showingFirst100') + ' ' + timelineDetails.length + '</div>';
   }
   const timelineEl = document.getElementById('leadTimelineDetails');
   if (timelineEl) timelineEl.innerHTML = timelineHtml;
