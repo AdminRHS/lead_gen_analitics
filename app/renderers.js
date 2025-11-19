@@ -71,6 +71,74 @@ function formatDateShort(date) {
   });
 }
 
+function isFullDataScope(filteredRows) {
+  return filteredRows === state.rows;
+}
+
+function sortWeekKeys(keys = []) {
+  return [...keys].sort((a, b) => {
+    const [ay, aw] = a.split('-W').map(Number);
+    const [by, bw] = b.split('-W').map(Number);
+    if (ay !== by) return ay - by;
+    return (aw || 0) - (bw || 0);
+  });
+}
+
+function buildWeeklyAggregatesFromSummary() {
+  const weekly = state.serverSummary?.weekly;
+  if (!weekly) return null;
+  const keys = sortWeekKeys(Object.keys(weekly));
+  return {
+    weeks: keys,
+    created: keys.map((key) => weekly[key]?.Created || 0),
+    sent: keys.map((key) => weekly[key]?.SentRequests || 0),
+    connected: keys.map((key) => weekly[key]?.Connected || 0),
+    replies: keys.map((key) => weekly[key]?.Replies || 0),
+    positive: keys.map((key) => weekly[key]?.PositiveReplies || 0),
+    events: keys.map((key) => weekly[key]?.Events || 0)
+  };
+}
+
+function buildMonthlyAggregatesFromSummary() {
+  const monthly = state.serverSummary?.monthly;
+  if (!monthly) return null;
+  const keys = Object.keys(monthly).sort();
+  return {
+    months: keys,
+    created: keys.map((key) => monthly[key]?.Created || 0),
+    sent: keys.map((key) => monthly[key]?.SentRequests || 0),
+    connected: keys.map((key) => monthly[key]?.Connected || 0),
+    replies: keys.map((key) => monthly[key]?.Replies || 0),
+    positive: keys.map((key) => monthly[key]?.PositiveReplies || 0),
+    events: keys.map((key) => monthly[key]?.Events || 0),
+    conversionRates: keys.map((key) => {
+      const data = monthly[key] || {};
+      return data.Created > 0 ? (data.Events / data.Created) * 100 : 0;
+    })
+  };
+}
+
+function buildCountryAggregatesFromSummary() {
+  const countriesSummary = state.serverSummary?.countries;
+  if (!countriesSummary) return null;
+  const countries = Object.keys(countriesSummary).sort(
+    (a, b) => (countriesSummary[b]?.Created || 0) - (countriesSummary[a]?.Created || 0)
+  );
+  return {
+    countries,
+    created: countries.map((country) => countriesSummary[country]?.Created || 0),
+    sent: countries.map((country) => countriesSummary[country]?.SentRequests || 0),
+    connected: countries.map((country) => countriesSummary[country]?.Connected || 0),
+    replies: countries.map((country) => countriesSummary[country]?.Replies || 0),
+    positive: countries.map((country) => countriesSummary[country]?.PositiveReplies || 0),
+    events: countries.map((country) => countriesSummary[country]?.Events || 0),
+    conversionRates: countries.map((country) => {
+      const data = countriesSummary[country] || {};
+      return data.Created > 0 ? (data.Events / data.Created) * 100 : 0;
+    })
+  };
+}
+
 function renderFunnelDropoffMatrix(summary) {
   const container = document.getElementById('funnelDropoffContainer');
   if (!container) return;
@@ -620,11 +688,21 @@ function renderCountrySegmentationTable() {
 }
 
 function renderCountryCharts(filteredRows) {
-  if (shouldRecalculateAggregations(filteredRows, state.aggregationCache) || !state.aggregationCache.country) {
+  const canUseSummary = isFullDataScope(filteredRows) && state.serverSummary?.countries;
+  if (canUseSummary) {
+    const countryAgg = buildCountryAggregatesFromSummary();
+    if (countryAgg) {
+      const countrySegmentation = buildCountrySegmentation(filteredRows);
+      updateAggregationCache(state.aggregationCache, filteredRows, {
+        country: countryAgg,
+        countrySegmentation
+      });
+    }
+  }
+  if (!state.aggregationCache.country || shouldRecalculateAggregations(filteredRows, state.aggregationCache)) {
     const countryAgg = buildCountryAggregates(filteredRows);
     const countrySegmentation = buildCountrySegmentation(filteredRows);
-    state.aggregationCache.country = countryAgg;
-    updateAggregationCache(state.aggregationCache, filteredRows, { 
+    updateAggregationCache(state.aggregationCache, filteredRows, {
       country: countryAgg,
       countrySegmentation
     });
@@ -735,10 +813,20 @@ function renderCountryCharts(filteredRows) {
 }
 
 function renderWeeklyCharts(filteredRows) {
-  if (shouldRecalculateAggregations(filteredRows, state.aggregationCache) || !state.aggregationCache.weekly) {
+  const canUseSummary = isFullDataScope(filteredRows) && state.serverSummary?.weekly;
+  if (canUseSummary) {
+    const weekAgg = buildWeeklyAggregatesFromSummary();
+    if (weekAgg) {
+      const dailySnapshot = buildDailySnapshots(filteredRows);
+      updateAggregationCache(state.aggregationCache, filteredRows, {
+        weekly: weekAgg,
+        dailySnapshot
+      });
+    }
+  }
+  if (!state.aggregationCache.weekly || shouldRecalculateAggregations(filteredRows, state.aggregationCache)) {
     const weekAgg = buildWeeklyAggregates(filteredRows);
     const dailySnapshot = buildDailySnapshots(filteredRows);
-    state.aggregationCache.weekly = weekAgg;
     updateAggregationCache(state.aggregationCache, filteredRows, {
       weekly: weekAgg,
       dailySnapshot
@@ -799,9 +887,15 @@ function renderWeeklyCharts(filteredRows) {
 }
 
 function renderMonthlyCharts(filteredRows) {
-  if (shouldRecalculateAggregations(filteredRows, state.aggregationCache) || !state.aggregationCache.monthly) {
+  const canUseSummary = isFullDataScope(filteredRows) && state.serverSummary?.monthly;
+  if (canUseSummary) {
+    const monthAgg = buildMonthlyAggregatesFromSummary();
+    if (monthAgg) {
+      updateAggregationCache(state.aggregationCache, filteredRows, { monthly: monthAgg });
+    }
+  }
+  if (!state.aggregationCache.monthly || shouldRecalculateAggregations(filteredRows, state.aggregationCache)) {
     const monthAgg = buildMonthlyAggregates(filteredRows);
-    state.aggregationCache.monthly = monthAgg;
     updateAggregationCache(state.aggregationCache, filteredRows, { monthly: monthAgg });
   }
   const monthAgg = state.aggregationCache.monthly;

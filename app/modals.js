@@ -253,106 +253,51 @@ function buildLeadTimelineDetails(leadName, rows, fromDate, toDate) {
   const now = new Date();
   const leadDetails = [];
 
-  const filteredRows = rows
-    .filter((r) => {
-      const name = r.Name || 'Unknown';
-      if (name !== leadName) return false;
-      const d = parseDdMmYyyyToDate(r.Date);
-      if (!d) return false;
-      if (fromDate && d < fromDate) return false;
-      if (toDate && d > toDate) return false;
-      return true;
-    })
-    .map((r) => ({
-      ...r,
-      date: parseDdMmYyyyToDate(r.Date)
-    }))
-    .filter((r) => r.date instanceof Date && !isNaN(r.date.valueOf()))
-    .sort((a, b) => a.date - b.date);
+  rows.forEach((row, index) => {
+    const name = row.Name || 'Unknown';
+    if (name !== leadName) return;
+    const date = parseDdMmYyyyToDate(row.Date);
+    if (!(date instanceof Date) || isNaN(date.valueOf())) return;
+    if (fromDate && date < fromDate) return;
+    if (toDate && date > toDate) return;
 
-  let cumulativeCreated = 0;
-  let cumulativeSent = 0;
-  let cumulativeConnected = 0;
-  let cumulativePositive = 0;
-  let cumulativeEvents = 0;
-
-  filteredRows.forEach((row, index) => {
     const created = Number(row['Created'] || 0);
     const sent = Number(row['Sent Requests'] || 0);
     const connected = Number(row['Connected'] || 0);
+    const replies = Number(row['Total replies'] || 0);
     const positive = Number(row['Positive Replies'] || 0);
     const events = Number(row['Events Created'] || 0);
+    const totalActivity = created + sent + connected + replies + positive + events;
+    if (totalActivity === 0) return;
 
-    const prevCreated = cumulativeCreated;
-    const prevSent = cumulativeSent;
-    const prevConnected = cumulativeConnected;
-    const prevPositive = cumulativePositive;
-    const prevEvents = cumulativeEvents;
+    const leadAge = Math.max(0, Math.round((now - date) / MS_PER_DAY));
+    const timeStuck = events > 0 ? 0 : leadAge;
 
-    cumulativeCreated += created;
-    cumulativeSent += sent;
-    cumulativeConnected += connected;
-    cumulativePositive += positive;
-    cumulativeEvents += events;
+    leadDetails.push({
+      entryId: `${leadName}-${date.getTime()}-${index}`,
+      createdCount: created,
+      sentCount: sent,
+      connectedCount: connected,
+      repliesCount: replies,
+      positiveCount: positive,
+      eventsCount: events,
+      createdDate: created > 0 ? date : null,
+      sentDate: sent > 0 ? date : null,
+      connectedDate: connected > 0 ? date : null,
+      repliesDate: replies > 0 ? date : null,
+      positiveDate: positive > 0 ? date : null,
+      eventDate: events > 0 ? date : null,
+      leadAge,
+      timeStuck,
+      source: row.Source || 'Unknown',
+      generator: leadName
+    });
+  });
 
-    const newCreated = cumulativeCreated - prevCreated;
-    const newSent = cumulativeSent - prevSent;
-    const newConnected = cumulativeConnected - prevConnected;
-    const newPositive = cumulativePositive - prevPositive;
-    const newEvents = cumulativeEvents - prevEvents;
-
-    for (let i = 0; i < newCreated; i++) {
-      const createdDate = row.date;
-      let sentDate = null;
-      let connectedDate = null;
-      let positiveDate = null;
-      let eventDate = null;
-
-      let runningSent = prevSent;
-      let runningConnected = prevConnected;
-      let runningPositive = prevPositive;
-      let runningEvents = prevEvents;
-
-      for (let j = index; j < filteredRows.length; j++) {
-        const nextRow = filteredRows[j];
-        runningSent += Number(nextRow['Sent Requests'] || 0);
-        runningConnected += Number(nextRow['Connected'] || 0);
-        runningPositive += Number(nextRow['Positive Replies'] || 0);
-        runningEvents += Number(nextRow['Events Created'] || 0);
-
-        if (!sentDate && runningSent > prevSent + i) {
-          sentDate = nextRow.date;
-        }
-        if (!connectedDate && runningConnected > prevConnected + i) {
-          connectedDate = nextRow.date;
-        }
-        if (!positiveDate && runningPositive > prevPositive + i) {
-          positiveDate = nextRow.date;
-        }
-        if (!eventDate && runningEvents > prevEvents + i) {
-          eventDate = nextRow.date;
-        }
-        if (sentDate && connectedDate && positiveDate && eventDate) break;
-      }
-
-      const currentStage = eventDate ? 'Event' : positiveDate ? 'Positive' : connectedDate ? 'Connected' : sentDate ? 'Sent' : 'Created';
-      const lastStageDate = eventDate || positiveDate || connectedDate || sentDate || createdDate;
-      const leadAge = Math.round((now - createdDate) / MS_PER_DAY);
-      const timeStuck = Math.round((now - lastStageDate) / MS_PER_DAY);
-
-      leadDetails.push({
-        createdDate,
-        sentDate,
-        connectedDate,
-        positiveDate,
-        eventDate,
-        currentStage,
-        leadAge,
-        timeStuck,
-        source: row.Source || 'Unknown',
-        generator: leadName
-      });
-    }
+  leadDetails.sort((a, b) => {
+    const aDate = a.createdDate || a.sentDate || a.connectedDate || a.positiveDate || a.eventDate || 0;
+    const bDate = b.createdDate || b.sentDate || b.connectedDate || b.positiveDate || b.eventDate || 0;
+    return (bDate || 0) - (aDate || 0);
   });
 
   return leadDetails;
@@ -480,31 +425,42 @@ export function openLeadInsight(leadName, rows) {
   timelineHtml += '<table class="summary-table">';
   timelineHtml += '<thead><tr>';
   timelineHtml += '<th>#</th>';
-  timelineHtml += '<th>' + t('table.createdDate') + '</th>';
-  timelineHtml += '<th>' + t('table.sentDate') + '</th>';
-  timelineHtml += '<th>' + t('table.connectedDate') + '</th>';
-  timelineHtml += '<th>' + t('table.positiveDate') + '</th>';
-  timelineHtml += '<th>' + t('table.eventDate') + '</th>';
+  timelineHtml += '<th>' + t('table.created') + '</th>';
+  timelineHtml += '<th>' + t('table.sentRequests') + '</th>';
+  timelineHtml += '<th>' + t('table.connected') + '</th>';
+  timelineHtml += '<th>' + t('table.replies') + '</th>';
+  timelineHtml += '<th>' + t('table.positiveReplies') + '</th>';
+  timelineHtml += '<th>' + t('table.events') + '</th>';
   timelineHtml += '<th>' + t('table.leadAge') + '</th>';
   timelineHtml += '<th>' + t('table.timeStuck') + '</th>';
   timelineHtml += '<th>' + t('table.source') + '</th>';
   timelineHtml += '<th>' + t('table.generator') + '</th>';
   timelineHtml += '</tr></thead><tbody>';
   
+  const locale = localeMap[state.currentLanguage] || 'en-US';
   const formatDate = (date) => {
     if (!date) return '—';
-    const locale = localeMap[state.currentLanguage] || 'en-US';
     return date.toLocaleDateString(locale, { year: 'numeric', month: '2-digit', day: '2-digit' });
   };
+  const formatCountWithDate = (count, date) => {
+    if (!count || count <= 0 || !date) return '—';
+    const formattedCount = Number(count).toLocaleString(locale);
+    return `${formattedCount}<br><span class="timeline-date">${formatDate(date)}</span>`;
+  };
+
+  if (!timelineDetails.length) {
+    timelineHtml += `<tr><td colspan="11">${t('table.noData')}</td></tr>`;
+  }
 
   timelineDetails.slice(0, 100).forEach((lead, index) => {
     timelineHtml += '<tr>';
     timelineHtml += '<td>' + (index + 1) + '</td>';
-    timelineHtml += '<td>' + formatDate(lead.createdDate) + '</td>';
-    timelineHtml += '<td>' + formatDate(lead.sentDate) + '</td>';
-    timelineHtml += '<td>' + formatDate(lead.connectedDate) + '</td>';
-    timelineHtml += '<td>' + formatDate(lead.positiveDate) + '</td>';
-    timelineHtml += '<td>' + formatDate(lead.eventDate) + '</td>';
+    timelineHtml += '<td>' + formatCountWithDate(lead.createdCount, lead.createdDate) + '</td>';
+    timelineHtml += '<td>' + formatCountWithDate(lead.sentCount, lead.sentDate) + '</td>';
+    timelineHtml += '<td>' + formatCountWithDate(lead.connectedCount, lead.connectedDate) + '</td>';
+    timelineHtml += '<td>' + formatCountWithDate(lead.repliesCount, lead.repliesDate) + '</td>';
+    timelineHtml += '<td>' + formatCountWithDate(lead.positiveCount, lead.positiveDate) + '</td>';
+    timelineHtml += '<td>' + formatCountWithDate(lead.eventsCount, lead.eventDate) + '</td>';
     timelineHtml += '<td>' + lead.leadAge + ' ' + t('table.days') + '</td>';
     timelineHtml += '<td>' + lead.timeStuck + ' ' + t('table.days') + '</td>';
     timelineHtml += '<td>' + lead.source + '</td>';

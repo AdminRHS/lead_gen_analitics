@@ -8,6 +8,8 @@ import { setupExportButtons } from './exports.js';
 
 registerStatusUIUpdater(updateStatusUI);
 
+let summaryLoadPromise = null;
+
 function updateStatusUI(updateEl, json, fromCache = false) {
   if (!updateEl || !json) return;
   state.lastStatusPayload = { json, fromCache };
@@ -33,6 +35,59 @@ async function fetchDataFromServer() {
   return json;
 }
 
+async function fetchSummaryFromServer() {
+  const res = await fetch('summary.json', { cache: 'no-store' });
+  if (!res.ok) {
+    throw new Error(`HTTP error! status: ${res.status} ${res.statusText}`);
+  }
+  return res.json();
+}
+
+function rerenderWithLastFilter() {
+  const rowsForRender =
+    Array.isArray(state.lastFilteredRows) && state.lastFilteredRows.length > 0
+      ? state.lastFilteredRows
+      : state.rows;
+  if (rowsForRender && rowsForRender.length) {
+    renderAll(rowsForRender);
+  }
+}
+
+async function hydrateSummary(force = false) {
+  if (!force) {
+    if (state.serverSummary) {
+      return state.serverSummary;
+    }
+    if (summaryLoadPromise) {
+      return summaryLoadPromise;
+    }
+  }
+
+  const loader = (async () => {
+    try {
+      const summary = await fetchSummaryFromServer();
+      state.serverSummary = summary;
+      rerenderWithLastFilter();
+      return summary;
+    } catch (error) {
+      if (force) {
+        state.serverSummary = null;
+      }
+      console.info('[summary] Not available:', error?.message || error);
+      return null;
+    }
+  })();
+
+  if (!force) {
+    summaryLoadPromise = loader;
+  }
+  const result = await loader;
+  if (!force) {
+    summaryLoadPromise = null;
+  }
+  return result;
+}
+
 function processDashboardData(json) {
   if (!json || !json.data) {
     console.error('Invalid data structure in processDashboardData:', json);
@@ -50,6 +105,7 @@ function processDashboardData(json) {
     .filter(Boolean)
     .sort((a, b) => a - b);
   const minDate = datesList[0] || new Date();
+  state.minDate = minDate;
   state.maxDate = datesList[datesList.length - 1] || new Date();
 
   const fromEl = document.getElementById('fromDate');
@@ -113,6 +169,7 @@ async function handleManualRefresh() {
     }
     processDashboardData(json);
     await initializeDashboardWithData(json);
+    await hydrateSummary(true);
     updateStatusUI(updateEl, json, false);
   } catch (error) {
     console.error('Error refreshing data:', error);
@@ -140,6 +197,7 @@ async function updateDataInBackground() {
       }
       processDashboardData(json);
       await initializeDashboardWithData(json);
+      await hydrateSummary(true);
       const updateEl = document.getElementById('update');
       if (updateEl) {
         updateStatusUI(updateEl, json, false);
@@ -166,6 +224,7 @@ async function initializeDashboardWithData(json) {
   }
 
   renderAll(state.rows);
+  hydrateSummary(false);
 }
 
 export async function initDashboard() {
@@ -196,6 +255,7 @@ export async function initDashboard() {
     updateStatusUI(updateEl, json, false);
     processDashboardData(json);
     await initializeDashboardWithData(json);
+    await hydrateSummary(true);
   } catch (error) {
     console.error('Error fetching data from server:', error);
     if (isLocalStorageAvailable()) {

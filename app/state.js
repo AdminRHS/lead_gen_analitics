@@ -4,6 +4,7 @@ export const state = {
   rows: [],
   lastFilteredRows: [],
   currentDayData: null,
+  minDate: null,
   maxDate: new Date(),
   chartRefs: {
     createdFound: null,
@@ -85,6 +86,7 @@ export const state = {
     teamLoad: null,
     countrySegmentation: null
   },
+  serverSummary: null,
   currentTheme: 'light',
   userHasExplicitTheme: false,
   rerenderAll: null,
