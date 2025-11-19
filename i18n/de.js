@@ -21,6 +21,19 @@ const de = {
     exportPdf: '📄 PDF exportieren',
     unknown: 'Unbekannt'
   },
+  filters: {
+    country: 'Land',
+    source: 'Quelle',
+    generator: 'Generator',
+    all: 'Alle',
+    search: 'Suche',
+    searchPlaceholder: 'Suchen...',
+    metric: 'Metrik',
+    direction: 'Richtung',
+    directionAsc: 'Aufsteigend',
+    directionDesc: 'Absteigend',
+    sortBy: 'Sortieren nach'
+  },
   tabs: {
     funnel: 'Funnel',
     countries: 'Länder',

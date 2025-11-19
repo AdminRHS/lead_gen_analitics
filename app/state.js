@@ -86,6 +86,23 @@ export const state = {
     teamLoad: null,
     countrySegmentation: null
   },
+  filters: {
+    country: 'all',
+    source: 'all',
+    generator: 'all'
+  },
+  tableControls: {
+    teamLoad: {
+      search: '',
+      sortKey: 'activeLeadsAssigned',
+      sortDir: 'desc'
+    },
+    countrySegmentation: {
+      search: '',
+      sortMetric: 'created',
+      sortDir: 'desc'
+    }
+  },
   currentTheme: 'light',
   userHasExplicitTheme: false,
   rerenderAll: null,

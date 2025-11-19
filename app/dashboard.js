@@ -11,6 +11,71 @@ registerStatusUIUpdater(updateStatusUI);
 
 let summaryLoadPromise = null;
 
+function normalizeDimensionValue(value, fallback = 'Unknown') {
+  if (value === null || value === undefined) return fallback;
+  if (typeof value === 'string' && value.trim() === '') return fallback;
+  return typeof value === 'string' ? value.trim() : value;
+}
+
+function getUniqueSortedValues(rows, fieldName, fallback = 'Unknown') {
+  const set = new Set();
+  rows.forEach((row) => {
+    const raw = row[fieldName];
+    const normalized = normalizeDimensionValue(raw, fallback);
+    if (normalized) {
+      set.add(normalized);
+    }
+  });
+  return Array.from(set).sort((a, b) => a.localeCompare(b));
+}
+
+function populateFilterSelect(selectId, values, selectedValue = 'all') {
+  const select = document.getElementById(selectId);
+  if (!select) return;
+  const preservedSelected = selectedValue ?? select.value ?? 'all';
+  select
+    .querySelectorAll('option:not([value="all"])')
+    .forEach((option) => option.remove());
+  values.forEach((value) => {
+    const option = document.createElement('option');
+    option.value = value;
+    option.textContent = value;
+    select.appendChild(option);
+  });
+  const canSelectPreserved =
+    preservedSelected === 'all' || values.includes(preservedSelected);
+  select.value = canSelectPreserved ? preservedSelected : 'all';
+}
+
+function populateFilterOptions() {
+  if (!state.rows || state.rows.length === 0) return;
+  populateFilterSelect('countryFilter', getUniqueSortedValues(state.rows, 'Country'), state.filters.country);
+  populateFilterSelect('sourceFilter', getUniqueSortedValues(state.rows, 'Source'), state.filters.source);
+  populateFilterSelect('generatorFilter', getUniqueSortedValues(state.rows, 'Name'), state.filters.generator);
+}
+
+function readFilterSelections() {
+  const country = document.getElementById('countryFilter')?.value || 'all';
+  const source = document.getElementById('sourceFilter')?.value || 'all';
+  const generator = document.getElementById('generatorFilter')?.value || 'all';
+  state.filters = { country, source, generator };
+  return state.filters;
+}
+
+function rowMatchesFilters(row, filters) {
+  if (!filters) return true;
+  if (filters.country !== 'all') {
+    if (normalizeDimensionValue(row.Country) !== filters.country) return false;
+  }
+  if (filters.source !== 'all') {
+    if (normalizeDimensionValue(row.Source) !== filters.source) return false;
+  }
+  if (filters.generator !== 'all') {
+    if (normalizeDimensionValue(row.Name) !== filters.generator) return false;
+  }
+  return true;
+}
+
 function updateStatusUI(updateEl, json, fromCache = false) {
   if (!updateEl || !json) return;
   state.lastStatusPayload = { json, fromCache };
@@ -127,6 +192,7 @@ function processDashboardData(json) {
     fromEl.value = toIsoDateInputValue(minDate);
     toEl.value = toIsoDateInputValue(state.maxDate);
   }
+  populateFilterOptions();
 }
 
 function resetFilters() {
@@ -142,6 +208,13 @@ function resetFilters() {
     fromEl.value = toIsoDateInputValue(minDate);
     toEl.value = toIsoDateInputValue(maxDate);
   }
+  state.filters = { country: 'all', source: 'all', generator: 'all' };
+  ['countryFilter', 'sourceFilter', 'generatorFilter'].forEach((id) => {
+    const select = document.getElementById(id);
+    if (select) {
+      select.value = 'all';
+    }
+  });
   renderAll(state.rows);
 }
 
@@ -161,9 +234,11 @@ export function applyCurrentFilter() {
   }
   from.setHours(0, 0, 0, 0);
   to.setHours(23, 59, 59, 999);
+  const filters = readFilterSelections();
   const filtered = state.rows.filter((r) => {
     const d = parseDdMmYyyyToDate(r.Date);
-    return d && d >= from && d <= to;
+    if (!d || d < from || d > to) return false;
+    return rowMatchesFilters(r, filters);
   });
   renderAll(filtered);
 }

@@ -28,6 +28,10 @@ import { localeMap } from '../i18n/index.js';
 
 const numberFormattersCache = new Map();
 const MAX_STEP_COLUMNS = 5;
+const SORT_DIRECTIONS = {
+  ASC: 'asc',
+  DESC: 'desc'
+};
 
 function getLocale() {
   return localeMap[state.currentLanguage] || undefined;
@@ -69,6 +73,108 @@ function formatDateShort(date) {
     month: 'short',
     year: 'numeric'
   });
+}
+
+function getRowsForModals() {
+  return state.lastFilteredRows.length > 0 ? state.lastFilteredRows : state.rows;
+}
+
+function initTeamLoadControls() {
+  const searchInput = document.getElementById('teamLoadSearch');
+  if (searchInput && !searchInput.dataset.bound) {
+    searchInput.value = state.tableControls.teamLoad.search || '';
+    searchInput.addEventListener('input', (event) => {
+      state.tableControls.teamLoad.search = event.target.value || '';
+      renderTeamLoadTable();
+    });
+    searchInput.dataset.bound = 'true';
+  }
+
+  const sortSelect = document.getElementById('teamLoadSort');
+  if (sortSelect && !sortSelect.dataset.bound) {
+    sortSelect.value = state.tableControls.teamLoad.sortKey;
+    sortSelect.addEventListener('change', (event) => {
+      state.tableControls.teamLoad.sortKey = event.target.value || 'activeLeadsAssigned';
+      renderTeamLoadTable();
+    });
+    sortSelect.dataset.bound = 'true';
+  } else if (sortSelect) {
+    sortSelect.value = state.tableControls.teamLoad.sortKey;
+  }
+
+  const dirSelect = document.getElementById('teamLoadSortDir');
+  if (dirSelect && !dirSelect.dataset.bound) {
+    dirSelect.value = state.tableControls.teamLoad.sortDir;
+    dirSelect.addEventListener('change', (event) => {
+      state.tableControls.teamLoad.sortDir = event.target.value || SORT_DIRECTIONS.DESC;
+      renderTeamLoadTable();
+    });
+    dirSelect.dataset.bound = 'true';
+  } else if (dirSelect) {
+    dirSelect.value = state.tableControls.teamLoad.sortDir;
+  }
+}
+
+function initCountrySegmentationControls() {
+  const searchInput = document.getElementById('countrySegSearch');
+  if (searchInput && !searchInput.dataset.bound) {
+    searchInput.value = state.tableControls.countrySegmentation.search || '';
+    searchInput.addEventListener('input', (event) => {
+      state.tableControls.countrySegmentation.search = event.target.value || '';
+      renderCountrySegmentationTable();
+    });
+    searchInput.dataset.bound = 'true';
+  }
+
+  const metricSelect = document.getElementById('countrySegSortMetric');
+  if (metricSelect && !metricSelect.dataset.bound) {
+    metricSelect.value = state.tableControls.countrySegmentation.sortMetric;
+    metricSelect.addEventListener('change', (event) => {
+      state.tableControls.countrySegmentation.sortMetric = event.target.value || 'created';
+      renderCountrySegmentationTable();
+    });
+    metricSelect.dataset.bound = 'true';
+  } else if (metricSelect) {
+    metricSelect.value = state.tableControls.countrySegmentation.sortMetric;
+  }
+
+  const dirSelect = document.getElementById('countrySegSortDir');
+  if (dirSelect && !dirSelect.dataset.bound) {
+    dirSelect.value = state.tableControls.countrySegmentation.sortDir;
+    dirSelect.addEventListener('change', (event) => {
+      state.tableControls.countrySegmentation.sortDir = event.target.value || SORT_DIRECTIONS.DESC;
+      renderCountrySegmentationTable();
+    });
+    dirSelect.dataset.bound = 'true';
+  } else if (dirSelect) {
+    dirSelect.value = state.tableControls.countrySegmentation.sortDir;
+  }
+}
+
+function bindTeamLoadRowClicks() {
+  const tbody = document.getElementById('teamLoadTableBody');
+  if (!tbody || tbody.dataset.drillBound) return;
+  tbody.addEventListener('click', (event) => {
+    const row = event.target.closest('tr[data-generator]');
+    if (!row) return;
+    const generator = row.dataset.generator;
+    if (!generator) return;
+    openLeadInsight(generator, getRowsForModals());
+  });
+  tbody.dataset.drillBound = 'true';
+}
+
+function bindCountrySegmentationClicks() {
+  const container = document.getElementById('countrySegmentationContainer');
+  if (!container || container.dataset.drillBound) return;
+  container.addEventListener('click', (event) => {
+    const row = event.target.closest('tr[data-country]');
+    if (!row) return;
+    const country = row.dataset.country;
+    if (!country) return;
+    openCountryInsight(country, getRowsForModals());
+  });
+  container.dataset.drillBound = 'true';
 }
 
 function isFullDataScope(filteredRows) {
@@ -632,12 +738,14 @@ function renderCountrySegmentationTable() {
   if (!container) return;
   const dataset = state.tableData.countrySegmentation;
 
-  if (!dataset || !dataset.crossTab || !dataset.countries || !dataset.segments) {
+  if (!dataset || !dataset.crossTab || !dataset.segments) {
     container.innerHTML = `<div class="table-responsive"><table class="summary-table"><tbody><tr><td colspan="4">${t('table.noData')}</td></tr></tbody></table></div>`;
     return;
   }
 
-  const { crossTab, countries, segments } = dataset;
+  initCountrySegmentationControls();
+
+  const { crossTab, segments } = dataset;
   const metrics = ['created', 'positive', 'events'];
   const metricLabels = {
     created: getMetricLabel('Created'),
@@ -647,11 +755,34 @@ function renderCountrySegmentationTable() {
 
   const segmentLabels = {
     'Small Biz': t('table.smallBiz'),
-    'Medium': t('table.medium'),
-    'Enterprise': t('table.enterprise')
+    Medium: t('table.medium'),
+    Enterprise: t('table.enterprise')
   };
 
-  let html = '<div class="table-responsive"><table class="summary-table segmentation-table"><thead><tr><th data-i18n="table.country" class="country-col">Country</th>';
+  const rows = dataset.rows || [];
+  const controls = state.tableControls.countrySegmentation;
+  const search = (controls.search || '').trim().toLowerCase();
+
+  let workingRows = rows;
+  if (search) {
+    workingRows = rows.filter((row) => row.country.toLowerCase().includes(search));
+  }
+  if (!workingRows.length) {
+    container.innerHTML = `<div class="table-responsive"><table class="summary-table"><tbody><tr><td colspan="4">${t('table.noData')}</td></tr></tbody></table></div>`;
+    return;
+  }
+
+  const sortMetric = controls.sortMetric || 'created';
+  const sortDir = controls.sortDir === SORT_DIRECTIONS.ASC ? SORT_DIRECTIONS.ASC : SORT_DIRECTIONS.DESC;
+  const sortedRows = [...workingRows].sort((a, b) => {
+    const aVal = Number(a[sortMetric] || 0);
+    const bVal = Number(b[sortMetric] || 0);
+    return sortDir === SORT_DIRECTIONS.ASC ? aVal - bVal : bVal - aVal;
+  });
+  const countries = sortedRows.map((row) => row.country);
+
+  let html =
+    '<div class="table-responsive"><table class="summary-table segmentation-table"><thead><tr><th data-i18n="table.country" class="country-col">Country</th>';
 
   segments.forEach((seg, segIndex) => {
     const isLast = segIndex === segments.length - 1;
@@ -663,20 +794,20 @@ function renderCountrySegmentationTable() {
     const isLast = segIndex === segments.length - 1;
     metrics.forEach((metric, metricIndex) => {
       const isLastMetric = metricIndex === metrics.length - 1;
-      const borderClass = (!isLast && isLastMetric) ? 'segment-border' : '';
+      const borderClass = !isLast && isLastMetric ? 'segment-border' : '';
       html += `<th class="${borderClass}">${metricLabels[metric]}</th>`;
     });
   });
   html += '</tr></thead><tbody>';
 
   countries.forEach((country) => {
-    html += `<tr><td class="country-col"><strong>${country}</strong></td>`;
+    html += `<tr data-country="${country}"><td class="country-col"><strong>${country}</strong></td>`;
     segments.forEach((seg, segIndex) => {
       const isLast = segIndex === segments.length - 1;
       const data = crossTab[seg][country] || { created: 0, positive: 0, events: 0 };
       metrics.forEach((metric, metricIndex) => {
         const isLastMetric = metricIndex === metrics.length - 1;
-        const borderClass = (!isLast && isLastMetric) ? 'segment-border' : '';
+        const borderClass = !isLast && isLastMetric ? 'segment-border' : '';
         html += `<td class="${borderClass}">${formatNumber(data[metric])}</td>`;
       });
     });
@@ -685,6 +816,7 @@ function renderCountrySegmentationTable() {
 
   html += '</tbody></table></div>';
   container.innerHTML = html;
+  bindCountrySegmentationClicks();
 }
 
 function renderCountryCharts(filteredRows) {
@@ -964,15 +1096,37 @@ function renderTeamLoadTable() {
   if (!tbody) return;
   const dataset = state.tableData.teamLoad?.rows || [];
 
+  initTeamLoadControls();
+
   if (!dataset.length) {
     tbody.innerHTML = `<tr><td colspan="6">${t('table.noData')}</td></tr>`;
     return;
   }
 
-  const rowsHtml = dataset
+  const controls = state.tableControls.teamLoad;
+  const search = (controls.search || '').trim().toLowerCase();
+  let rows = dataset;
+  if (search) {
+    rows = dataset.filter((row) => row.name.toLowerCase().includes(search));
+  }
+
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="6">${t('table.noData')}</td></tr>`;
+    return;
+  }
+
+  const sortKey = controls.sortKey || 'activeLeadsAssigned';
+  const sortDir = controls.sortDir === SORT_DIRECTIONS.ASC ? SORT_DIRECTIONS.ASC : SORT_DIRECTIONS.DESC;
+  const sortedRows = [...rows].sort((a, b) => {
+    const aVal = Number(a[sortKey] || 0);
+    const bVal = Number(b[sortKey] || 0);
+    return sortDir === SORT_DIRECTIONS.ASC ? aVal - bVal : bVal - aVal;
+  });
+
+  const rowsHtml = sortedRows
     .map((row) => {
       return `
-        <tr>
+        <tr data-generator="${row.name}">
           <td>${row.name}</td>
           <td>${formatNumber(row.activeLeadsAssigned)}</td>
           <td>${formatNumber(row.leadsInProgress)}</td>
@@ -985,6 +1139,7 @@ function renderTeamLoadTable() {
     .join('');
 
   tbody.innerHTML = rowsHtml;
+  bindTeamLoadRowClicks();
 }
 
 function renderLeaderboardCharts(filteredRows) {

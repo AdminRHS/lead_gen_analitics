@@ -21,6 +21,19 @@ const uk = {
     exportPdf: '📄 Експорт в PDF',
     unknown: 'Невідомо'
   },
+  filters: {
+    country: 'Країна',
+    source: 'Джерело',
+    generator: 'Генератор',
+    all: 'Усі',
+    search: 'Пошук',
+    searchPlaceholder: 'Пошук...',
+    metric: 'Метрика',
+    direction: 'Напрямок',
+    directionAsc: 'За зростанням',
+    directionDesc: 'За спаданням',
+    sortBy: 'Сортувати за'
+  },
   tabs: {
     funnel: 'Воронка',
     countries: 'Країни',

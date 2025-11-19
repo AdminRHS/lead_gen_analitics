@@ -809,6 +809,24 @@
         <label for="toDate" data-i18n="common.to">To</label>
         <input type="date" id="toDate" class="input">
       </div>
+      <div class="field">
+        <label for="countryFilter" data-i18n="filters.country">Country</label>
+        <select id="countryFilter" class="input">
+          <option value="all" data-i18n="filters.all">All</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="sourceFilter" data-i18n="filters.source">Source</label>
+        <select id="sourceFilter" class="input">
+          <option value="all" data-i18n="filters.all">All</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="generatorFilter" data-i18n="filters.generator">Generator</label>
+        <select id="generatorFilter" class="input">
+          <option value="all" data-i18n="filters.all">All</option>
+        </select>
+      </div>
       <div class="controls-actions">
         <button id="applyFilter" class="btn btn-primary" data-i18n="common.apply">Apply</button>
         <button id="resetFilter" class="btn btn-secondary" data-i18n="common.reset">Reset</button>
@@ -902,6 +920,27 @@
         <div>
           <h3 data-i18n="table.countrySegmentationTitle">Lead Segmentation by Country</h3>
           <p class="card-subtitle" data-i18n="table.countrySegmentationSubtitle">See which segment performs best in each country</p>
+        </div>
+      </div>
+      <div class="table-toolbar">
+        <div class="field">
+          <label for="countrySegSearch" data-i18n="filters.search">Search</label>
+          <input type="text" id="countrySegSearch" class="input" placeholder="Search" data-i18n="filters.searchPlaceholder" data-i18n-attr="placeholder">
+        </div>
+        <div class="field">
+          <label for="countrySegSortMetric" data-i18n="filters.metric">Metric</label>
+          <select id="countrySegSortMetric" class="input">
+            <option value="created" data-i18n="table.created">Created</option>
+            <option value="positive" data-i18n="table.positiveReplies">Positive Replies</option>
+            <option value="events" data-i18n="table.events">Events</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="countrySegSortDir" data-i18n="filters.direction">Direction</label>
+          <select id="countrySegSortDir" class="input">
+            <option value="desc" data-i18n="filters.directionDesc">Descending</option>
+            <option value="asc" data-i18n="filters.directionAsc">Ascending</option>
+          </select>
         </div>
       </div>
       <div id="countrySegmentationContainer"></div>
@@ -1059,6 +1098,29 @@
         <div>
           <h3 data-i18n="table.teamLoadTitle">Team Load / Capacity</h3>
           <p class="card-subtitle" data-i18n="table.teamLoadSubtitle">Identify overloaded team members and available capacity</p>
+        </div>
+      </div>
+      <div class="table-toolbar">
+        <div class="field">
+          <label for="teamLoadSearch" data-i18n="filters.search">Search</label>
+          <input type="text" id="teamLoadSearch" class="input" placeholder="Search" data-i18n="filters.searchPlaceholder" data-i18n-attr="placeholder">
+        </div>
+        <div class="field">
+          <label for="teamLoadSort" data-i18n="filters.sortBy">Sort by</label>
+          <select id="teamLoadSort" class="input">
+            <option value="activeLeadsAssigned" data-i18n="table.activeLeadsAssigned">Active leads assigned</option>
+            <option value="leadsInProgress" data-i18n="table.leadsInProgress">Leads in progress</option>
+            <option value="leadsOverdue" data-i18n="table.leadsOverdue">Leads overdue</option>
+            <option value="avgLeadsPerDay" data-i18n="table.avgLeadsPerDay">Avg leads per day</option>
+            <option value="eventsThisWeek" data-i18n="table.eventsThisWeek">Events generated this week</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="teamLoadSortDir" data-i18n="filters.direction">Direction</label>
+          <select id="teamLoadSortDir" class="input">
+            <option value="desc" data-i18n="filters.directionDesc">Descending</option>
+            <option value="asc" data-i18n="filters.directionAsc">Ascending</option>
+          </select>
         </div>
       </div>
       <div class="table-responsive">
