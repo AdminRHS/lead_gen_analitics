@@ -440,6 +440,65 @@
     body.dark-theme .timeline-date {
       color: #cbd5f5;
     }
+    .heat-cell {
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+    body.dark-theme .heat-cell {
+      mix-blend-mode: screen;
+    }
+    .anomaly-alerts {
+      max-width: 1240px;
+      margin: 0 auto 20px auto;
+      display: none;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .anomaly-alerts.visible {
+      display: flex;
+    }
+    .anomaly-heading {
+      flex: 0 0 100%;
+      font-weight: 600;
+      color: #475569;
+    }
+    .anomaly-alert {
+      flex: 1;
+      min-width: 260px;
+      display: flex;
+      gap: 10px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      background: #f8fafc;
+    }
+    .anomaly-alert.positive {
+      border-left: 4px solid #16a34a;
+    }
+    .anomaly-alert.negative {
+      border-left: 4px solid #dc2626;
+    }
+    .alert-icon {
+      font-size: 20px;
+      line-height: 1;
+    }
+    .alert-title {
+      font-weight: 600;
+      color: #0f172a;
+    }
+    .alert-meta {
+      font-size: 12px;
+      color: #64748b;
+    }
+    body.dark-theme .anomaly-alert {
+      background: rgba(15, 23, 42, 0.6);
+      border-color: rgba(148, 163, 184, 0.2);
+    }
+    body.dark-theme .alert-title {
+      color: #e2e8f0;
+    }
+    body.dark-theme .alert-meta {
+      color: #94a3b8;
+    }
     /* Responsive Design */
     @media (max-width: 1200px) {
       .dashboard-grid { 
@@ -799,6 +858,7 @@
 <body>
   <h1 data-i18n="common.title">Lead Generation Dashboard</h1>
   <div id="update" data-i18n="common.loading">Loading...</div>
+  <div id="anomalyAlerts" class="anomaly-alerts" role="status" aria-live="polite"></div>
   <div class="controls">
     <div class="controls-left">
       <div class="field">

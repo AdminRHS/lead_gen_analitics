@@ -19,7 +19,9 @@ const en = {
     exportCsv: 'Export CSV',
     exportExcel: '📊 Export Excel',
     exportPdf: '📄 Export PDF',
-    unknown: 'Unknown'
+    unknown: 'Unknown',
+    anomalyTitle: 'Notable changes',
+    anomalyWindow: 'vs previous {days}-day range'
   },
   filters: {
     country: 'Country',
@@ -210,7 +212,9 @@ const en = {
     exportExcelError: 'Error exporting to Excel: ',
     exportPdfError: 'Error exporting to PDF: ',
     dataNotLoaded: 'Data not loaded yet. Please wait for data to load.',
-    noDataToExport: 'No data available to export. Please wait for data to load.'
+    noDataToExport: 'No data available to export. Please wait for data to load.',
+    metricSpike: '{metric} up {value} vs previous period',
+    metricDip: '{metric} down {value} vs previous period'
   },
   errors: {
     dataLoadTitle: 'Data load error',

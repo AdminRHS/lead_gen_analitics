@@ -19,7 +19,9 @@ const de = {
     exportCsv: 'CSV exportieren',
     exportExcel: '📊 Excel exportieren',
     exportPdf: '📄 PDF exportieren',
-    unknown: 'Unbekannt'
+    unknown: 'Unbekannt',
+    anomalyTitle: 'Auffällige Änderungen',
+    anomalyWindow: 'im Vergleich zum vorherigen Zeitraum von {days} Tagen'
   },
   filters: {
     country: 'Land',
@@ -210,7 +212,9 @@ const de = {
     exportExcelError: 'Fehler beim Excel-Export: ',
     exportPdfError: 'Fehler beim PDF-Export: ',
     dataNotLoaded: 'Daten noch nicht geladen. Bitte warten.',
-    noDataToExport: 'Keine Daten zum Exportieren. Bitte warten.'
+    noDataToExport: 'Keine Daten zum Exportieren. Bitte warten.',
+    metricSpike: '{metric} stieg um {value} gegenüber dem vorherigen Zeitraum',
+    metricDip: '{metric} sank um {value} gegenüber dem vorherigen Zeitraum'
   },
   errors: {
     dataLoadTitle: 'Fehler beim Laden der Daten',

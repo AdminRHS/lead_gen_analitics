@@ -21,6 +21,7 @@ import {
   updateSingleBarChart,
   scheduleChartUpdate
 } from '../chartOptimizer.js';
+import { parseDdMmYyyyToDate } from '../utils.js';
 import { state } from './state.js';
 import { t, getMetricLabel } from './i18nSupport.js';
 import { openCountryInsight, openLeadInsight } from './modals.js';
@@ -32,9 +33,33 @@ const SORT_DIRECTIONS = {
   ASC: 'asc',
   DESC: 'desc'
 };
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 function getLocale() {
   return localeMap[state.currentLanguage] || undefined;
+}
+
+function normalizeDimensionValue(value, fallback = 'Unknown') {
+  if (value === null || value === undefined) return fallback;
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    return trimmed === '' ? fallback : trimmed;
+  }
+  return value;
+}
+
+function matchesActiveFilters(row) {
+  const filters = state.filters || {};
+  if (filters.country && filters.country !== 'all') {
+    if (normalizeDimensionValue(row.Country) !== filters.country) return false;
+  }
+  if (filters.source && filters.source !== 'all') {
+    if (normalizeDimensionValue(row.Source) !== filters.source) return false;
+  }
+  if (filters.generator && filters.generator !== 'all') {
+    if (normalizeDimensionValue(row.Name) !== filters.generator) return false;
+  }
+  return true;
 }
 
 function formatNumber(value, maximumFractionDigits = 0) {
@@ -175,6 +200,127 @@ function bindCountrySegmentationClicks() {
     openCountryInsight(country, getRowsForModals());
   });
   container.dataset.drillBound = 'true';
+}
+
+function sumMetricTotals(rows = []) {
+  return rows.reduce(
+    (acc, row) => {
+      acc.created += Number(row['Created'] || 0);
+      acc.sent += Number(row['Sent Requests'] || 0);
+      acc.connected += Number(row['Connected'] || 0);
+      acc.replies += Number(row['Total replies'] || 0);
+      acc.positive += Number(row['Positive Replies'] || 0);
+      acc.events += Number(row['Events Created'] || 0);
+      return acc;
+    },
+    { created: 0, sent: 0, connected: 0, replies: 0, positive: 0, events: 0 }
+  );
+}
+
+function filterRowsForRange(rows = [], fromDate, toDate, applyFilters = false) {
+  return rows
+    .map((row) => ({ row, date: parseDdMmYyyyToDate(row.Date) }))
+    .filter(({ row, date }) => {
+      if (!(date instanceof Date) || isNaN(date.valueOf())) return false;
+      if (fromDate && date < fromDate) return false;
+      if (toDate && date > toDate) return false;
+      if (applyFilters && !matchesActiveFilters(row)) return false;
+      return true;
+    })
+    .map(({ row }) => row);
+}
+
+function renderAnomalyAlerts(filteredRows = []) {
+  const container = document.getElementById('anomalyAlerts');
+  if (!container) return;
+  container.innerHTML = '';
+  container.classList.remove('visible');
+
+  const datedRows = (filteredRows || [])
+    .map((row) => ({ row, date: parseDdMmYyyyToDate(row.Date) }))
+    .filter(({ date }) => date instanceof Date && !isNaN(date.valueOf()))
+    .sort((a, b) => a.date - b.date);
+
+  if (datedRows.length < 3) {
+    return;
+  }
+
+  const startDate = datedRows[0].date;
+  const endDate = datedRows[datedRows.length - 1].date;
+  if (!(startDate instanceof Date) || !(endDate instanceof Date)) {
+    return;
+  }
+  const windowDays = Math.max(1, Math.round((endDate - startDate) / MS_PER_DAY) + 1);
+  const prevEnd = new Date(startDate);
+  prevEnd.setDate(prevEnd.getDate() - 1);
+  const prevStart = new Date(prevEnd);
+  prevStart.setDate(prevStart.getDate() - windowDays + 1);
+
+  const currentRows = datedRows.map(({ row }) => row);
+  const previousRows = filterRowsForRange(state.rows || [], prevStart, prevEnd, true);
+
+  if (!previousRows.length) {
+    return;
+  }
+
+  const currentTotals = sumMetricTotals(currentRows);
+  const previousTotals = sumMetricTotals(previousRows);
+  const metrics = [
+    {
+      key: 'events',
+      label: getMetricLabel('Events Created'),
+      current: currentTotals.events,
+      previous: previousTotals.events
+    },
+    {
+      key: 'positive',
+      label: getMetricLabel('Positive Replies'),
+      current: currentTotals.positive,
+      previous: previousTotals.positive
+    }
+  ];
+
+  const alerts = metrics
+    .map((metric) => {
+      if (!metric.previous || metric.previous <= 0) return null;
+      const delta = (metric.current - metric.previous) / metric.previous;
+      if (Math.abs(delta) < 0.3) return null;
+      return {
+        metricLabel: metric.label,
+        delta
+      };
+    })
+    .filter(Boolean);
+
+  if (!alerts.length) {
+    return;
+  }
+
+  const windowLabel = t('common.anomalyWindow').replace('{days}', formatNumber(windowDays));
+
+  const alertsHtml = alerts
+    .map(({ metricLabel, delta }) => {
+      const isSpike = delta > 0;
+      const badge = isSpike ? '📈' : '📉';
+      const changeLabel = formatPercent(Math.abs(delta) * 100, 1);
+      const textKey = isSpike ? 'alerts.metricSpike' : 'alerts.metricDip';
+      const text = t(textKey)
+        .replace('{metric}', metricLabel)
+        .replace('{value}', changeLabel);
+      return `
+        <div class="anomaly-alert ${isSpike ? 'positive' : 'negative'}">
+          <span class="alert-icon">${badge}</span>
+          <div>
+            <div class="alert-title">${text}</div>
+            <div class="alert-meta">${windowLabel}</div>
+          </div>
+        </div>
+      `;
+    })
+    .join('');
+
+  container.innerHTML = `<div class="anomaly-heading">${t('common.anomalyTitle')}</div>${alertsHtml}`;
+  container.classList.add('visible');
 }
 
 function isFullDataScope(filteredRows) {
@@ -781,6 +927,20 @@ function renderCountrySegmentationTable() {
   });
   const countries = sortedRows.map((row) => row.country);
 
+  const metricMax = metrics.reduce((acc, metric) => {
+    acc[metric] = 0;
+    return acc;
+  }, {});
+  segments.forEach((seg) => {
+    countries.forEach((country) => {
+      const data = crossTab[seg]?.[country];
+      if (!data) return;
+      metrics.forEach((metric) => {
+        metricMax[metric] = Math.max(metricMax[metric], Number(data[metric] || 0));
+      });
+    });
+  });
+
   let html =
     '<div class="table-responsive"><table class="summary-table segmentation-table"><thead><tr><th data-i18n="table.country" class="country-col">Country</th>';
 
@@ -808,7 +968,16 @@ function renderCountrySegmentationTable() {
       metrics.forEach((metric, metricIndex) => {
         const isLastMetric = metricIndex === metrics.length - 1;
         const borderClass = !isLast && isLastMetric ? 'segment-border' : '';
-        html += `<td class="${borderClass}">${formatNumber(data[metric])}</td>`;
+        const value = Number(data[metric] || 0);
+        const maxValue = metricMax[metric] || 0;
+        const intensity = maxValue > 0 ? value / maxValue : 0;
+        const alpha = intensity > 0 ? Math.min(0.85, 0.15 + intensity * 0.7) : 0;
+        const textColor = intensity > 0.55 ? '#fff' : 'inherit';
+        const heatStyle =
+          intensity > 0
+            ? `style="background-color: rgba(59,130,246,${alpha}); color: ${textColor};"`
+            : '';
+        html += `<td class="heat-cell ${borderClass}" ${heatStyle}>${formatNumber(value)}</td>`;
       });
     });
     html += '</tr>';
@@ -1366,6 +1535,7 @@ function renderTimingTables(filteredRows) {
 
 export function renderAll(filteredRows) {
   state.lastFilteredRows = filteredRows;
+  renderAnomalyAlerts(filteredRows);
   const activeTab = document.querySelector('.tabpanel.active')?.id;
 
   if (activeTab === 'tab-funnel' || !activeTab) {
