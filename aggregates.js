@@ -2,6 +2,32 @@
 
 import { parseDdMmYyyyToDate, getIsoWeekInfo } from './utils.js';
 
+/**
+ * @typedef {Object} DataRow
+ * @property {string} Date
+ * @property {string} [Name]
+ * @property {string} [Country]
+ * @property {string} [Source]
+ * @property {string} [Company Size]
+ * @property {number|string} [Created]
+ * @property {number|string} ['Sent Requests']
+ * @property {number|string} [Connected]
+ * @property {number|string} ['Total replies']
+ * @property {number|string} ['Positive Replies']
+ * @property {number|string} ['Events Created']
+ * @property {string} [ 'Created Timestamp' ]
+ * @property {string} [ 'Sent Timestamp' ]
+ * @property {string} [ 'Connected Timestamp' ]
+ * @property {string} [ 'Positive Timestamp' ]
+ * @property {string} [ 'Event Timestamp' ]
+ */
+
+/**
+ * @typedef {Object} SegmentationThresholds
+ * @property {number} medium
+ * @property {number} enterprise
+ */
+
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const SEGMENTS = ['Small Biz', 'Medium', 'Enterprise'];
 
@@ -60,6 +86,10 @@ function initTotals() {
   };
 }
 
+/**
+ * Aggregate funnel stats by calendar day.
+ * @param {DataRow[]} filteredRows
+ */
 export function buildAggregates(filteredRows) {
   const byDate = {};
   for (const row of filteredRows) {
@@ -537,6 +567,11 @@ export function buildLeadAgingBuckets(filteredRows = []) {
   return { buckets, rows };
 }
 
+/**
+ * Build timing statistics for sequential funnel steps.
+ * @param {DataRow[]} filteredRows
+ * @returns {{steps: Array}}
+ */
 export function buildTimingStats(filteredRows = []) {
   const datedRows = filteredRows
     .map((row) => ({ row, date: parseDdMmYyyyToDate(row.Date) }))
@@ -776,6 +811,11 @@ export function buildTeamLoadCapacity(filteredRows = []) {
   return { rows };
 }
 
+/**
+ * Build country-level segmentation cross tab.
+ * @param {DataRow[]} filteredRows
+ * @param {SegmentationThresholds} [thresholds]
+ */
 export function buildCountrySegmentation(filteredRows = [], thresholds) {
   const datedRows = filteredRows
     .map((row) => ({ row, date: parseDdMmYyyyToDate(row.Date) }))

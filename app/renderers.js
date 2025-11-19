@@ -25,28 +25,13 @@ import { parseDdMmYyyyToDate } from '../utils.js';
 import { state } from './state.js';
 import { t, getMetricLabel } from './i18nSupport.js';
 import { openCountryInsight, openLeadInsight, openSourceInsight } from './modals.js';
-import { localeMap } from '../i18n/index.js';
+import { formatNumber, formatPercent, formatDays, formatDateShort, normalizeDimensionValue } from './formatters.js';
 
-const numberFormattersCache = new Map();
 const MAX_STEP_COLUMNS = 5;
 const SORT_DIRECTIONS = {
   ASC: 'asc',
   DESC: 'desc'
 };
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
-
-function getLocale() {
-  return localeMap[state.currentLanguage] || undefined;
-}
-
-function normalizeDimensionValue(value, fallback = 'Unknown') {
-  if (value === null || value === undefined) return fallback;
-  if (typeof value === 'string') {
-    const trimmed = value.trim();
-    return trimmed === '' ? fallback : trimmed;
-  }
-  return value;
-}
 
 function matchesActiveFilters(row) {
   const filters = state.filters || {};
@@ -60,44 +45,6 @@ function matchesActiveFilters(row) {
     if (normalizeDimensionValue(row.Name) !== filters.generator) return false;
   }
   return true;
-}
-
-function formatNumber(value, maximumFractionDigits = 0) {
-  const locale = getLocale();
-  const cacheKey = `${locale || 'default'}-${maximumFractionDigits}`;
-  if (!numberFormattersCache.has(cacheKey)) {
-    numberFormattersCache.set(
-      cacheKey,
-      new Intl.NumberFormat(locale, {
-        minimumFractionDigits: 0,
-        maximumFractionDigits
-      })
-    );
-  }
-  const formatter = numberFormattersCache.get(cacheKey);
-  const safeValue = Number.isFinite(value) ? value : 0;
-  return formatter.format(safeValue);
-}
-
-function formatPercent(value, digits = 1) {
-  return `${formatNumber(value, digits)}%`;
-}
-
-function formatDays(value) {
-  if (value === null || value === undefined || !Number.isFinite(value)) {
-    return '—';
-  }
-  return `${formatNumber(value, 1)} ${t('table.days')}`;
-}
-
-function formatDateShort(date) {
-  if (!(date instanceof Date) || isNaN(date.valueOf())) return '';
-  const locale = getLocale();
-  return date.toLocaleDateString(locale || undefined, {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric'
-  });
 }
 
 function getRowsForModals() {

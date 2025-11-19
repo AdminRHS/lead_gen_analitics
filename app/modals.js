@@ -3,9 +3,9 @@ import { parseDdMmYyyyToDate, toIsoDateInputValue } from '../utils.js';
 import { state } from './state.js';
 import { t, getMetricLabel, DAY_SUMMARY_METRICS } from './i18nSupport.js';
 import { localeMap } from '../i18n/index.js';
+import { formatNumber, normalizeDimensionValue } from './formatters.js';
 
 let modalsInitialized = false;
-const numberFormatters = new Map();
 
 export function showModalOverlay(overlay) {
   if (!overlay || overlay.classList.contains('visible')) return;
@@ -39,32 +39,6 @@ export function hideModalOverlay(overlay) {
   if (state.openModalCount === 0) {
     document.body.style.overflow = '';
   }
-}
-
-function normalizeDimensionValue(value, fallback = 'Unknown') {
-  if (value === null || value === undefined) return fallback;
-  if (typeof value === 'string') {
-    const trimmed = value.trim();
-    return trimmed === '' ? fallback : trimmed;
-  }
-  return value;
-}
-
-function formatNumberValue(value, fractionDigits = 0) {
-  const locale = localeMap[state.currentLanguage] || 'en-US';
-  const cacheKey = `${locale}-${fractionDigits}`;
-  if (!numberFormatters.has(cacheKey)) {
-    numberFormatters.set(
-      cacheKey,
-      new Intl.NumberFormat(locale, {
-        minimumFractionDigits: 0,
-        maximumFractionDigits: fractionDigits
-      })
-    );
-  }
-  const formatter = numberFormatters.get(cacheKey);
-  const numeric = Number(value) || 0;
-  return formatter.format(numeric);
 }
 
 function getRowsForDay(dateObj) {
@@ -640,11 +614,11 @@ export function openSourceInsight(sourceName, rows) {
     summaryEl.innerHTML = `
       <table class="summary-table">
         <tbody>
-          <tr><td>${t('table.created')}</td><td>${formatNumberValue(summaryTotals.created)}</td></tr>
-          <tr><td>${t('table.sentRequests')}</td><td>${formatNumberValue(summaryTotals.sent)}</td></tr>
-          <tr><td>${t('table.connected')}</td><td>${formatNumberValue(summaryTotals.connected)}</td></tr>
-          <tr><td>${t('table.positiveReplies')}</td><td>${formatNumberValue(summaryTotals.positive)}</td></tr>
-          <tr><td>${t('table.events')}</td><td>${formatNumberValue(summaryTotals.events)}</td></tr>
+        <tr><td>${t('table.created')}</td><td>${formatNumber(summaryTotals.created)}</td></tr>
+        <tr><td>${t('table.sentRequests')}</td><td>${formatNumber(summaryTotals.sent)}</td></tr>
+        <tr><td>${t('table.connected')}</td><td>${formatNumber(summaryTotals.connected)}</td></tr>
+        <tr><td>${t('table.positiveReplies')}</td><td>${formatNumber(summaryTotals.positive)}</td></tr>
+        <tr><td>${t('table.events')}</td><td>${formatNumber(summaryTotals.events)}</td></tr>
         </tbody>
       </table>
     `;
@@ -675,11 +649,11 @@ export function openSourceInsight(sourceName, rows) {
               <td>${row.Name || '—'}</td>
               <td>${row.Country || '—'}</td>
               <td>${companySize || '—'}</td>
-              <td>${formatNumberValue(row['Created'] || 0)}</td>
-              <td>${formatNumberValue(row['Sent Requests'] || 0)}</td>
-              <td>${formatNumberValue(row['Connected'] || 0)}</td>
-              <td>${formatNumberValue(row['Positive Replies'] || 0)}</td>
-              <td>${formatNumberValue(row['Events Created'] || 0)}</td>
+              <td>${formatNumber(row['Created'] || 0)}</td>
+              <td>${formatNumber(row['Sent Requests'] || 0)}</td>
+              <td>${formatNumber(row['Connected'] || 0)}</td>
+              <td>${formatNumber(row['Positive Replies'] || 0)}</td>
+              <td>${formatNumber(row['Events Created'] || 0)}</td>
             </tr>
           `;
         })
