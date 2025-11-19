@@ -34,7 +34,9 @@ const ru = {
     direction: 'Направление',
     directionAsc: 'По возрастанию',
     directionDesc: 'По убыванию',
-    sortBy: 'Сортировать по'
+    sortBy: 'Сортировать по',
+    mediumThreshold: 'Порог для среднего сегмента (лидов/день)',
+    enterpriseThreshold: 'Порог для enterprise-сегмента (лидов/день)'
   },
   tabs: {
     funnel: 'Воронка',
@@ -105,6 +107,7 @@ const ru = {
     daySummary: 'Дневной отчёт',
     countryInsight: 'Аналитика по стране',
     leadInsight: 'Аналитика по лиду',
+    sourceInsight: 'Аналитика по источнику',
     topGenerators: 'Топ-5 генераторов',
     topCountries: 'Топ-5 стран'
   },
@@ -191,6 +194,8 @@ const ru = {
     smallBiz: 'Малый бизнес',
     medium: 'Средний',
     enterprise: 'Предприятие',
+    companySize: 'Размер компании',
+    sourceQualityHint: 'Нажмите на название источника, чтобы посмотреть примеры лидов',
     timelineDetailsTitle: 'Детали таймлайна лида',
     createdDate: 'Создано',
     sentDate: 'Отправлено',

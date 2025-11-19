@@ -440,6 +440,16 @@
     body.dark-theme .timeline-date {
       color: #cbd5f5;
     }
+    .source-name {
+      cursor: pointer;
+      color: #2563eb;
+      font-weight: 600;
+      transition: color 0.2s ease;
+    }
+    .source-name:hover {
+      color: #1d4ed8;
+      text-decoration: underline;
+    }
     .heat-cell {
       transition: background-color 0.2s ease, color 0.2s ease;
     }
@@ -1002,6 +1012,14 @@
             <option value="asc" data-i18n="filters.directionAsc">Ascending</option>
           </select>
         </div>
+        <div class="field">
+          <label for="segmentMediumThreshold" data-i18n="filters.mediumThreshold">Medium threshold (leads/day)</label>
+          <input type="number" id="segmentMediumThreshold" class="input" min="0" step="1" value="5">
+        </div>
+        <div class="field">
+          <label for="segmentEnterpriseThreshold" data-i18n="filters.enterpriseThreshold">Enterprise threshold (leads/day)</label>
+          <input type="number" id="segmentEnterpriseThreshold" class="input" min="1" step="1" value="20">
+        </div>
       </div>
       <div id="countrySegmentationContainer"></div>
     </div>
@@ -1262,6 +1280,7 @@
         <div>
           <h3 data-i18n="table.sourceQualityTitle">Lead Source Quality Breakdown</h3>
           <p class="card-subtitle" data-i18n="table.sourceQualitySubtitle">Full-funnel health per acquisition channel</p>
+          <p class="card-subtitle" style="margin-top:4px;color:#94a3b8;" data-i18n="table.sourceQualityHint">Click any source name to view sample leads</p>
         </div>
       </div>
       <div class="table-responsive" id="sourceQualityContainer"></div>
@@ -1373,6 +1392,39 @@
       </div>
       <div class="modal-actions">
         <button id="doneLead" class="btn btn-primary" data-i18n="common.done">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal for Source Insight -->
+  <div class="modal-overlay" id="sourceModalOverlay">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="sourceModalTitle">
+      <div class="modal-header">
+        <div class="modal-title" id="sourceModalTitle">Source Insight</div>
+        <button id="closeSourceModal" class="link-btn" data-i18n="common.close">Close</button>
+      </div>
+      <div class="modal-body">
+        <div id="sourceModalSummary" class="summary-table-wrapper" style="margin-bottom:16px;"></div>
+        <div class="table-responsive">
+          <table class="summary-table">
+            <thead>
+              <tr>
+                <th data-i18n="table.name">Name</th>
+                <th data-i18n="table.country">Country</th>
+                <th data-i18n="table.companySize">Company size</th>
+                <th data-i18n="table.created">Created</th>
+                <th data-i18n="table.sentRequests">Sent</th>
+                <th data-i18n="table.connected">Connected</th>
+                <th data-i18n="table.positiveReplies">Positive</th>
+                <th data-i18n="table.events">Events</th>
+              </tr>
+            </thead>
+            <tbody id="sourceSamplesBody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button id="doneSourceModal" class="btn btn-primary" data-i18n="common.done">Done</button>
       </div>
     </div>
   </div>

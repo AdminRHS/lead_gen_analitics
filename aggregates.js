@@ -3,6 +3,62 @@
 import { parseDdMmYyyyToDate, getIsoWeekInfo } from './utils.js';
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
+const SEGMENTS = ['Small Biz', 'Medium', 'Enterprise'];
+
+function parseDateTimeFlexible(value) {
+  if (!value || typeof value !== 'string') return null;
+  const isoCandidate = value.replace(/(\d{2})\/(\d{2})\/(\d{4})/, '$3-$2-$1');
+  const date = new Date(isoCandidate);
+  if (!isNaN(date.valueOf())) return date;
+  const fallback = new Date(value);
+  return isNaN(fallback.valueOf()) ? null : fallback;
+}
+
+function normalizeCompanySize(value) {
+  if (!value) return null;
+  const normalized = String(value).toLowerCase();
+  if (/(enterprise|large|corp|global)/.test(normalized)) return 'Enterprise';
+  if (/(mid|medium|growth|scale)/.test(normalized)) return 'Medium';
+  if (/(small|smb|startup|boutique)/.test(normalized)) return 'Small Biz';
+  return null;
+}
+
+function normalizeThresholds(thresholds = {}) {
+  const mediumRaw = Number(thresholds.medium);
+  const enterpriseRaw = Number(thresholds.enterprise);
+  const medium = Number.isFinite(mediumRaw) && mediumRaw > 0 ? mediumRaw : 5;
+  const minEnterprise = medium + 1;
+  const enterprise =
+    Number.isFinite(enterpriseRaw) && enterpriseRaw > medium
+      ? enterpriseRaw
+      : Math.max(20, minEnterprise);
+  return { medium, enterprise };
+}
+
+function determineSegmentForRow(row, thresholds) {
+  const sizeValue =
+    row['Company Size'] ||
+    row['Company size'] ||
+    row['Company Segment'] ||
+    row['Company segment'] ||
+    row['CompanySegment'];
+  const normalizedSize = normalizeCompanySize(sizeValue);
+  if (normalizedSize) {
+    return normalizedSize;
+  }
+  const created = Number(row['Created'] || 0);
+  if (created >= thresholds.enterprise) return 'Enterprise';
+  if (created >= thresholds.medium) return 'Medium';
+  return 'Small Biz';
+}
+
+function initTotals() {
+  return {
+    created: 0,
+    positive: 0,
+    events: 0
+  };
+}
 
 export function buildAggregates(filteredRows) {
   const byDate = {};
@@ -496,29 +552,78 @@ export function buildTimingStats(filteredRows = []) {
       key: 'createdToSent',
       labelKey: 'Created → Sent',
       fromField: 'Created',
-      toField: 'Sent Requests'
+      toField: 'Sent Requests',
+      fromTimestampField: 'Created Timestamp',
+      toTimestampField: 'Sent Timestamp'
     },
     {
       key: 'sentToConnected',
       labelKey: 'Sent → Connected',
       fromField: 'Sent Requests',
-      toField: 'Connected'
+      toField: 'Connected',
+      fromTimestampField: 'Sent Timestamp',
+      toTimestampField: 'Connected Timestamp'
     },
     {
       key: 'connectedToPositive',
       labelKey: 'Connected → Positive',
       fromField: 'Connected',
-      toField: 'Positive Replies'
+      toField: 'Positive Replies',
+      fromTimestampField: 'Connected Timestamp',
+      toTimestampField: 'Positive Timestamp'
     },
     {
       key: 'positiveToEvent',
       labelKey: 'Positive → Event',
       fromField: 'Positive Replies',
-      toField: 'Events Created'
+      toField: 'Events Created',
+      fromTimestampField: 'Positive Timestamp',
+      toTimestampField: 'Event Timestamp'
     }
   ];
 
+  const computeStats = (values) => {
+    if (!values.length) {
+      return {
+        median: null,
+        average: null,
+        fastest: null,
+        slowest: null,
+        percentile90: null
+      };
+    }
+    const sorted = [...values].sort((a, b) => a - b);
+    const median = sorted[Math.floor(sorted.length / 2)];
+    const average = sorted.reduce((sum, val) => sum + val, 0) / sorted.length;
+    const fastest = sorted[0];
+    const slowest = sorted[sorted.length - 1];
+    const percentile90Index = Math.min(sorted.length - 1, Math.floor(sorted.length * 0.9));
+    const percentile90 = sorted[percentile90Index];
+    return { median, average, fastest, slowest, percentile90 };
+  };
+
   const steps = stepConfigs.map((config) => {
+    const timestampIntervals = [];
+    filteredRows.forEach((row) => {
+      const fromValue = parseDateTimeFlexible(row[config.fromTimestampField]);
+      const toValue = parseDateTimeFlexible(row[config.toTimestampField]);
+      if (fromValue && toValue && toValue >= fromValue) {
+        const diff = (toValue - fromValue) / MS_PER_DAY;
+        if (diff >= 0 && diff <= 365) {
+          timestampIntervals.push(diff);
+        }
+      }
+    });
+
+    if (timestampIntervals.length >= 3) {
+      const stats = computeStats(timestampIntervals);
+      return {
+        key: config.key,
+        labelKey: config.labelKey,
+        ...stats
+      };
+    }
+
     const intervals = [];
     let cumulativeFrom = 0;
     let cumulativeTo = 0;
@@ -566,7 +671,7 @@ export function buildTimingStats(filteredRows = []) {
     for (let i = 0; i < Math.min(fromEvents.length, toEvents.length); i++) {
       const fromEvent = fromEvents[i];
       let toEvent = toEvents[i];
-      
+
       let j = i;
       while (j < toEvents.length && toEvents[j].date <= fromEvent.date) {
         j++;
@@ -581,34 +686,11 @@ export function buildTimingStats(filteredRows = []) {
       }
     }
 
-    if (intervals.length === 0) {
-      return {
-        key: config.key,
-        labelKey: config.labelKey,
-        median: null,
-        average: null,
-        fastest: null,
-        slowest: null,
-        percentile90: null
-      };
-    }
-
-    const sorted = [...intervals].sort((a, b) => a - b);
-    const median = sorted[Math.floor(sorted.length / 2)];
-    const average = sorted.reduce((sum, val) => sum + val, 0) / sorted.length;
-    const fastest = sorted[0];
-    const slowest = sorted[sorted.length - 1];
-    const percentile90Index = Math.floor(sorted.length * 0.9);
-    const percentile90 = sorted[percentile90Index];
-
+    const stats = computeStats(intervals);
     return {
       key: config.key,
       labelKey: config.labelKey,
-      median,
-      average,
-      fastest,
-      slowest,
-      percentile90
+      ...stats
     };
   });
 
@@ -694,23 +776,27 @@ export function buildTeamLoadCapacity(filteredRows = []) {
   return { rows };
 }
 
-export function buildCountrySegmentation(filteredRows = []) {
+export function buildCountrySegmentation(filteredRows = [], thresholds) {
   const datedRows = filteredRows
     .map((row) => ({ row, date: parseDdMmYyyyToDate(row.Date) }))
     .filter(({ date }) => date instanceof Date && !isNaN(date.valueOf()))
     .sort((a, b) => a.date - b.date);
 
   if (datedRows.length === 0) {
-    return { rows: [], segments: ['Small Biz', 'Medium', 'Enterprise'] };
+    return { rows: [], segments: SEGMENTS, countries: [], crossTab: {} };
   }
 
-  const byCountry = {};
-  const segments = ['Small Biz', 'Medium', 'Enterprise'];
+  const normalizedThresholds = normalizeThresholds(thresholds);
+  const crossTab = {};
+  SEGMENTS.forEach((seg) => {
+    crossTab[seg] = {};
+  });
+  const byCountryTotals = {};
 
   datedRows.forEach(({ row, date }) => {
     const country = row.Country || 'Unknown';
-    if (!byCountry[country]) {
-      byCountry[country] = {
+    if (!byCountryTotals[country]) {
+      byCountryTotals[country] = {
         created: 0,
         positive: 0,
         events: 0,
@@ -718,62 +804,53 @@ export function buildCountrySegmentation(filteredRows = []) {
       };
     }
 
-    const stats = byCountry[country];
+    const totals = byCountryTotals[country];
     if (date instanceof Date && !isNaN(date.valueOf())) {
-      stats.days.add(date.toISOString().split('T')[0]);
+      totals.days.add(date.toISOString().split('T')[0]);
     }
 
-    stats.created += Number(row['Created'] || 0);
-    stats.positive += Number(row['Positive Replies'] || 0);
-    stats.events += Number(row['Events Created'] || 0);
+    const created = Number(row['Created'] || 0);
+    const positive = Number(row['Positive Replies'] || 0);
+    const events = Number(row['Events Created'] || 0);
+
+    totals.created += created;
+    totals.positive += positive;
+    totals.events += events;
+
+    const segment = determineSegmentForRow(row, normalizedThresholds);
+    if (!crossTab[segment][country]) {
+      crossTab[segment][country] = initTotals();
+    }
+    crossTab[segment][country].created += created;
+    crossTab[segment][country].positive += positive;
+    crossTab[segment][country].events += events;
   });
 
-  const rows = Object.keys(byCountry).map((country) => {
-    const stats = byCountry[country];
-    const activeDays = stats.days.size;
-    const avgLeadsPerDay = activeDays > 0 ? stats.created / activeDays : 0;
+  const countries = Object.keys(byCountryTotals).sort();
+  countries.forEach((country) => {
+    SEGMENTS.forEach((seg) => {
+      if (!crossTab[seg][country]) {
+        crossTab[seg][country] = initTotals();
+      }
+    });
+  });
 
-    let segment = 'Small Biz';
-    if (avgLeadsPerDay >= 20) {
-      segment = 'Enterprise';
-    } else if (avgLeadsPerDay >= 5) {
-      segment = 'Medium';
-    }
-
+  const rows = countries.map((country) => {
+    const stats = byCountryTotals[country];
     return {
       country,
-      segment,
       created: stats.created,
       positive: stats.positive,
       events: stats.events
     };
   });
 
-  const crossTab = {};
-  segments.forEach((seg) => {
-    crossTab[seg] = {};
-    Object.keys(byCountry).forEach((country) => {
-      crossTab[seg][country] = {
-        created: 0,
-        positive: 0,
-        events: 0
-      };
-    });
-  });
-
-  rows.forEach((row) => {
-    crossTab[row.segment][row.country] = {
-      created: row.created,
-      positive: row.positive,
-      events: row.events
-    };
-  });
-
   return {
     rows,
-    segments,
-    countries: Object.keys(byCountry).sort(),
-    crossTab
+    segments: SEGMENTS,
+    countries,
+    crossTab,
+    thresholds: normalizedThresholds
   };
 }
 

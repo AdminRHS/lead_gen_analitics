@@ -34,7 +34,9 @@ const en = {
     direction: 'Direction',
     directionAsc: 'Ascending',
     directionDesc: 'Descending',
-    sortBy: 'Sort by'
+    sortBy: 'Sort by',
+    mediumThreshold: 'Medium threshold (leads/day)',
+    enterpriseThreshold: 'Enterprise threshold (leads/day)'
   },
   tabs: {
     funnel: 'Funnel',
@@ -105,6 +107,7 @@ const en = {
     daySummary: 'Day Summary',
     countryInsight: 'Country Insight',
     leadInsight: 'Lead Insight',
+    sourceInsight: 'Source Insight',
     topGenerators: 'Top 5 Generators',
     topCountries: 'Top 5 Countries'
   },
@@ -191,6 +194,8 @@ const en = {
     smallBiz: 'Small Biz',
     medium: 'Medium',
     enterprise: 'Enterprise',
+    companySize: 'Company size',
+    sourceQualityHint: 'Click any source name to view sample leads',
     timelineDetailsTitle: 'Lead Timeline Details',
     createdDate: 'Created',
     sentDate: 'Sent',

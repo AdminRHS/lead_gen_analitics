@@ -34,7 +34,9 @@ const uk = {
     direction: 'Напрямок',
     directionAsc: 'За зростанням',
     directionDesc: 'За спаданням',
-    sortBy: 'Сортувати за'
+    sortBy: 'Сортувати за',
+    mediumThreshold: 'Поріг для середнього сегмента (лідів/день)',
+    enterpriseThreshold: 'Поріг для enterprise-сегмента (лідів/день)'
   },
   tabs: {
     funnel: 'Воронка',
@@ -105,6 +107,7 @@ const uk = {
     daySummary: 'Денний звіт',
     countryInsight: 'Аналітика за країною',
     leadInsight: 'Аналітика за лідом',
+    sourceInsight: 'Аналітика за джерелом',
     topGenerators: 'Топ-5 генераторів',
     topCountries: 'Топ-5 країн'
   },
@@ -191,6 +194,8 @@ const uk = {
     smallBiz: 'Малий бізнес',
     medium: 'Середній',
     enterprise: 'Підприємство',
+    companySize: 'Розмір компанії',
+    sourceQualityHint: 'Натисніть на назву джерела, щоб переглянути приклади лідів',
     timelineDetailsTitle: 'Деталі таймлайну ліда',
     createdDate: 'Створено',
     sentDate: 'Відправлено',

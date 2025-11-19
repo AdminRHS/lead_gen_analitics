@@ -24,7 +24,7 @@ import {
 import { parseDdMmYyyyToDate } from '../utils.js';
 import { state } from './state.js';
 import { t, getMetricLabel } from './i18nSupport.js';
-import { openCountryInsight, openLeadInsight } from './modals.js';
+import { openCountryInsight, openLeadInsight, openSourceInsight } from './modals.js';
 import { localeMap } from '../i18n/index.js';
 
 const numberFormattersCache = new Map();
@@ -174,6 +174,50 @@ function initCountrySegmentationControls() {
   } else if (dirSelect) {
     dirSelect.value = state.tableControls.countrySegmentation.sortDir;
   }
+
+  const mediumInput = document.getElementById('segmentMediumThreshold');
+  if (mediumInput) {
+    mediumInput.value = state.segmentationThresholds.medium;
+    if (!mediumInput.dataset.bound) {
+      mediumInput.addEventListener('change', (event) => {
+        applySegmentationThresholdChange('medium', event.target.value);
+      });
+      mediumInput.dataset.bound = 'true';
+    }
+  }
+
+  const enterpriseInput = document.getElementById('segmentEnterpriseThreshold');
+  if (enterpriseInput) {
+    enterpriseInput.value = state.segmentationThresholds.enterprise;
+    if (!enterpriseInput.dataset.bound) {
+      enterpriseInput.addEventListener('change', (event) => {
+        applySegmentationThresholdChange('enterprise', event.target.value);
+      });
+      enterpriseInput.dataset.bound = 'true';
+    }
+  }
+}
+
+function applySegmentationThresholdChange(type, rawValue) {
+  let value = Number(rawValue);
+  if (!Number.isFinite(value) || value <= 0) {
+    value = state.segmentationThresholds[type];
+  }
+  state.segmentationThresholds[type] = value;
+
+  if (state.segmentationThresholds.enterprise <= state.segmentationThresholds.medium) {
+    state.segmentationThresholds.enterprise = state.segmentationThresholds.medium + 1;
+    const enterpriseInput = document.getElementById('segmentEnterpriseThreshold');
+    if (enterpriseInput) {
+      enterpriseInput.value = state.segmentationThresholds.enterprise;
+    }
+  }
+
+  state.tableData.countrySegmentation = buildCountrySegmentation(
+    getRowsForModals(),
+    state.segmentationThresholds
+  );
+  renderCountrySegmentationTable();
 }
 
 function bindTeamLoadRowClicks() {
@@ -751,7 +795,9 @@ function renderSourceQualityTable() {
     return;
   }
 
-  const headerCells = dataset.sources.map((name) => `<th>${name}</th>`).join('');
+  const headerCells = dataset.sources
+    .map((name) => `<th><span class="source-name" data-source-name="${name}">${name}</span></th>`)
+    .join('');
 
   const formatValue = (value, type) => {
     if (value === null || value === undefined || !Number.isFinite(value)) {
@@ -798,6 +844,19 @@ function renderSourceQualityTable() {
       </tbody>
     </table>
   `;
+  bindSourceQualityInteractions(container);
+}
+
+function bindSourceQualityInteractions(container) {
+  if (!container || container.dataset.bound) return;
+  container.addEventListener('click', (event) => {
+    const target = event.target.closest('[data-source-name]');
+    if (!target) return;
+    const sourceName = target.dataset.sourceName;
+    if (!sourceName) return;
+    openSourceInsight(sourceName, getRowsForModals());
+  });
+  container.dataset.bound = 'true';
 }
 
 function renderOrUpdateChart(chartRef, elementId, renderFn, updateFn, ...args) {
@@ -993,23 +1052,22 @@ function renderCountryCharts(filteredRows) {
   if (canUseSummary) {
     const countryAgg = buildCountryAggregatesFromSummary();
     if (countryAgg) {
-      const countrySegmentation = buildCountrySegmentation(filteredRows);
       updateAggregationCache(state.aggregationCache, filteredRows, {
-        country: countryAgg,
-        countrySegmentation
+        country: countryAgg
       });
     }
   }
   if (!state.aggregationCache.country || shouldRecalculateAggregations(filteredRows, state.aggregationCache)) {
     const countryAgg = buildCountryAggregates(filteredRows);
-    const countrySegmentation = buildCountrySegmentation(filteredRows);
     updateAggregationCache(state.aggregationCache, filteredRows, {
-      country: countryAgg,
-      countrySegmentation
+      country: countryAgg
     });
   }
   const countryAgg = state.aggregationCache.country;
-  state.tableData.countrySegmentation = state.aggregationCache.countrySegmentation;
+  state.tableData.countrySegmentation = buildCountrySegmentation(
+    filteredRows,
+    state.segmentationThresholds
+  );
   renderCountrySegmentationTable();
 
   scheduleChartUpdate(() => {

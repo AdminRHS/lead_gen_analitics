@@ -5,6 +5,7 @@ import { t, getMetricLabel, DAY_SUMMARY_METRICS } from './i18nSupport.js';
 import { localeMap } from '../i18n/index.js';
 
 let modalsInitialized = false;
+const numberFormatters = new Map();
 
 export function showModalOverlay(overlay) {
   if (!overlay || overlay.classList.contains('visible')) return;
@@ -38,6 +39,32 @@ export function hideModalOverlay(overlay) {
   if (state.openModalCount === 0) {
     document.body.style.overflow = '';
   }
+}
+
+function normalizeDimensionValue(value, fallback = 'Unknown') {
+  if (value === null || value === undefined) return fallback;
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    return trimmed === '' ? fallback : trimmed;
+  }
+  return value;
+}
+
+function formatNumberValue(value, fractionDigits = 0) {
+  const locale = localeMap[state.currentLanguage] || 'en-US';
+  const cacheKey = `${locale}-${fractionDigits}`;
+  if (!numberFormatters.has(cacheKey)) {
+    numberFormatters.set(
+      cacheKey,
+      new Intl.NumberFormat(locale, {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: fractionDigits
+      })
+    );
+  }
+  const formatter = numberFormatters.get(cacheKey);
+  const numeric = Number(value) || 0;
+  return formatter.format(numeric);
 }
 
 function getRowsForDay(dateObj) {
@@ -478,6 +505,94 @@ export function openLeadInsight(leadName, rows) {
   showModalOverlay(overlay);
 }
 
+function buildSourceSamples(sourceName, rows, limit = 25) {
+  const normalizedSource = normalizeDimensionValue(sourceName);
+  return rows
+    .filter((row) => normalizeDimensionValue(row.Source) === normalizedSource)
+    .sort((a, b) => {
+      const dateA = parseDdMmYyyyToDate(a.Date);
+      const dateB = parseDdMmYyyyToDate(b.Date);
+      return (dateB?.valueOf() || 0) - (dateA?.valueOf() || 0);
+    })
+    .slice(0, limit);
+}
+
+export function openSourceInsight(sourceName, rows) {
+  const overlay = document.getElementById('sourceModalOverlay');
+  if (!overlay) return;
+  const samples = buildSourceSamples(sourceName, rows, 25);
+  const summaryTotals = samples.reduce(
+    (acc, row) => {
+      acc.created += Number(row['Created'] || 0);
+      acc.sent += Number(row['Sent Requests'] || 0);
+      acc.connected += Number(row['Connected'] || 0);
+      acc.positive += Number(row['Positive Replies'] || 0);
+      acc.events += Number(row['Events Created'] || 0);
+      return acc;
+    },
+    { created: 0, sent: 0, connected: 0, positive: 0, events: 0 }
+  );
+
+  const summaryEl = document.getElementById('sourceModalSummary');
+  if (summaryEl) {
+    summaryEl.innerHTML = `
+      <table class="summary-table">
+        <tbody>
+          <tr><td>${t('table.created')}</td><td>${formatNumberValue(summaryTotals.created)}</td></tr>
+          <tr><td>${t('table.sentRequests')}</td><td>${formatNumberValue(summaryTotals.sent)}</td></tr>
+          <tr><td>${t('table.connected')}</td><td>${formatNumberValue(summaryTotals.connected)}</td></tr>
+          <tr><td>${t('table.positiveReplies')}</td><td>${formatNumberValue(summaryTotals.positive)}</td></tr>
+          <tr><td>${t('table.events')}</td><td>${formatNumberValue(summaryTotals.events)}</td></tr>
+        </tbody>
+      </table>
+    `;
+  }
+
+  const body = document.getElementById('sourceSamplesBody');
+  if (body) {
+    if (!samples.length) {
+      body.innerHTML = `<tr><td colspan="8">${t('table.noData')}</td></tr>`;
+    } else {
+      const locale = localeMap[state.currentLanguage] || 'en-US';
+      const formatDate = (value) => {
+        const dateObj = parseDdMmYyyyToDate(value);
+        return dateObj instanceof Date && !isNaN(dateObj.valueOf())
+          ? dateObj.toLocaleDateString(locale)
+          : '—';
+      };
+      body.innerHTML = samples
+        .map((row) => {
+          const companySize =
+            row['Company Size'] ||
+            row['Company size'] ||
+            row['Company Segment'] ||
+            row['Company segment'] ||
+            '—';
+          return `
+            <tr>
+              <td>${row.Name || '—'}</td>
+              <td>${row.Country || '—'}</td>
+              <td>${companySize || '—'}</td>
+              <td>${formatNumberValue(row['Created'] || 0)}</td>
+              <td>${formatNumberValue(row['Sent Requests'] || 0)}</td>
+              <td>${formatNumberValue(row['Connected'] || 0)}</td>
+              <td>${formatNumberValue(row['Positive Replies'] || 0)}</td>
+              <td>${formatNumberValue(row['Events Created'] || 0)}</td>
+            </tr>
+          `;
+        })
+        .join('');
+    }
+  }
+
+  const titleEl = document.getElementById('sourceModalTitle');
+  if (titleEl) {
+    titleEl.textContent = `${t('modals.sourceInsight')} — ${sourceName}`;
+  }
+
+  showModalOverlay(overlay);
+}
+
 function bindSortSelect() {
   const sortSelect = document.getElementById('sortColumn');
   if (!sortSelect || sortSelect.dataset.bound) return;
@@ -578,6 +693,24 @@ function bindLeadModalButtons() {
   }
 }
 
+function bindSourceModalButtons() {
+  const overlay = document.getElementById('sourceModalOverlay');
+  const closeBtn = document.getElementById('closeSourceModal');
+  const doneBtn = document.getElementById('doneSourceModal');
+  [closeBtn, doneBtn].forEach((btn) => {
+    if (btn && !btn.dataset.bound) {
+      btn.addEventListener('click', () => hideModalOverlay(overlay));
+      btn.dataset.bound = 'true';
+    }
+  });
+  if (overlay && !overlay.dataset.bound) {
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) hideModalOverlay(overlay);
+    });
+    overlay.dataset.bound = 'true';
+  }
+}
+
 export function setupModals() {
   if (modalsInitialized) return;
   bindSortSelect();
@@ -585,5 +718,6 @@ export function setupModals() {
   bindDayModalButtons();
   bindCountryModalButtons();
   bindLeadModalButtons();
+  bindSourceModalButtons();
   modalsInitialized = true;
 }

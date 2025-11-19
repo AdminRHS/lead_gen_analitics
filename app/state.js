@@ -103,6 +103,10 @@ export const state = {
       sortDir: 'desc'
     }
   },
+  segmentationThresholds: {
+    medium: 5,
+    enterprise: 20
+  },
   currentTheme: 'light',
   userHasExplicitTheme: false,
   rerenderAll: null,
