@@ -5,6 +5,7 @@ from datetime import datetime
 
 import gspread
 from google.oauth2.service_account import Credentials
+from reports.generate_snapshot import generate_daily_report
 
 SPREADSHEET_ID = "1SNyKdbNIXHDdvqd71W57gkUe64Gsy2s9ylRCJJoJgJg"
 SHEET_NAME = "Form responses 1"
@@ -158,5 +159,6 @@ if __name__ == "__main__":
     save_to_json(data)
     summary = build_summary(data)
     save_summary(summary)
+    generate_daily_report(data, summary)
   except Exception as exc:
     print("❌ Помилка при зчитуванні:", exc)

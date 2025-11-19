@@ -1,6 +1,44 @@
 import { state } from './state.js';
 import { t, formatLocaleDateTime, getActiveTabLabel } from './i18nSupport.js';
 
+function quoteCsvValue(value) {
+  if (value === null || value === undefined) return '""';
+  const stringValue = String(value).replace(/"/g, '""');
+  return `"${stringValue}"`;
+}
+
+function downloadCsv(filename, headers, rows) {
+  const csvLines = [];
+  if (headers && headers.length) {
+    csvLines.push(headers.map(quoteCsvValue).join(','));
+  }
+  rows.forEach((row) => {
+    csvLines.push(row.map(quoteCsvValue).join(','));
+  });
+  const blob = new Blob([csvLines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+function ensureJsPdf() {
+  if (!window.jspdf) {
+    alert(t('alerts.pdfLibraryMissing'));
+    return null;
+  }
+  return window.jspdf.jsPDF;
+}
+
+function getReportFileName(prefix, extension) {
+  const dateStr = new Date().toISOString().split('T')[0];
+  return `${prefix}-${dateStr}.${extension}`;
+}
+
 export function exportToExcel() {
   try {
     if (!window.XLSX) {
@@ -250,16 +288,198 @@ export async function exportToPDF() {
   }
 }
 
-export function setupExportButtons() {
-  const excelBtn = document.getElementById('exportExcel');
-  if (excelBtn && !excelBtn.dataset.bound) {
-    excelBtn.addEventListener('click', exportToExcel);
-    excelBtn.dataset.bound = 'true';
+export function exportTeamLoadCsv() {
+  const dataset = state.tableData.teamLoad?.rows || [];
+  if (!dataset.length) {
+    alert(t('alerts.noDataToExport'));
+    return;
   }
+  const headers = [
+    t('table.name'),
+    t('table.activeLeadsAssigned'),
+    t('table.leadsInProgress'),
+    t('table.leadsOverdue'),
+    t('table.avgLeadsPerDay'),
+    t('table.eventsThisWeek')
+  ];
+  const rows = dataset.map((row) => [
+    row.name,
+    row.activeLeadsAssigned,
+    row.leadsInProgress,
+    row.leadsOverdue,
+    row.avgLeadsPerDay,
+    row.eventsThisWeek
+  ]);
+  downloadCsv(getReportFileName('team-load', 'csv'), headers, rows);
+}
 
-  const pdfBtn = document.getElementById('exportPDF');
-  if (pdfBtn && !pdfBtn.dataset.bound) {
-    pdfBtn.addEventListener('click', exportToPDF);
-    pdfBtn.dataset.bound = 'true';
+export function exportTeamLoadPdf() {
+  const dataset = state.tableData.teamLoad?.rows || [];
+  if (!dataset.length) {
+    alert(t('alerts.noDataToExport'));
+    return;
   }
+  const jsPDF = ensureJsPdf();
+  if (!jsPDF) return;
+  const doc = new jsPDF('landscape', 'mm', 'a4');
+  const margin = 15;
+  let y = 20;
+  doc.setFontSize(16);
+  doc.text(t('table.teamLoadTitle'), margin, y);
+  y += 10;
+  doc.setFontSize(10);
+  dataset.forEach((row) => {
+    if (y > doc.internal.pageSize.getHeight() - 10) {
+      doc.addPage();
+      y = 20;
+    }
+    const line = `${row.name} • ${t('table.activeLeadsAssigned')}: ${row.activeLeadsAssigned} • ${t('table.leadsInProgress')}: ${row.leadsInProgress} • ${t('table.leadsOverdue')}: ${row.leadsOverdue} • ${t('table.avgLeadsPerDay')}: ${row.avgLeadsPerDay.toFixed(
+      1
+    )} • ${t('table.eventsThisWeek')}: ${row.eventsThisWeek}`;
+    doc.text(line, margin, y);
+    y += 6;
+  });
+  doc.save(getReportFileName('team-load', 'pdf'));
+}
+
+export function exportCountrySegmentationCsv() {
+  const dataset = state.tableData.countrySegmentation;
+  if (!dataset || !dataset.countries || !dataset.countries.length) {
+    alert(t('alerts.noDataToExport'));
+    return;
+  }
+  const headers = [t('table.stage'), t('table.country'), t('table.created'), t('table.positiveReplies'), t('table.events')];
+  const rows = [];
+  dataset.segments.forEach((segment) => {
+    dataset.countries.forEach((country) => {
+      const data = dataset.crossTab?.[segment]?.[country];
+      if (!data) return;
+      rows.push([segment, country, data.created, data.positive, data.events]);
+    });
+  });
+  downloadCsv(getReportFileName('country-segmentation', 'csv'), headers, rows);
+}
+
+export function exportCountrySegmentationPdf() {
+  const dataset = state.tableData.countrySegmentation;
+  if (!dataset || !dataset.countries || !dataset.countries.length) {
+    alert(t('alerts.noDataToExport'));
+    return;
+  }
+  const jsPDF = ensureJsPdf();
+  if (!jsPDF) return;
+  const doc = new jsPDF('landscape', 'mm', 'a4');
+  const margin = 15;
+  let y = 20;
+  doc.setFontSize(16);
+  doc.text(t('table.countrySegmentationTitle'), margin, y);
+  y += 10;
+  doc.setFontSize(10);
+  dataset.segments.forEach((segment) => {
+    if (y > doc.internal.pageSize.getHeight() - 15) {
+      doc.addPage();
+      y = 20;
+    }
+    doc.setFont('helvetica', 'bold');
+    doc.text(segment, margin, y);
+    y += 6;
+    doc.setFont('helvetica', 'normal');
+    dataset.countries.forEach((country) => {
+      const data = dataset.crossTab?.[segment]?.[country];
+      if (!data) return;
+      if (y > doc.internal.pageSize.getHeight() - 10) {
+        doc.addPage();
+        y = 20;
+      }
+      doc.text(
+        `${country}: ${t('table.created')} ${data.created}, ${t('table.positiveReplies')} ${data.positive}, ${t('table.events')} ${data.events}`,
+        margin,
+        y
+      );
+      y += 5;
+    });
+    y += 4;
+  });
+  doc.save(getReportFileName('country-segmentation', 'pdf'));
+}
+
+export function exportLeadTimelineCsv() {
+  const timeline = state.exportTemplates.timeline || [];
+  if (!timeline.length) {
+    alert(t('alerts.noDataToExport'));
+    return;
+  }
+  const headers = [
+    '#',
+    t('table.createdDate'),
+    t('table.sentDate'),
+    t('table.connectedDate'),
+    t('table.positiveDate'),
+    t('table.eventDate'),
+    t('table.source'),
+    t('table.generator')
+  ];
+  const rows = timeline.map((lead, index) => [
+    index + 1,
+    lead.createdDate ? lead.createdDate.toISOString().split('T')[0] : '—',
+    lead.sentDate ? lead.sentDate.toISOString().split('T')[0] : '—',
+    lead.connectedDate ? lead.connectedDate.toISOString().split('T')[0] : '—',
+    lead.positiveDate ? lead.positiveDate.toISOString().split('T')[0] : '—',
+    lead.eventDate ? lead.eventDate.toISOString().split('T')[0] : '—',
+    lead.source || '—',
+    lead.generator || '—'
+  ]);
+  const leadName = state.exportTemplates.timelineMeta?.leadName || 'lead';
+  downloadCsv(getReportFileName(`timeline-${leadName}`, 'csv'), headers, rows);
+}
+
+export function exportLeadTimelinePdf() {
+  const timeline = state.exportTemplates.timeline || [];
+  if (!timeline.length) {
+    alert(t('alerts.noDataToExport'));
+    return;
+  }
+  const jsPDF = ensureJsPdf();
+  if (!jsPDF) return;
+  const doc = new jsPDF('landscape', 'mm', 'a4');
+  const margin = 15;
+  let y = 20;
+  const leadName = state.exportTemplates.timelineMeta?.leadName || '';
+  doc.setFontSize(16);
+  doc.text(`${t('table.timelineDetailsTitle')} — ${leadName}`, margin, y);
+  y += 10;
+  doc.setFontSize(9);
+  timeline.slice(0, 80).forEach((lead, index) => {
+    if (y > doc.internal.pageSize.getHeight() - 10) {
+      doc.addPage();
+      y = 20;
+    }
+    const line = `${index + 1}. ${t('table.createdDate')}: ${lead.createdDate ? lead.createdDate.toLocaleDateString() : '—'} | ${t('table.sentDate')}: ${
+      lead.sentDate ? lead.sentDate.toLocaleDateString() : '—'
+    } | ${t('table.connectedDate')}: ${lead.connectedDate ? lead.connectedDate.toLocaleDateString() : '—'} | ${t('table.positiveDate')}: ${
+      lead.positiveDate ? lead.positiveDate.toLocaleDateString() : '—'
+    } | ${t('table.eventDate')}: ${lead.eventDate ? lead.eventDate.toLocaleDateString() : '—'} | ${t('table.source')}: ${lead.source || '—'}`;
+    doc.text(line, margin, y);
+    y += 6;
+  });
+  doc.save(getReportFileName(`timeline-${leadName || 'lead'}`, 'pdf'));
+}
+
+function bindExportButton(id, handler) {
+  const btn = document.getElementById(id);
+  if (btn && !btn.dataset.bound) {
+    btn.addEventListener('click', handler);
+    btn.dataset.bound = 'true';
+  }
+}
+
+export function setupExportButtons() {
+  bindExportButton('exportExcel', exportToExcel);
+  bindExportButton('exportPDF', exportToPDF);
+  bindExportButton('teamLoadExportCsv', exportTeamLoadCsv);
+  bindExportButton('teamLoadExportPdf', exportTeamLoadPdf);
+  bindExportButton('countrySegExportCsv', exportCountrySegmentationCsv);
+  bindExportButton('countrySegExportPdf', exportCountrySegmentationPdf);
+  bindExportButton('exportLeadTimelineCsv', exportLeadTimelineCsv);
+  bindExportButton('exportLeadTimelinePdf', exportLeadTimelinePdf);
 }

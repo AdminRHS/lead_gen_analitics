@@ -447,6 +447,13 @@ export function openLeadInsight(leadName, rows) {
   if (topEl) topEl.innerHTML = topHtml;
 
   const timelineDetails = buildLeadTimelineDetails(leadName, rows, from, to);
+  state.exportTemplates.timeline = timelineDetails.slice();
+  state.exportTemplates.timelineMeta = {
+    leadName,
+    from: fromInput?.value || '',
+    to: toInput?.value || '',
+    generatedAt: new Date().toISOString()
+  };
   let timelineHtml = '<div class="section-break"><div class="label">' + t('table.timelineDetailsTitle') + '</div></div>';
   timelineHtml += '<div class="table-responsive">';
   timelineHtml += '<table class="summary-table">';

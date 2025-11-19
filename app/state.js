@@ -103,6 +103,11 @@ export const state = {
       sortDir: 'desc'
     }
   },
+  exportTemplates: {
+    teamLoad: null,
+    countrySegmentation: null,
+    timeline: null
+  },
   segmentationThresholds: {
     medium: 5,
     enterprise: 20
