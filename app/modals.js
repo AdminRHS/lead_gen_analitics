@@ -135,10 +135,18 @@ function sortDayData(sortColumn) {
   }
 }
 
-function renderDaySummary(dateObj) {
+function buildDaySummaryData(dateObj) {
   const dayRows = getRowsForDay(dateObj);
   const byName = {};
-  for (const r of dayRows) {
+  const totals = {
+    Created: 0,
+    SentRequests: 0,
+    Connected: 0,
+    PositiveReplies: 0,
+    Events: 0
+  };
+
+  dayRows.forEach((r) => {
     const name = r.Name || 'Unknown';
     if (!byName[name]) {
       byName[name] = {
@@ -149,13 +157,35 @@ function renderDaySummary(dateObj) {
         Events: 0
       };
     }
-    byName[name].Created += Number(r["Created"] || 0);
-    byName[name].SentRequests += Number(r["Sent Requests"] || 0);
-    byName[name].Connected += Number(r["Connected"] || 0);
-    byName[name].PositiveReplies += Number(r["Positive Replies"] || 0);
-    byName[name].Events += Number(r["Events Created"] || 0);
-  }
+    const created = Number(r['Created'] || 0);
+    const sent = Number(r['Sent Requests'] || 0);
+    const connected = Number(r['Connected'] || 0);
+    const positive = Number(r['Positive Replies'] || 0);
+    const events = Number(r['Events Created'] || 0);
 
+    byName[name].Created += created;
+    byName[name].SentRequests += sent;
+    byName[name].Connected += connected;
+    byName[name].PositiveReplies += positive;
+    byName[name].Events += events;
+
+    totals.Created += created;
+    totals.SentRequests += sent;
+    totals.Connected += connected;
+    totals.PositiveReplies += positive;
+    totals.Events += events;
+  });
+
+  const rows = Object.keys(byName).map((name) => ({
+    name,
+    ...byName[name]
+  }));
+
+  return { byName, rows, totals };
+}
+
+function renderDaySummary(dateObj) {
+  const { byName } = buildDaySummaryData(dateObj);
   state.currentDayData = byName;
   const sortSelect = document.getElementById('sortColumn');
   const selected = sortSelect ? sortSelect.value : 'Created';
@@ -164,6 +194,71 @@ function renderDaySummary(dateObj) {
   if (titleEl) {
     titleEl.textContent = `${t('modals.daySummary')} — ${toIsoDateInputValue(dateObj)}`;
   }
+}
+
+function exportDaySummaryToExcel(dateObj) {
+  if (!window.XLSX) {
+    alert(t('alerts.excelLibraryMissing'));
+    return;
+  }
+  const { rows } = buildDaySummaryData(dateObj);
+  if (!rows.length) {
+    alert(t('alerts.noDataForDay'));
+    return;
+  }
+  const sheetRows = rows.map((row) => ({
+    Name: row.name,
+    Created: row.Created,
+    'Sent Requests': row.SentRequests,
+    Connected: row.Connected,
+    'Positive Replies': row.PositiveReplies,
+    Events: row.Events
+  }));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(sheetRows), 'Day Summary');
+  XLSX.writeFile(wb, `day-summary-${toIsoDateInputValue(dateObj)}.xlsx`);
+}
+
+function exportDaySummaryToPdf(dateObj) {
+  if (!window.jspdf) {
+    alert(t('alerts.pdfLibraryMissing'));
+    return;
+  }
+  const { rows, totals } = buildDaySummaryData(dateObj);
+  if (!rows.length) {
+    alert(t('alerts.noDataForDay'));
+    return;
+  }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF('landscape', 'mm', 'a4');
+  const margin = 15;
+  let y = 20;
+  doc.setFontSize(16);
+  doc.text(`${t('modals.daySummary')} — ${toIsoDateInputValue(dateObj)}`, margin, y);
+  y += 10;
+  doc.setFontSize(10);
+  rows
+    .sort((a, b) => b.Created - a.Created)
+    .forEach((row) => {
+      if (y > doc.internal.pageSize.getHeight() - 10) {
+        doc.addPage();
+        y = 20;
+      }
+      doc.text(
+        `${row.name}: ${t('table.created')} ${row.Created}, ${t('table.sentRequests')} ${row.SentRequests}, ${t('table.connected')} ${row.Connected}, ${t('table.positiveReplies')} ${row.PositiveReplies}, ${t('table.events')} ${row.Events}`,
+        margin,
+        y
+      );
+      y += 6;
+    });
+  y += 4;
+  doc.setFontSize(11);
+  doc.text(
+    `${t('table.total')}: ${t('table.created')} ${totals.Created}, ${t('table.sentRequests')} ${totals.SentRequests}, ${t('table.connected')} ${totals.Connected}, ${t('table.positiveReplies')} ${totals.PositiveReplies}, ${t('table.events')} ${totals.Events}`,
+    margin,
+    y
+  );
+  doc.save(`day-summary-${toIsoDateInputValue(dateObj)}.pdf`);
 }
 
 function aggregateCountrySummary(countryName, rows, fromDate, toDate) {
@@ -627,6 +722,8 @@ function bindDayModalButtons() {
   const closeBtn = document.getElementById('closeDayModal');
   const doneBtn = document.getElementById('doneDay');
   const exportCsvBtn = document.getElementById('exportDayCsv');
+  const exportExcelBtn = document.getElementById('exportDayExcel');
+  const exportPdfBtn = document.getElementById('exportDayPDF');
   if (openBtn && !openBtn.dataset.bound) {
     openBtn.addEventListener('click', () => {
       const dayPicker = document.getElementById('dayPicker');
@@ -665,6 +762,19 @@ function bindDayModalButtons() {
       URL.revokeObjectURL(url);
     });
     exportCsvBtn.dataset.bound = 'true';
+  }
+  const exportAction = (fn) => {
+    const dayPicker = document.getElementById('dayPicker');
+    const date = new Date(dayPicker?.value || state.maxDate);
+    fn(date);
+  };
+  if (exportExcelBtn && !exportExcelBtn.dataset.bound) {
+    exportExcelBtn.addEventListener('click', () => exportAction(exportDaySummaryToExcel));
+    exportExcelBtn.dataset.bound = 'true';
+  }
+  if (exportPdfBtn && !exportPdfBtn.dataset.bound) {
+    exportPdfBtn.addEventListener('click', () => exportAction(exportDaySummaryToPdf));
+    exportPdfBtn.dataset.bound = 'true';
   }
 }
 
