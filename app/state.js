@@ -86,11 +86,12 @@ export const state = {
     teamLoad: null,
     countrySegmentation: null
   },
-  serverSummary: null,
   currentTheme: 'light',
   userHasExplicitTheme: false,
   rerenderAll: null,
   openModalCount: 0,
+  serverSummary: null,
+  summaryUnavailable: false,
   prefersDarkSchemeQuery: typeof window !== 'undefined' && window.matchMedia
     ? window.matchMedia('(prefers-color-scheme: dark)')
     : null

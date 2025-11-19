@@ -1,0 +1,163 @@
+{
+  "generated_at": "2025-11-19 08:12:28 UTC",
+  "min_date": "0005-10-29T00:00:00",
+  "max_date": "2025-10-29T00:00:00",
+  "totals": {
+    "Created": 1940,
+    "SentRequests": 4643,
+    "Connected": 896,
+    "Replies": 102,
+    "PositiveReplies": 12,
+    "Events": 6
+  },
+  "weekly": {
+    "2025-W07": {
+      "Created": 16,
+      "SentRequests": 41,
+      "Connected": 8,
+      "Replies": 0,
+      "PositiveReplies": 0,
+      "Events": 0
+    },
+    "2025-W42": {
+      "Created": 597,
+      "SentRequests": 1406,
+      "Connected": 169,
+      "Replies": 25,
+      "PositiveReplies": 3,
+      "Events": 1
+    },
+    "2025-W43": {
+      "Created": 897,
+      "SentRequests": 2198,
+      "Connected": 429,
+      "Replies": 48,
+      "PositiveReplies": 4,
+      "Events": 4
+    },
+    "2025-W44": {
+      "Created": 400,
+      "SentRequests": 930,
+      "Connected": 274,
+      "Replies": 27,
+      "PositiveReplies": 5,
+      "Events": 1
+    },
+    "5-W43": {
+      "Created": 30,
+      "SentRequests": 68,
+      "Connected": 16,
+      "Replies": 2,
+      "PositiveReplies": 0,
+      "Events": 0
+    }
+  },
+  "monthly": {
+    "0005-10": {
+      "Created": 30,
+      "SentRequests": 68,
+      "Connected": 16,
+      "Replies": 2,
+      "PositiveReplies": 0,
+      "Events": 0
+    },
+    "2025-02": {
+      "Created": 16,
+      "SentRequests": 41,
+      "Connected": 8,
+      "Replies": 0,
+      "PositiveReplies": 0,
+      "Events": 0
+    },
+    "2025-10": {
+      "Created": 1894,
+      "SentRequests": 4534,
+      "Connected": 872,
+      "Replies": 100,
+      "PositiveReplies": 12,
+      "Events": 6
+    }
+  },
+  "countries": {
+    "Belgium": {
+      "Created": 270,
+      "SentRequests": 585,
+      "Connected": 84,
+      "Replies": 7,
+      "PositiveReplies": 0,
+      "Events": 0
+    },
+    "Denmark": {
+      "Created": 62,
+      "SentRequests": 220,
+      "Connected": 36,
+      "Replies": 2,
+      "PositiveReplies": 1,
+      "Events": 0
+    },
+    "Finland": {
+      "Created": 228,
+      "SentRequests": 654,
+      "Connected": 143,
+      "Replies": 11,
+      "PositiveReplies": 0,
+      "Events": 0
+    },
+    "France": {
+      "Created": 354,
+      "SentRequests": 787,
+      "Connected": 138,
+      "Replies": 15,
+      "PositiveReplies": 3,
+      "Events": 0
+    },
+    "Germany": {
+      "Created": 212,
+      "SentRequests": 606,
+      "Connected": 93,
+      "Replies": 3,
+      "PositiveReplies": 0,
+      "Events": 0
+    },
+    "Israel": {
+      "Created": 192,
+      "SentRequests": 416,
+      "Connected": 96,
+      "Replies": 21,
+      "PositiveReplies": 4,
+      "Events": 4
+    },
+    "Italy": {
+      "Created": 119,
+      "SentRequests": 280,
+      "Connected": 52,
+      "Replies": 1,
+      "PositiveReplies": 0,
+      "Events": 0
+    },
+    "Netherlands": {
+      "Created": 16,
+      "SentRequests": 41,
+      "Connected": 8,
+      "Replies": 0,
+      "PositiveReplies": 0,
+      "Events": 0
+    },
+    "Sweden": {
+      "Created": 189,
+      "SentRequests": 434,
+      "Connected": 89,
+      "Replies": 24,
+      "PositiveReplies": 1,
+      "Events": 0
+    },
+    "United Kingdom": {
+      "Created": 298,
+      "SentRequests": 620,
+      "Connected": 157,
+      "Replies": 18,
+      "PositiveReplies": 3,
+      "Events": 2
+    }
+  }
+}

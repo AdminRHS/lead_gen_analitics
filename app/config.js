@@ -35,3 +35,6 @@ export const metricTranslationMap = {
   'Connected → Positive': 'table.connectedToPositive',
   'Positive → Event': 'table.positiveToEvent'
 };
+
+export const SUMMARY_ENDPOINT = 'summary.json';
+export const ENABLE_SERVER_SUMMARY = true;

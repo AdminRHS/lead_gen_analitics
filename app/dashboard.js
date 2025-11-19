@@ -5,6 +5,7 @@ import { t, registerStatusUIUpdater } from './i18nSupport.js';
 import { renderAll } from './renderers.js';
 import { setupModals } from './modals.js';
 import { setupExportButtons } from './exports.js';
+import { SUMMARY_ENDPOINT, ENABLE_SERVER_SUMMARY } from './config.js';
 
 registerStatusUIUpdater(updateStatusUI);
 
@@ -36,7 +37,14 @@ async function fetchDataFromServer() {
 }
 
 async function fetchSummaryFromServer() {
-  const res = await fetch('summary.json', { cache: 'no-store' });
+  if (!ENABLE_SERVER_SUMMARY || !SUMMARY_ENDPOINT || state.summaryUnavailable) {
+    return null;
+  }
+  const res = await fetch(SUMMARY_ENDPOINT, { cache: 'no-store' });
+  if (res.status === 404) {
+    state.summaryUnavailable = true;
+    return null;
+  }
   if (!res.ok) {
     throw new Error(`HTTP error! status: ${res.status} ${res.statusText}`);
   }
@@ -54,6 +62,9 @@ function rerenderWithLastFilter() {
 }
 
 async function hydrateSummary(force = false) {
+  if (!ENABLE_SERVER_SUMMARY || state.summaryUnavailable) {
+    return null;
+  }
   if (!force) {
     if (state.serverSummary) {
       return state.serverSummary;
@@ -66,8 +77,10 @@ async function hydrateSummary(force = false) {
   const loader = (async () => {
     try {
       const summary = await fetchSummaryFromServer();
-      state.serverSummary = summary;
-      rerenderWithLastFilter();
+      if (summary) {
+        state.serverSummary = summary;
+        rerenderWithLastFilter();
+      }
       return summary;
     } catch (error) {
       if (force) {
