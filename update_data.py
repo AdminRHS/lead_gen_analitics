@@ -1,10 +1,18 @@
 import json
 import os
+import sys
 from collections import defaultdict
 from datetime import datetime
+from pathlib import Path
 
 import gspread
 from google.oauth2.service_account import Credentials
+
+CURRENT_DIR = Path(__file__).resolve().parent
+REPO_ROOT = CURRENT_DIR.parent
+if str(REPO_ROOT) not in sys.path:
+  sys.path.insert(0, str(REPO_ROOT))
+
 from reports.generate_snapshot import generate_daily_report
 
 SPREADSHEET_ID = "1SNyKdbNIXHDdvqd71W57gkUe64Gsy2s9ylRCJJoJgJg"
