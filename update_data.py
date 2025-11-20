@@ -1,3 +1,4 @@
+import importlib.util
 import json
 import os
 import sys
@@ -15,7 +16,24 @@ for path in (CURRENT_DIR, REPO_ROOT):
   if resolved not in sys.path:
     sys.path.insert(0, resolved)
 
-from reports.generate_snapshot import generate_daily_report
+
+def _load_generate_daily_report():
+  try:
+    from reports.generate_snapshot import generate_daily_report as reporter
+    return reporter
+  except ModuleNotFoundError:
+    candidate = REPO_ROOT / 'reports' / 'generate_snapshot.py'
+    if candidate.exists():
+      spec = importlib.util.spec_from_file_location('reports.generate_snapshot', candidate)
+      module = importlib.util.module_from_spec(spec)
+      if spec and spec.loader:
+        spec.loader.exec_module(module)  # type: ignore[attr-defined]
+        return getattr(module, 'generate_daily_report', None)
+    print("⚠️  reports module not found. Skipping snapshot generation.")
+    return None
+
+
+generate_daily_report = _load_generate_daily_report()
 
 SPREADSHEET_ID = "1SNyKdbNIXHDdvqd71W57gkUe64Gsy2s9ylRCJJoJgJg"
 SHEET_NAME = "Form responses 1"
@@ -169,6 +187,7 @@ if __name__ == "__main__":
     save_to_json(data)
     summary = build_summary(data)
     save_summary(summary)
-    generate_daily_report(data, summary)
+    if generate_daily_report:
+      generate_daily_report(data, summary)
   except Exception as exc:
     print("❌ Помилка при зчитуванні:", exc)
