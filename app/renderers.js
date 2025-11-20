@@ -28,6 +28,7 @@ import { openCountryInsight, openLeadInsight, openSourceInsight } from './modals
 import { formatNumber, formatPercent, formatDays, formatDateShort, normalizeDimensionValue } from './formatters.js';
 
 const MAX_STEP_COLUMNS = 5;
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const SORT_DIRECTIONS = {
   ASC: 'asc',
   DESC: 'desc'
