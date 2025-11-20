@@ -16,7 +16,7 @@ function getNumberFormatter(maxFractionDigits = 0) {
       cacheKey,
       new Intl.NumberFormat(locale, {
         minimumFractionDigits: 0,
-        maximumFractionDigits
+        maximumFractionDigits: maxFractionDigits
       })
     );
   }
