@@ -338,14 +338,24 @@
     .summary-table th:first-child, .summary-table td:first-child { text-align: left; }
     .summary-table tfoot td { font-weight: 700; }
     .summary-table tbody tr {
-      transition: background-color 0.2s ease;
+      transition: background-color 0.2s ease, box-shadow 0.2s ease, outline 0.2s ease, border-color 0.2s ease;
       cursor: pointer;
+      position: relative;
+      outline: 2px solid transparent;
+      outline-offset: -2px;
     }
     .summary-table tbody tr:hover {
       background-color: rgba(51, 109, 255, 0.08);
+      outline: 2px solid rgba(51, 109, 255, 0.5);
+      box-shadow: 0 2px 8px rgba(51, 109, 255, 0.15);
+    }
+    .summary-table tbody tr:hover td {
+      border-color: rgba(51, 109, 255, 0.4);
     }
     .summary-table tbody tr:active {
       background-color: rgba(51, 109, 255, 0.12);
+      outline: 2px solid rgba(51, 109, 255, 0.7);
+      box-shadow: 0 2px 12px rgba(51, 109, 255, 0.25);
     }
     .dashboard-grid {
       display: grid;
@@ -374,28 +384,52 @@
     }
     .matrix-table tbody tr,
     .segmentation-table tbody tr {
-      transition: background-color 0.2s ease;
+      transition: background-color 0.2s ease, box-shadow 0.2s ease, outline 0.2s ease, border-color 0.2s ease;
       cursor: pointer;
+      position: relative;
+      outline: 2px solid transparent;
+      outline-offset: -2px;
     }
     .matrix-table tbody tr:hover,
     .segmentation-table tbody tr:hover {
       background-color: rgba(51, 109, 255, 0.08);
+      outline: 2px solid rgba(51, 109, 255, 0.5);
+      box-shadow: 0 2px 8px rgba(51, 109, 255, 0.15);
+    }
+    .matrix-table tbody tr:hover td,
+    .segmentation-table tbody tr:hover td {
+      border-color: rgba(51, 109, 255, 0.4);
     }
     .matrix-table tbody tr:active,
     .segmentation-table tbody tr:active {
       background-color: rgba(51, 109, 255, 0.12);
+      outline: 2px solid rgba(51, 109, 255, 0.7);
+      box-shadow: 0 2px 12px rgba(51, 109, 255, 0.25);
     }
     body.dark-theme .segmentation-table .segment-border,
     body.dark-theme .segmentation-table .country-col {
       border-right-color: rgba(148, 163, 184, 0.5);
     }
+    body.dark-theme .matrix-table tbody tr,
+    body.dark-theme .segmentation-table tbody tr {
+      outline: 2px solid transparent;
+      outline-offset: -2px;
+    }
     body.dark-theme .matrix-table tbody tr:hover,
     body.dark-theme .segmentation-table tbody tr:hover {
       background-color: rgba(79, 140, 255, 0.15);
+      outline: 2px solid rgba(79, 140, 255, 0.6);
+      box-shadow: 0 2px 8px rgba(79, 140, 255, 0.2);
+    }
+    body.dark-theme .matrix-table tbody tr:hover td,
+    body.dark-theme .segmentation-table tbody tr:hover td {
+      border-color: rgba(79, 140, 255, 0.5);
     }
     body.dark-theme .matrix-table tbody tr:active,
     body.dark-theme .segmentation-table tbody tr:active {
       background-color: rgba(79, 140, 255, 0.2);
+      outline: 2px solid rgba(79, 140, 255, 0.8);
+      box-shadow: 0 2px 12px rgba(79, 140, 255, 0.3);
     }
     .card-header {
       display: flex;
@@ -858,11 +892,22 @@
     body.dark-theme .summary-table tfoot td {
       color: #f8fafc;
     }
+    body.dark-theme .summary-table tbody tr {
+      outline: 2px solid transparent;
+      outline-offset: -2px;
+    }
     body.dark-theme .summary-table tbody tr:hover {
       background-color: rgba(79, 140, 255, 0.15);
+      outline: 2px solid rgba(79, 140, 255, 0.6);
+      box-shadow: 0 2px 8px rgba(79, 140, 255, 0.2);
+    }
+    body.dark-theme .summary-table tbody tr:hover td {
+      border-color: rgba(79, 140, 255, 0.5);
     }
     body.dark-theme .summary-table tbody tr:active {
       background-color: rgba(79, 140, 255, 0.2);
+      outline: 2px solid rgba(79, 140, 255, 0.8);
+      box-shadow: 0 2px 12px rgba(79, 140, 255, 0.3);
     }
     body.dark-theme .card-subtitle,
     body.dark-theme .table-toolbar label {
