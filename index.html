@@ -315,6 +315,10 @@
       opacity: 1;
       transform: translateY(0) scale(1);
     }
+    .chart-tooltip-modal {
+      width: min(400px, 85vw);
+      max-width: 450px;
+    }
     .modal-body {
       padding: 16px;
       overflow-y: auto;
@@ -661,6 +665,10 @@
       .modal {
         width: 95vw;
         max-height: calc(100vh - 20px);
+      }
+      .chart-tooltip-modal {
+        width: min(350px, 90vw);
+        max-width: 400px;
       }
       .modal-body {
         padding: 12px;
@@ -1542,7 +1550,7 @@
 
   <!-- Modal for Chart Tooltip Information -->
   <div class="modal-overlay" id="chartTooltipModalOverlay">
-    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="chartTooltipModalTitle">
+    <div class="modal chart-tooltip-modal" role="dialog" aria-modal="true" aria-labelledby="chartTooltipModalTitle">
       <div class="modal-header">
         <div class="modal-title" id="chartTooltipModalTitle">Chart Details</div>
         <button id="closeChartTooltipModal" class="link-btn" data-i18n="common.close">Close</button>
