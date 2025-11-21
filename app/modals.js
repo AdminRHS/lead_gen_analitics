@@ -802,6 +802,84 @@ function bindSourceModalButtons() {
   }
 }
 
+function bindChartTooltipModalButtons() {
+  const overlay = document.getElementById('chartTooltipModalOverlay');
+  const closeBtn = document.getElementById('closeChartTooltipModal');
+  const doneBtn = document.getElementById('doneChartTooltip');
+  [closeBtn, doneBtn].forEach((btn) => {
+    if (btn && !btn.dataset.bound) {
+      btn.addEventListener('click', () => hideModalOverlay(overlay));
+      btn.dataset.bound = 'true';
+    }
+  });
+  if (overlay && !overlay.dataset.bound) {
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) hideModalOverlay(overlay);
+    });
+    overlay.dataset.bound = 'true';
+  }
+}
+
+export function showChartTooltipModal(tooltipData) {
+  const overlay = document.getElementById('chartTooltipModalOverlay');
+  const titleEl = document.getElementById('chartTooltipModalTitle');
+  const contentEl = document.getElementById('chartTooltipContent');
+  
+  if (!overlay || !contentEl) return;
+  
+  // Set title
+  if (titleEl) {
+    titleEl.textContent = tooltipData.title || 'Chart Details';
+  }
+  
+  // Build content HTML
+  let html = `<div style="padding: 16px;">`;
+  html += `<div style="font-size: 18px; font-weight: 600; margin-bottom: 16px; color: #1b1f2f;">${tooltipData.label || ''}</div>`;
+  html += `<div style="display: flex; flex-direction: column; gap: 12px;">`;
+  
+  tooltipData.data.forEach((item) => {
+    html += `<div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #f8f9fa; border-radius: 8px; border: 1px solid #e9ecef;">`;
+    html += `<span style="font-weight: 600; color: #495057;">${item.label}:</span>`;
+    html += `<span style="font-size: 18px; font-weight: 700; color: #336dff;">${item.value}</span>`;
+    html += `</div>`;
+  });
+  
+  html += `</div></div>`;
+  
+  contentEl.innerHTML = html;
+  
+  // Update dark theme styles if needed
+  if (document.body.classList.contains('dark-theme')) {
+    const style = document.createElement('style');
+    style.textContent = `
+      body.dark-theme #chartTooltipContent > div > div:first-child {
+        color: #e2e8f0 !important;
+      }
+      body.dark-theme #chartTooltipContent > div > div > div {
+        background: rgba(30, 41, 59, 0.6) !important;
+        border-color: rgba(148, 163, 184, 0.2) !important;
+      }
+      body.dark-theme #chartTooltipContent > div > div > div span:first-child {
+        color: #cbd5f5 !important;
+      }
+      body.dark-theme #chartTooltipContent > div > div > div span:last-child {
+        color: #7aa7ff !important;
+      }
+    `;
+    if (!document.getElementById('chartTooltipModalStyles')) {
+      style.id = 'chartTooltipModalStyles';
+      document.head.appendChild(style);
+    }
+  }
+  
+  showModalOverlay(overlay);
+}
+
+// Make function available globally for chart onClick handlers
+if (typeof window !== 'undefined') {
+  window.showChartTooltipModal = showChartTooltipModal;
+}
+
 export function setupModals() {
   if (modalsInitialized) return;
   bindSortSelect();
@@ -810,5 +888,6 @@ export function setupModals() {
   bindCountryModalButtons();
   bindLeadModalButtons();
   bindSourceModalButtons();
+  bindChartTooltipModalButtons();
   modalsInitialized = true;
 }

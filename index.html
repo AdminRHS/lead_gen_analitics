@@ -1540,6 +1540,22 @@
     </div>
   </div>
 
+  <!-- Modal for Chart Tooltip Information -->
+  <div class="modal-overlay" id="chartTooltipModalOverlay">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="chartTooltipModalTitle">
+      <div class="modal-header">
+        <div class="modal-title" id="chartTooltipModalTitle">Chart Details</div>
+        <button id="closeChartTooltipModal" class="link-btn" data-i18n="common.close">Close</button>
+      </div>
+      <div class="modal-body">
+        <div id="chartTooltipContent"></div>
+      </div>
+      <div class="modal-actions">
+        <button id="doneChartTooltip" class="btn btn-primary" data-i18n="common.done">Done</button>
+      </div>
+    </div>
+  </div>
+
   <script type="module" src="./app/main.js"></script>
 </body>
 </html>

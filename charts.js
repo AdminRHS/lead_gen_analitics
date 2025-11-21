@@ -8,7 +8,7 @@ export function renderPairedBarChart(
   rightSeriesLabel,
   rightSeriesData
 ) {
-  return new window.Chart(canvasElement, {
+  const chart = new window.Chart(canvasElement, {
     type: "bar",
     data: {
       labels,
@@ -36,6 +36,38 @@ export function renderPairedBarChart(
       scales: { y: { beginAtZero: true } }
     }
   });
+  
+  // Add onClick handler after chart creation
+  if (chart) {
+    chart.options.onClick = (evt) => {
+      const points = chart.getElementsAtEventForMode(evt, 'index', { intersect: false }, false);
+      if (points && points.length > 0) {
+        // Get the index from the first point
+        const index = points[0].index;
+        const label = labels[index];
+        
+        // Get both values for the paired chart
+        const leftValue = chart.data.datasets[0].data[index];
+        const rightValue = chart.data.datasets[1].data[index];
+        const leftLabel = chart.data.datasets[0].label;
+        const rightLabel = chart.data.datasets[1].label;
+        
+        // Show modal with tooltip information
+        if (window.showChartTooltipModal) {
+          window.showChartTooltipModal({
+            label: label,
+            title: `${leftLabel} → ${rightLabel}`,
+            data: [
+              { label: leftLabel, value: leftValue },
+              { label: rightLabel, value: rightValue }
+            ]
+          });
+        }
+      }
+    };
+  }
+  
+  return chart;
 }
 
 export function renderSingleBarChart(
@@ -45,7 +77,7 @@ export function renderSingleBarChart(
   seriesData,
   color = "rgba(54,162,235,0.6)"
 ) {
-  return new window.Chart(canvasElement, {
+  const chart = new window.Chart(canvasElement, {
     type: "bar",
     data: {
       labels,
@@ -68,6 +100,32 @@ export function renderSingleBarChart(
       scales: { y: { beginAtZero: true } }
     }
   });
+  
+  // Add onClick handler after chart creation
+  if (chart) {
+    chart.options.onClick = (evt) => {
+      const points = chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
+      if (points && points.length > 0) {
+        const element = points[0];
+        const index = element.index;
+        const label = labels[index];
+        const value = chart.data.datasets[0].data[index];
+        
+        // Show modal with tooltip information
+        if (window.showChartTooltipModal) {
+          window.showChartTooltipModal({
+            label: label,
+            title: seriesLabel,
+            data: [
+              { label: seriesLabel, value: value }
+            ]
+          });
+        }
+      }
+    };
+  }
+  
+  return chart;
 }
 
 export function renderConversionRateChart(
@@ -82,7 +140,7 @@ export function renderConversionRateChart(
   // Встановлюємо максимум як 110% від найбільшого значення, але не менше 5%
   const yMax = Math.max(maxValue * 1.1, 5);
   
-  return new window.Chart(canvasElement, {
+  const chart = new window.Chart(canvasElement, {
     type: "bar",
     data: {
       labels,
@@ -127,6 +185,32 @@ export function renderConversionRateChart(
       }
     }
   });
+  
+  // Add onClick handler after chart creation
+  if (chart) {
+    chart.options.onClick = (evt) => {
+      const points = chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
+      if (points && points.length > 0) {
+        const element = points[0];
+        const index = element.index;
+        const label = labels[index];
+        const value = chart.data.datasets[0].data[index];
+        
+        // Show modal with tooltip information
+        if (window.showChartTooltipModal) {
+          window.showChartTooltipModal({
+            label: label,
+            title: seriesLabel,
+            data: [
+              { label: seriesLabel, value: value.toFixed(2) + '%' }
+            ]
+          });
+        }
+      }
+    };
+  }
+  
+  return chart;
 }
 
 
